@@ -27,10 +27,10 @@ jobs:
         black --check --diff .
     - name: Lint application with flake8
       run: |
-        flake8 src --count --show-source --statistics
+        flake8 regsync --count --show-source --statistics
     - name: Check application with mypy
       run: |
-        mypy src
+        mypy regsync
     - name: Lint tests with flake8
       run: |
         flake8 tests --count --show-source --statistics
