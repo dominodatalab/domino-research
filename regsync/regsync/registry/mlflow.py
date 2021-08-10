@@ -1,6 +1,6 @@
 import logging
 from typing import List, Dict
-from regsync.types import Model, ModelVersion
+from regsync.types import Model, ModelVersion, Artifact
 from regsync.registry import ModelRegistry
 from mlflow.tracking import MlflowClient  # type: ignore
 from mlflow.entities.model_registry import RegisteredModel  # type: ignore
@@ -15,24 +15,21 @@ class Client(ModelRegistry):
         self.models: Dict[str, RegisteredModel] = {}
 
     def list_models(self) -> List[Model]:
-        self.models = {
-            model.name: model for model in self.client.list_registered_models()
-        }
         output = []
-        for model in self.models.values():
-            output.append(Model(name=model.name, versions=[]))
-        return output
-
-    def list_model_versions(self, model: Model) -> List[ModelVersion]:
-        if reg_model := self.models.get(model.name):
-            output = []
-            for version in reg_model.latest_versions:
-                output.append(
+        for model in self.client.list_registered_models():
+            versions = []
+            for version in model.latest_versions:
+                versions.append(
                     ModelVersion(
                         version=version.version,
-                        artifact_type="",
-                        artifact_path="",
+                        stages=set([version.current_stage])
+                        if version.current_stage is not None
+                        and version.current_stage != "None"
+                        else set([]),
                     )
                 )
-            return output
-        return []
+            output.append(Model(name=model.name, versions=versions))
+        return output
+
+    def fetch_version(sefl, model_name: str, version: str) -> Artifact:
+        pass

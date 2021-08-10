@@ -5,8 +5,6 @@ from typing import List, Set
 @dataclass
 class ModelVersion:
     version: str
-    artifact_path: str
-    artifact_type: str
     stages: Set[str] = field(default_factory=set)
 
 
@@ -14,3 +12,9 @@ class ModelVersion:
 class Model:
     name: str
     versions: List[ModelVersion]
+
+
+@dataclass
+class Artifact:
+    path: str
+    kind: str

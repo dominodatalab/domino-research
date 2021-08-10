@@ -26,18 +26,24 @@ def main():
         logger.error(f"Unrecognized APP_REGISTRY_KIND '{REGISTRY_KIND}'")
         sys.exit(1)
 
+    SCAN_INTERVAL = float(os.environ.get("APP_SCAN_INTERVAL_S", "15"))
     while True:
         try:
             logger.info("Reading models from registry")
             models = registry_client.list_models()
             logger.info(f"Found {len(models)} model(s).")
             logger.debug(pformat(models))
-            for model in models:
-                versions = registry_client.list_model_versions(model)
-                logger.info(
-                    f"Found {len(versions)} versions for model {model}"
-                )
-                logger.debug(pformat(versions))
+
+            # TODO: Fetch current state
+
+            versions_to_create = {}
+
+            for model in versions_to_create:
+                for version in model.versions:
+                    registry_client.fetch_version(model.name, version.version)
+
+            # TODO: Apply imperative actions.
         except Exception as e:
             logger.exception(e)
-        time.sleep(15)
+
+        time.sleep(SCAN_INTERVAL)
