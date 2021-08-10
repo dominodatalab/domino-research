@@ -8,5 +8,6 @@ setuptools.setup(
     description="Automatically configure serving infrastructure based on model registry.",
     url="https://github.com/dominodatalab/domino-research/regsync",
     packages=setuptools.find_packages(),
-    install_requires=[],
+    install_requires=["mlflow==1.19"],
+    entry_points={"console_scripts": ["regsync = regsync.app:main"]},
 )
