@@ -63,7 +63,9 @@ class SageMakerDeployTarget(DeployTarget):
         pass
 
     def update_version_stage(
-        self, updated_versions: List[Dict[ModelVersion, Set[str]]]
+        self,
+        current_routing: Dict[str, Dict[str, Set[str]]],
+        desired_routing: Dict[str, Dict[str, Set[str]]],
     ):
         pass
 
