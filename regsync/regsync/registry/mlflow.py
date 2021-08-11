@@ -9,6 +9,8 @@ logger = logging.getLogger(__name__)
 
 
 class Client(ModelRegistry):
+    LATEST_STAGE_NAME = "Latest"
+
     def __init__(self, uri: str):
         logger.info(f"Registry client initialized with uri '{uri}'")
         self.client = MlflowClient(registry_uri=uri)
@@ -17,16 +19,22 @@ class Client(ModelRegistry):
     def list_models(self) -> List[Model]:
         output = []
         for model in self.client.list_registered_models():
-            versions = []
+            versions: Dict[str, set[ModelVersion]] = {}
+
             for version in model.latest_versions:
-                versions.append(
-                    ModelVersion(
-                        version=version.version,
-                        stages=set([version.current_stage])
-                        if version.current_stage is not None
-                        and version.current_stage != "None"
-                        else set([]),
-                    )
+                stage = (
+                    version.current_stage
+                    if version.current_stage is not None
+                    and version.current_stage != "None"
+                    else self.LATEST_STAGE_NAME
+                )
+                versions[stage] = set(
+                    [
+                        ModelVersion(
+                            model_name=model.name,
+                            version=version.version,
+                        )
+                    ]
                 )
             output.append(Model(name=model.name, versions=versions))
         return output
