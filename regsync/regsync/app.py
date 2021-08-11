@@ -3,6 +3,8 @@ import time
 import os
 import sys
 from pprint import pformat
+from typing import List, Dict, Set
+from regsync.types import Model
 
 logger = logging.getLogger(__name__)
 
@@ -26,24 +28,66 @@ def main():
         logger.error(f"Unrecognized APP_REGISTRY_KIND '{REGISTRY_KIND}'")
         sys.exit(1)
 
+    DEPLOY_KIND = os.environ.get("APP_DEPLOY_KIND", "sagemaker").lower()
+    if DEPLOY_KIND == "sagemaker":
+        from regsync.deploy.sagemaker import SageMakerDeployTarget
+
+        deploy_client = SageMakerDeployTarget()
+    else:
+        logger.error(f"Unrecognized APP_REGISTRY_KIND '{REGISTRY_KIND}'")
+        sys.exit(1)
+
     SCAN_INTERVAL = float(os.environ.get("APP_SCAN_INTERVAL_S", "15"))
     while True:
         try:
             logger.info("Reading models from registry")
-            models = registry_client.list_models()
-            logger.info(f"Found {len(models)} model(s).")
-            logger.debug(pformat(models))
+            desired_models = registry_client.list_models()
+            logger.info(f"Found {len(desired_models)} desired model(s).")
+            logger.debug(pformat(desired_models))
 
-            # TODO: Fetch current state
+            logger.info("Reading models from deploy target")
+            current_models = deploy_client.list_models()
+            logger.info(f"Found {len(current_models)} deployed model(s).")
+            logger.debug(pformat(current_models))
 
-            versions_to_create = {}
+            current_model_versions = {
+                version
+                for model in current_models
+                for version in model.unique_versions()
+            }
+            desired_model_versions = {
+                version
+                for model in desired_models
+                for version in model.unique_versions()
+            }
 
-            for model in versions_to_create:
-                for version in model.versions:
-                    registry_client.fetch_version(model.name, version.version)
+            new_versions = desired_model_versions - current_model_versions
+            expired_versions = current_model_versions - desired_model_versions
 
-            # TODO: Apply imperative actions.
+            logger.debug(f"New model versions: {pformat(new_versions)}")
+            logger.debug(
+                f"Expired model versions: {pformat(expired_versions)}"
+            )
+
+            current_routing = routing_from_models(current_models)
+            desired_routing = routing_from_models(desired_models)
+
+            deploy_client.create_versions(new_versions)
+            deploy_client.update_version_stage(
+                current_routing, desired_routing
+            )
+            deploy_client.delete_versions(expired_versions)
         except Exception as e:
             logger.exception(e)
 
         time.sleep(SCAN_INTERVAL)
+
+
+def routing_from_models(models: List[Model]) -> Dict[str, Dict[str, Set[str]]]:
+    return {
+        model.name: {
+            stage: {version.version for version in versions}
+            for stage, versions in model.versions.items()
+        }
+        for model in models
+    }
