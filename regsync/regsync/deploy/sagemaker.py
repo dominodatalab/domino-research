@@ -29,11 +29,31 @@ class SageMakerDeployTarget(DeployTarget):
 
         output = []
         for endpoint in endpoint_data["Endpoints"]:
-            model_name = endpoint["EndpointName"].removeprefix(endpoint_prefix)
+            endpoint_name = endpoint["EndpointName"]
+            model_name = endpoint_name.removeprefix(endpoint_prefix)
+
+            model_version_prefix = (
+                f"{self.SAGEMAKER_NAME_PREFIX}-{model_name}-"
+            )
+
+            endpoint_config = self.client.describe_endpoint_config(
+                EndpointConfigName=endpoint_name
+            )
+
+            versions = [
+                ModelVersion(
+                    version=variant["ModelName"].removeprefix(
+                        model_version_prefix
+                    ),
+                    stages={variant["VariantName"]},
+                )
+                for variant in endpoint_config["ProductionVariants"]
+            ]
+
             output.append(
                 Model(
                     name=model_name,
-                    versions=self._fetch_model_versions(model_name),
+                    versions=versions,
                 )
             )
 
@@ -49,25 +69,3 @@ class SageMakerDeployTarget(DeployTarget):
 
     def delete_versions(self, deleted_versions: List[ModelVersion]):
         pass
-
-    def _fetch_model_versions(self, model_name: str) -> List[ModelVersion]:
-        model_prefix = f"{self.SAGEMAKER_NAME_PREFIX}-{model_name}-"
-
-        models = self.client.list_models(
-            SortBy="Name",
-            SortOrder="Ascending",
-            # NextToken='string', # handle pagination
-            MaxResults=100,
-            NameContains=model_prefix,
-        )
-
-        output = [
-            ModelVersion(version=model["ModelName"].removeprefix(model_prefix))
-            for model in models["Models"]
-        ]
-
-        return output
-
-
-sm = SageMakerDeployTarget()
-print(sm.list_models())
