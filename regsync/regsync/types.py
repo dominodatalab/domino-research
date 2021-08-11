@@ -5,6 +5,7 @@ from typing import Dict, Set
 @dataclass
 class ModelVersion:
     model_name: str
+    #TODO: rename to version_id
     version: str
 
     def __hash__(self):

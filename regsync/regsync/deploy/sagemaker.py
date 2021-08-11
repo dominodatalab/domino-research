@@ -3,6 +3,7 @@ from typing import List, Dict, Set
 from regsync.types import Model, ModelVersion, Artifact
 from regsync.deploy import DeployTarget
 import boto3  # type: ignore
+from botocore.exceptions import ClientError
 
 
 logger = logging.getLogger(__name__)
@@ -10,16 +11,19 @@ logger = logging.getLogger(__name__)
 
 class SageMakerDeployTarget(DeployTarget):
     SAGEMAKER_NAME_PREFIX = "rs"
+    S3_BUCKET_NAME = "regsync-artifacts"
+    S3_BUCKET_REGION = "us-east-2"
 
     def __init__(self):
         logger.info("SageMaker DeployTarget client initialized")
         session = boto3.Session(profile_name="gambit-sandbox")
-        self.client = session.client("sagemaker")
+        self.sagemaker_client = session.client("sagemaker")
+        self.s3_client = session.client('s3')
 
     def list_models(self) -> List[Model]:
         endpoint_prefix = f"{self.SAGEMAKER_NAME_PREFIX}-"
 
-        endpoint_data = self.client.list_endpoints(
+        endpoint_data = self.sagemaker_client.list_endpoints(
             SortBy="Name",
             SortOrder="Ascending",
             MaxResults=100,
@@ -40,7 +44,7 @@ class SageMakerDeployTarget(DeployTarget):
                 f"-{endpoint_stage}"
             )  # eg: modelA
 
-            endpoint_config = self.client.describe_endpoint_config(
+            endpoint_config = self.sagemaker_client.describe_endpoint_config(
                 EndpointConfigName=endpoint_name
             )
 
@@ -70,8 +74,9 @@ class SageMakerDeployTarget(DeployTarget):
         return list(output.values())
 
     def create_versions(self, new_versions: Dict[ModelVersion, Artifact]):
-        for v in new_versions:
-            self._create_sagemaker_model(v)
+        for version, artifact in new_versions.items():
+            self._upload_version_artifact(version, artifact)
+            self._create_sagemaker_model(version)
 
     def update_version_stage(
         self,
@@ -83,34 +88,63 @@ class SageMakerDeployTarget(DeployTarget):
     def delete_versions(self, deleted_versions: Set[ModelVersion]):
         for v in deleted_versions:
             self._delete_sagemaker_model(v)
+            self._delete_version_artifact(v)
+
+    def _upload_version_artifact(self, version: ModelVersion, artifact: Artifact):
+        # TODO: better error handling
+        try:
+            self.s3_client.upload_file(
+                artifact.path,  # Absolute path to local file
+                self.S3_BUCKET_NAME,
+                self._s3_subpath_for_version_artifact(version),  # path in the s3 bucket
+                # Ensure default SageMaker Executor Role has access to object by tagging
+                ExtraArgs={"Tagging": "SageMaker=true"}
+            )
+        except ClientError as e:
+            logging.error(e)
+    
+    def _delete_version_artifact(self, version: ModelVersion):
+        # TODO: better error handling
+        try:
+            self.s3_client.delete_object(
+                Bucket=self.S3_BUCKET_NAME,
+                Key=self._s3_subpath_for_version_artifact(version) # path in the s3 bucket
+            )
+        except ClientError as e:
+            logging.error(e)
 
     def _create_sagemaker_model(self, version: ModelVersion):
-        # TODO: error handling
-        self.client.create_model(
-            ModelName=self._sagemaker_model_name_for_version(version),
-            PrimaryContainer={
-                # TODO: this shouldn't be hard coded
-                "Image": "667552661262.dkr.ecr.us-east-2.amazonaws.com/mlflow-pyfunc:1.19.0",  # noqa: E501
-                "ImageConfig": {
-                    "RepositoryAccessMode": "Platform",
+        # TODO: better error handling
+        try:
+            self.sagemaker_client.create_model(
+                ModelName=self._sagemaker_model_name_for_version(version),
+                PrimaryContainer={
+                    # TODO: this shouldn't be hard coded
+                    "Image": "667552661262.dkr.ecr.us-east-2.amazonaws.com/mlflow-pyfunc:1.19.0",  # noqa: E501
+                    "ImageConfig": {
+                        "RepositoryAccessMode": "Platform",
+                    },
+                    "Mode": "SingleModel",
+                    "ModelDataUrl": self._s3_path_for_version_artifact(version),
+                    "Environment": {
+                        "MLFLOW_DEPLOYMENT_FLAVOR_NAME": "python_function"
+                    },
                 },
-                "Mode": "SingleModel",
                 # TODO: this shouldn't be hard coded
-                "ModelDataUrl": "https://s3.us-east-2.amazonaws.com/test-mlflow-deploy/test-mlflow-model-mccaucwptaa9hpnkbc4qwq/model.tar.gz",  # noqa: E501
-                "Environment": {
-                    "MLFLOW_DEPLOYMENT_FLAVOR_NAME": "python_function"
-                },
-            },
-            # TODO: this shouldn't be hard coded
-            ExecutionRoleArn="arn:aws:iam::667552661262:role/kevin_sagemaker_execution",  # noqa: E501
-            Tags=[],
-        )
+                ExecutionRoleArn="arn:aws:iam::667552661262:role/kevin_sagemaker_execution",  # noqa: E501
+                Tags=[],
+            )
+        except ClientError as e:
+            logging.error(e)
 
     def _delete_sagemaker_model(self, version: ModelVersion):
-        # TODO: error handling
-        self.client.delete_model(
-            ModelName=self._sagemaker_model_name_for_version(version)
-        )
+        # TODO: better error handling
+        try:
+            self.sagemaker_client.delete_model(
+                ModelName=self._sagemaker_model_name_for_version(version)
+            )
+        except ClientError as e:
+            logging.error(e)
 
     def _sagemaker_model_name_for_version(self, version: ModelVersion) -> str:
         return "-".join(
@@ -124,3 +158,17 @@ class SageMakerDeployTarget(DeployTarget):
             f"{self.SAGEMAKER_NAME_PREFIX}-{model_name}-"  # eg: rs-ModelA-
         )
         return sagemaker_model_name.removeprefix(model_version_prefix)
+
+    def _s3_subpath_for_version_artifact(self, version: ModelVersion) -> str:
+        return f"{version.model_name}/{version.version}/artifact.tar.gz"
+
+    def _s3_path_for_version_artifact(self, version: ModelVersion) -> str:
+        return f"https://{self.S3_BUCKET_NAME}.s3.{self.S3_BUCKET_REGION}.amazonaws.com/{self._s3_subpath_for_version_artifact(version)}"  # noqa: E501
+
+s = SageMakerDeployTarget()
+# s.create_versions({
+#     ModelVersion("modelE", "2"): Artifact("/Users/joshuabroomberg/work/Domino/domino-research/regsync/examples/mlflow_model/model.tar.gz", "")
+# })
+s.delete_versions({
+    ModelVersion("modelD", "1")
+})
