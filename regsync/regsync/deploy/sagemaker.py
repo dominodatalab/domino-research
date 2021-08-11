@@ -1,6 +1,6 @@
 import logging
 from typing import List, Dict, Set
-from regsync.types import Model, ModelVersion
+from regsync.types import Model, ModelVersion, Artifact
 from regsync.deploy import DeployTarget
 import boto3  # type: ignore
 
@@ -49,8 +49,9 @@ class SageMakerDeployTarget(DeployTarget):
                     ModelVersion(
                         model_name=model_name,
                         version=self._version_from_sagemaker_model_name(
-                            sagemaker_model_name = variant["ModelName"],
-                            model_name = model_name),  # eg: 1 from rs-modelC-1
+                            sagemaker_model_name=variant["ModelName"],
+                            model_name=model_name,
+                        ),  # eg: 1 from rs-modelC-1
                     )
                     for variant in endpoint_config[
                         "ProductionVariants"
@@ -68,7 +69,7 @@ class SageMakerDeployTarget(DeployTarget):
 
         return list(output.values())
 
-    def create_versions(self, new_versions: List[ModelVersion]):
+    def create_versions(self, new_versions: Dict[ModelVersion, Artifact]):
         for v in new_versions:
             self._create_sagemaker_model(v)
 
@@ -79,41 +80,47 @@ class SageMakerDeployTarget(DeployTarget):
     ):
         pass
 
-    def delete_versions(self, deleted_versions: List[ModelVersion]):
+    def delete_versions(self, deleted_versions: Set[ModelVersion]):
         for v in deleted_versions:
             self._delete_sagemaker_model(v)
-    
+
     def _create_sagemaker_model(self, version: ModelVersion):
         # TODO: error handling
-        response = self.client.create_model(
+        self.client.create_model(
             ModelName=self._sagemaker_model_name_for_version(version),
             PrimaryContainer={
                 # TODO: this shouldn't be hard coded
-                'Image': '667552661262.dkr.ecr.us-east-2.amazonaws.com/mlflow-pyfunc:1.19.0',
-                'ImageConfig': {
-                    'RepositoryAccessMode': 'Platform',
+                "Image": "667552661262.dkr.ecr.us-east-2.amazonaws.com/mlflow-pyfunc:1.19.0",  # noqa: E501
+                "ImageConfig": {
+                    "RepositoryAccessMode": "Platform",
                 },
-                'Mode': 'SingleModel',
+                "Mode": "SingleModel",
                 # TODO: this shouldn't be hard coded
-                'ModelDataUrl': 'https://s3.us-east-2.amazonaws.com/test-mlflow-deploy/test-mlflow-model-mccaucwptaa9hpnkbc4qwq/model.tar.gz',
-                'Environment': {
-                    "MLFLOW_DEPLOYMENT_FLAVOR_NAME": "python_function" 
-                }
+                "ModelDataUrl": "https://s3.us-east-2.amazonaws.com/test-mlflow-deploy/test-mlflow-model-mccaucwptaa9hpnkbc4qwq/model.tar.gz",  # noqa: E501
+                "Environment": {
+                    "MLFLOW_DEPLOYMENT_FLAVOR_NAME": "python_function"
+                },
             },
             # TODO: this shouldn't be hard coded
-            ExecutionRoleArn='arn:aws:iam::667552661262:role/kevin_sagemaker_execution',
-            Tags=[]
+            ExecutionRoleArn="arn:aws:iam::667552661262:role/kevin_sagemaker_execution",  # noqa: E501
+            Tags=[],
         )
-    
+
     def _delete_sagemaker_model(self, version: ModelVersion):
         # TODO: error handling
-        response = self.client.delete_model(
+        self.client.delete_model(
             ModelName=self._sagemaker_model_name_for_version(version)
         )
 
     def _sagemaker_model_name_for_version(self, version: ModelVersion) -> str:
-        return "-".join([self.SAGEMAKER_NAME_PREFIX, version.model_name, version.version])
+        return "-".join(
+            [self.SAGEMAKER_NAME_PREFIX, version.model_name, version.version]
+        )
 
-    def _version_from_sagemaker_model_name(self, sagemaker_model_name: str, model_name: str) -> str:
-        model_version_prefix = f"{self.SAGEMAKER_NAME_PREFIX}-{model_name}-"  # eg: rs-ModelA-
+    def _version_from_sagemaker_model_name(
+        self, sagemaker_model_name: str, model_name: str
+    ) -> str:
+        model_version_prefix = (
+            f"{self.SAGEMAKER_NAME_PREFIX}-{model_name}-"  # eg: rs-ModelA-
+        )
         return sagemaker_model_name.removeprefix(model_version_prefix)
