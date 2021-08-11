@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class SageMakerDeployTarget(DeployTarget):
-    SAGEMAKER_NAME_PREFIX = "regsync"
+    SAGEMAKER_NAME_PREFIX = "rs"
 
     def __init__(self):
         logger.info("SageMaker DeployTarget client initialized")
@@ -18,6 +18,7 @@ class SageMakerDeployTarget(DeployTarget):
 
     def list_models(self) -> List[Model]:
         endpoint_prefix = f"{self.SAGEMAKER_NAME_PREFIX}-"
+
         endpoint_data = self.client.list_endpoints(
             SortBy="Name",
             SortOrder="Ascending",
@@ -27,37 +28,49 @@ class SageMakerDeployTarget(DeployTarget):
             StatusEquals="InService",  # handle creating etc
         )
 
-        output = []
+        output: Dict[str, Model] = {}
+
         for endpoint in endpoint_data["Endpoints"]:
-            endpoint_name = endpoint["EndpointName"]
-            model_name = endpoint_name.removeprefix(endpoint_prefix)
+            endpoint_name = endpoint["EndpointName"]  # eg: rs-modelA-Staging
+            endpoint_stage = endpoint_name.split("-")[-1]  # eg: Staging
+
+            model_name = endpoint_name.removeprefix(
+                endpoint_prefix
+            ).removesuffix(
+                f"-{endpoint_stage}"
+            )  # eg: modelA
 
             model_version_prefix = (
-                f"{self.SAGEMAKER_NAME_PREFIX}-{model_name}-"
+                f"{self.SAGEMAKER_NAME_PREFIX}-{model_name}-"  # eg: rs-ModelA-
             )
 
             endpoint_config = self.client.describe_endpoint_config(
                 EndpointConfigName=endpoint_name
             )
 
-            versions = [
-                ModelVersion(
-                    version=variant["ModelName"].removeprefix(
-                        model_version_prefix
-                    ),
-                    stages={variant["VariantName"]},
-                )
-                for variant in endpoint_config["ProductionVariants"]
-            ]
-
-            output.append(
-                Model(
-                    name=model_name,
-                    versions=versions,
-                )
+            versions = set(
+                [
+                    ModelVersion(
+                        model_name=model_name,
+                        version=variant["ModelName"].removeprefix(
+                            model_version_prefix
+                        ),  # eg: 1
+                    )
+                    for variant in endpoint_config[
+                        "ProductionVariants"
+                    ]  # eg: rs-modelA-1
+                ]
             )
 
-        return output
+            if model := output.get(model_name):
+                model.versions[endpoint_stage] = versions
+            else:
+                output[model_name] = Model(
+                    name=model_name,
+                    versions={endpoint_stage: versions},
+                )
+
+        return list(output.values())
 
     def create_versions(self, new_versions: List[ModelVersion]):
         pass
@@ -71,3 +84,7 @@ class SageMakerDeployTarget(DeployTarget):
 
     def delete_versions(self, deleted_versions: List[ModelVersion]):
         pass
+
+
+s = SageMakerDeployTarget()
+print(s.list_models())
