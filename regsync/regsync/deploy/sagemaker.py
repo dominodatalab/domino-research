@@ -1,6 +1,6 @@
 import logging
 from typing import List, Dict, Set
-from regsync.types import Model, ModelVersion
+from regsync.types import Model, ModelVersion, Artifact
 from regsync.deploy import DeployTarget
 import boto3  # type: ignore
 
@@ -72,7 +72,7 @@ class SageMakerDeployTarget(DeployTarget):
 
         return list(output.values())
 
-    def create_versions(self, new_versions: List[ModelVersion]):
+    def create_versions(self, new_versions: Dict[ModelVersion, Artifact]):
         pass
 
     def update_version_stage(
@@ -82,9 +82,5 @@ class SageMakerDeployTarget(DeployTarget):
     ):
         pass
 
-    def delete_versions(self, deleted_versions: List[ModelVersion]):
+    def delete_versions(self, deleted_versions: Set[ModelVersion]):
         pass
-
-
-s = SageMakerDeployTarget()
-print(s.list_models())

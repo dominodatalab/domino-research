@@ -1,6 +1,6 @@
 import logging
 from typing import List, Dict
-from regsync.types import Model, ModelVersion, Artifact
+from regsync.types import Model, ModelVersion, Artifact, LATEST_STAGE_NAME
 from regsync.registry import ModelRegistry
 from mlflow.tracking import MlflowClient  # type: ignore
 from mlflow.entities.model_registry import RegisteredModel  # type: ignore
@@ -9,8 +9,6 @@ logger = logging.getLogger(__name__)
 
 
 class Client(ModelRegistry):
-    LATEST_STAGE_NAME = "Latest"
-
     def __init__(self, uri: str):
         logger.info(f"Registry client initialized with uri '{uri}'")
         self.client = MlflowClient(registry_uri=uri)
@@ -26,7 +24,7 @@ class Client(ModelRegistry):
                     version.current_stage
                     if version.current_stage is not None
                     and version.current_stage != "None"
-                    else self.LATEST_STAGE_NAME
+                    else LATEST_STAGE_NAME
                 )
                 versions[stage] = set(
                     [

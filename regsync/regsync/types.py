@@ -8,7 +8,7 @@ class ModelVersion:
     version: str
 
     def __hash__(self):
-        return hash(self.model_name + self.version)
+        return hash((self.model_name, self.version))
 
 
 @dataclass
@@ -16,8 +16,17 @@ class Model:
     name: str
     versions: Dict[str, Set[ModelVersion]]
 
+    def unique_versions(self) -> Set[ModelVersion]:
+        output = set([])
+        for _, versions in self.versions.items():
+            output.update(versions)
+        return output
+
 
 @dataclass
 class Artifact:
     path: str
     kind: str
+
+
+LATEST_STAGE_NAME = "Latest"
