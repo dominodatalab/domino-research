@@ -30,7 +30,22 @@ class SageMakerDeployTarget(DeployTarget):
         endpoint_prefix = f"{self.SAGEMAKER_NAME_PREFIX}-"
 
         endpoints: List[Dict[Any, Any]] = []
-        for state in ["Creating", "Updating", "SystemUpdating", "InService"]:
+
+        # The set of states an endpoint can be in such that we consider
+        # the endpoint to exist and represent a deployed model-stage-version(s)
+        # States ommitted from this list are not states we should ever reach
+        # and the code would not handle these. So we chose to ignore endpoints
+        # in these states for now.
+        states_considered_existant = [
+            "Creating",
+            "Updating",
+            "SystemUpdating",
+            "InService",
+            "Deleting",
+            "Failed",
+        ]
+
+        for state in states_considered_existant:
             endpoints.extend(
                 self.sagemaker_client.list_endpoints(
                     SortBy="Name",
@@ -85,14 +100,18 @@ class SageMakerDeployTarget(DeployTarget):
 
         return list(output.values())
 
-    def teardown(self):
-        resource_prefix = f"{self.SAGEMAKER_NAME_PREFIX}-"
+    def teardown(self, scoped_resource_prefix=None):
+        resource_prefix = (
+            scoped_resource_prefix or f"{self.SAGEMAKER_NAME_PREFIX}-"
+        )
+
         endpoints = self.sagemaker_client.list_endpoints(
             MaxResults=100,  # handle pagination
             NameContains=resource_prefix,
         )["Endpoints"]
 
         for endpoint in endpoints:
+            # The API returns all that *contain* not those that *start with*
             if (endpoint_name := endpoint["EndpointName"]).startswith(
                 resource_prefix
             ):
@@ -195,22 +214,65 @@ class SageMakerDeployTarget(DeployTarget):
     def _update_endpoint(
         self, model_name: str, stage: str, version_ids: Set[str]
     ):
-        self._new_endpoint_config(
-            model_name, stage, version_ids, overwrite=True
+        endpoint_name = self._endpoint_name(model_name, stage)
+        endpoint = self.sagemaker_client.describe_endpoint(
+            EndpointName=endpoint_name
         )
-        try:
-            self.sagemaker_client.update_endpoint(
-                EndpointName=self._endpoint_name(model_name, stage),
-                EndpointConfigName=self._endpoint_config_name(
-                    model_name, stage
-                ),
-                RetainAllVariantProperties=False,  # overwrite variant props
-                # TODO Consider smart default canary and auto-rollback using
-                # DeploymentConfig options here
+
+        status = endpoint["EndpointStatus"]
+        # Cannot update a model in the creating or updating states
+        # We ignore and let the control loop request the update again
+        # in a future iteration.
+        if status in {"Creating", "Updating", "SystemUpdating"}:
+            logger.warning(
+                "Attempted to update endpoint in a non-updatable state. "
+                + "Skipping update."
             )
-        except ClientError as e:
-            logging.error(e)
-            raise e
+            return
+
+        # We choose to treat models in the failed state as valid
+        # if their config is correct. This prevents an endless
+        # recreate loop if something about the artifact/config is
+        # causing a failure. This means we expect to see updates
+        # to endpoints in the failed state (when the user changes
+        # the config). However, we cannot literally update a failed
+        # endpoint in SageMaker. So we delete the endpoint upon a config
+        # change and then let the control loop handle recreating it with
+        # the right config. We don't recreate here because it requires
+        # blocking until the deletion finishes.
+        elif status in {"Failed"}:
+            logger.warning(
+                "Attempted to update endpoint in a failed state. "
+                + "Deleting endpoint to recreate with new config."
+            )
+            self._delete_endpoint(model_name, stage)
+            return
+
+        elif status in {"Deleting"}:
+            logger.error("Attempted to update endpoint that was deleted.")
+            return
+
+        elif status in {"InService"}:
+            self._new_endpoint_config(
+                model_name, stage, version_ids, overwrite=True
+            )
+
+            try:
+                self.sagemaker_client.update_endpoint(
+                    EndpointName=endpoint_name,
+                    EndpointConfigName=self._endpoint_config_name(
+                        model_name, stage
+                    ),
+                    # overwrite variant props
+                    RetainAllVariantProperties=False,
+                )
+            except ClientError as e:
+                logging.error(e)
+                raise e
+        else:
+            logger.error(
+                f"Attempted to update endpoint in unexpected status {status}"
+            )
 
     def _delete_endpoint(self, model_name: str, stage: str):
         self._delete_endpoint_config(model_name, stage)
