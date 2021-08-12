@@ -1,8 +1,8 @@
 import logging
 from typing import List, Dict, Optional
-from regsync.types import Model, ModelVersion, Artifact, LATEST_STAGE_NAME
-from regsync.registry import ModelRegistry
-from regsync.util import compress
+from bridge.types import Model, ModelVersion, Artifact, LATEST_STAGE_NAME
+from bridge.registry import ModelRegistry
+from bridge.util import compress
 from mlflow.tracking import MlflowClient  # type: ignore
 from mlflow.entities.model_registry import RegisteredModel  # type: ignore
 import os
@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 
 class Client(ModelRegistry):
     def __init__(self, model_cache_path: str):
-        registry_uri = os.environ.get("REGSYNC_MLFLOW_REGISTRY_URI")
-        tracking_uri = os.environ.get("REGSYNC_MLFLOW_TRACKING_URI")
+        registry_uri = os.environ.get("BRIDGE_MLFLOW_REGISTRY_URI")
+        tracking_uri = os.environ.get("BRIDGE_MLFLOW_TRACKING_URI")
 
         logger.info(
             (

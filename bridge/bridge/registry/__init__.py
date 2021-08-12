@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List
-from regsync.types import Model, Artifact
+from bridge.types import Model, Artifact
 
 
 class ModelRegistry(ABC):
