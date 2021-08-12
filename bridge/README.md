@@ -1,4 +1,6 @@
-# Domino Registry Sync
+# Bridge
+
+The easiest way to deploy from MLFlow to SageMaker
 
 ## Development
 
