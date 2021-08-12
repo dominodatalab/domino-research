@@ -13,6 +13,10 @@ class DeployTarget(ABC):
         pass
 
     @abstractmethod
+    def init(self):
+        pass
+
+    @abstractmethod
     def create_versions(self, new_versions: Dict[ModelVersion, Artifact]):
         pass
 

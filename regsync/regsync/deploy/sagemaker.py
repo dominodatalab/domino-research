@@ -4,7 +4,8 @@ from regsync.types import Model, ModelVersion, Artifact
 from regsync.deploy import DeployTarget
 import boto3  # type: ignore
 from botocore.exceptions import ClientError, NoCredentialsError  # type: ignore
-
+from pprint import pformat
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -13,15 +14,33 @@ class SageMakerDeployTarget(DeployTarget):
     SAGEMAKER_NAME_PREFIX = "rs"
     S3_BUCKET_NAME = "regsync-artifacts"
     S3_BUCKET_REGION = "us-east-2"
+    execution_role = "bridge-sagemaker-execution"
+    execution_role_policy_arn = (
+        "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
+    )
 
     def __init__(self):
-        self.sagemaker_client = boto3.client("sagemaker")
-        self.s3_client = boto3.client("s3")
+        if profile := os.environ.get("BRDG_DEPLOY_AWS_PROFILE"):
+            logger.info(f"Using deploy AWS profile {profile}")
+            session = boto3.Session(profile_name=profile)
+        else:
+            session = boto3.session.Session()
+
+        self.region = session.region_name
+        self.sagemaker_client = session.client("sagemaker")
+        self.s3_client = session.client("s3")
+        self.iam_client = session.client("iam")
 
         try:
-            sts = boto3.client("sts")
-            sts.get_caller_identity()
-            logger.info("SageMakerDeployTarget initialized")
+            sts = session.client("sts")
+            self.identity = sts.get_caller_identity()
+            logger.info(pformat(self.identity))
+            account_id = self.identity["Account"]
+            self.bucket_name = f"bridge-models-{account_id}-{self.region}"
+
+            logger.info(
+                f"SageMakerDeployTarget initialized for region {self.region}"
+            )
         except NoCredentialsError as e:
             logger.error("No AWS Credentials, cannot initialize.")
             raise e
@@ -141,6 +160,92 @@ class SageMakerDeployTarget(DeployTarget):
         for model in models:
             if (model_name := model["ModelName"]).startswith(resource_prefix):
                 self.sagemaker_client.delete_model(ModelName=model_name)
+
+        try:
+            Bucket = self.bucket_name
+            logger.info(f"Removing S3 Bucket {Bucket}")
+            response = self.s3_client.delete_bucket(Bucket=Bucket)
+            logger.debug(pformat(response))
+        except self.s3_client.exceptions.NoSuchBucket:
+            logger.info("No bucket found.")
+        except Exception as e:
+            logger.exception(e)
+
+        try:
+            RoleName = self.execution_role
+            PolicyArn = self.execution_role_policy_arn
+            logger.info(f"Removing Execution Role Policy {PolicyArn}")
+            response = self.iam_client.detach_role_policy(
+                RoleName=RoleName, PolicyArn=PolicyArn
+            )
+            logger.debug(pformat(response))
+        except self.iam_client.exceptions.NoSuchEntityException:
+            logger.info("No policy found.")
+        except Exception as e:
+            logger.exception(e)
+
+        try:
+            RoleName = self.execution_role
+            logger.info(f"Removing Execution Role {RoleName}")
+            response = self.iam_client.delete_role(RoleName=RoleName)
+            logger.debug(pformat(response))
+        except self.iam_client.exceptions.NoSuchEntityException:
+            logger.info("No role found.")
+        except Exception as e:
+            logger.exception(e)
+
+    def init(self):
+        # Create S3 Bucket ${ACCOUNT_ID}-${REGION}-bridge-models
+        # This does not appear to cause errors when the bucket already exists.
+        bucket = self.bucket_name
+        logger.info(f"Creating artifact bucket {bucket} if not exist.")
+        try:
+            if self.region == "us-east-1":
+                response = self.s3_client.create_bucket(
+                    ACL="private",
+                    Bucket=bucket,
+                )
+            else:
+                response = self.s3_client.create_bucket(
+                    ACL="private",
+                    Bucket=bucket,
+                    CreateBucketConfiguration={
+                        "LocationConstraint": self.region
+                    },
+                )
+            logger.debug(pformat(response))
+        except self.s3_client.exceptions.BucketAlreadyOwnedByYou:
+            logger.info("Found existing bucket.")
+
+        # Create IAM Role
+        RoleName = self.execution_role
+        logger.info(
+            f"Create SageMaker execution role {RoleName} if not exist."
+        )
+        try:
+            response = self.iam_client.create_role(
+                RoleName=RoleName,
+                AssumeRolePolicyDocument="""{
+    "Ver    sion": "2012-10-17",
+    "Sta    tement": {
+            "Effect": "Allow",
+            "Principal": {"Service": "sagemaker.amazonaws.com" },
+            "Action": "sts:AssumeRole"
+    }
+}""",
+            )
+            logger.debug(response)
+        except self.iam_client.exceptions.EntityAlreadyExistsException:
+            logger.info("Found existing role.")
+
+        # Attach Sagemaker Full Access Policy
+        PolicyArn = self.execution_role_policy_arn
+        logger.info(f"Attaching execution role policy: {PolicyArn}")
+        response = self.iam_client.attach_role_policy(
+            PolicyArn=PolicyArn,
+            RoleName=RoleName,
+        )
+        logger.debug(response)
 
     def create_versions(self, new_versions: Dict[ModelVersion, Artifact]):
         for version, artifact in new_versions.items():
