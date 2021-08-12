@@ -11,6 +11,7 @@ from regsync.types import (
     DEFAULT_MODEL_CACHE_PATH,
 )
 import shutil
+from regsync.deploy.registry import DEPLOY_REGISTRY
 
 logger = logging.getLogger(__name__)
 
@@ -35,11 +36,9 @@ def main():
         sys.exit(1)
 
     DEPLOY_KIND = os.environ.get("REGSYNC_DEPLOY_KIND", "sagemaker").lower()
-    if DEPLOY_KIND == "sagemaker":
-        from regsync.deploy.sagemaker import SageMakerDeployTarget
-
-        deploy_client = SageMakerDeployTarget()
-    else:
+    try:
+        deploy_client = DEPLOY_REGISTRY[DEPLOY_KIND]()
+    except KeyError:
         logger.error(f"Unrecognized REGSYNC_REGISTRY_KIND '{REGISTRY_KIND}'")
         sys.exit(1)
 
@@ -91,7 +90,6 @@ def main():
 
             current_routing = routing_from_models(current_models)
             desired_routing = routing_from_models(desired_models)
-
             deploy_client.create_versions(new_versions_map)
             deploy_client.update_version_stage(
                 current_routing, desired_routing
