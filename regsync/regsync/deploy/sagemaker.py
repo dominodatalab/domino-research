@@ -12,8 +12,6 @@ logger = logging.getLogger(__name__)
 
 class SageMakerDeployTarget(DeployTarget):
     SAGEMAKER_NAME_PREFIX = "rs"
-    S3_BUCKET_NAME = "regsync-artifacts"
-    S3_BUCKET_REGION = "us-east-2"
     execution_role = "bridge-sagemaker-execution"
     execution_role_policy_arn = (
         "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
@@ -461,7 +459,7 @@ class SageMakerDeployTarget(DeployTarget):
         try:
             self.s3_client.upload_file(
                 artifact.path,  # Absolute path to local file
-                self.S3_BUCKET_NAME,
+                self.bucket_name,
                 self._s3_subpath_for_version_artifact(
                     version
                 ),  # path in the s3 bucket
@@ -477,7 +475,7 @@ class SageMakerDeployTarget(DeployTarget):
         # TODO: better error handling
         try:
             self.s3_client.delete_object(
-                Bucket=self.S3_BUCKET_NAME,
+                Bucket=self.bucket_name,
                 Key=self._s3_subpath_for_version_artifact(
                     version
                 ),  # path in the s3 bucket
@@ -549,4 +547,4 @@ class SageMakerDeployTarget(DeployTarget):
         return f"{version.model_name}/{version.version}/artifact.tar.gz"
 
     def _s3_path_for_version_artifact(self, version: ModelVersion) -> str:
-        return f"https://{self.S3_BUCKET_NAME}.s3.{self.S3_BUCKET_REGION}.amazonaws.com/{self._s3_subpath_for_version_artifact(version)}"  # noqa: E501
+        return f"https://{self.bucket_name}.s3.{self.region}.amazonaws.com/{self._s3_subpath_for_version_artifact(version)}"  # noqa: E501
