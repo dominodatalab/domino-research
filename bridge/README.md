@@ -2,6 +2,8 @@
 
 The easiest way to deploy from MLFlow to SageMaker
 
+![build](https://github.com/dominodatalab/domino-research/actions/workflows/bridge.yml/badge.svg?branch=main)
+
 ## Development
 
 In this directory: 
