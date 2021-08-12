@@ -2,7 +2,7 @@ import argparse
 import logging
 import os
 from pprint import pformat
-from regsync.deploy.registry import DEPLOY_REGISTRY
+from bridge.deploy.registry import DEPLOY_REGISTRY
 
 
 def cli_init(args):
@@ -20,7 +20,7 @@ def cli_destroy(args):
 
 
 def cli_run(args):
-    from regsync.app import main
+    from bridge.app import main
 
     logger = logging.getLogger(__name__)
     logger.info(f"Starting Bridge '{pformat(args)}'.")

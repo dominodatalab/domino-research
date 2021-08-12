@@ -6,11 +6,11 @@ name: tests
 on: push
 
 jobs:
-  regsync:
+  bridge:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: regsync
+        working-directory: bridge
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.9
@@ -27,10 +27,10 @@ jobs:
         black --check --diff .
     - name: Lint application with flake8
       run: |
-        flake8 regsync --count --show-source --statistics
+        flake8 bridge --count --show-source --statistics
     - name: Check application with mypy
       run: |
-        mypy regsync
+        mypy bridge
     - name: Lint tests with flake8
       run: |
         flake8 tests --count --show-source --statistics

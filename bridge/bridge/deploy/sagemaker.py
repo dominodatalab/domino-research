@@ -1,7 +1,7 @@
 import logging
 from typing import List, Dict, Set, Union, Any
-from regsync.types import Model, ModelVersion, Artifact
-from regsync.deploy import DeployTarget
+from bridge.types import Model, ModelVersion, Artifact
+from bridge.deploy import DeployTarget
 import boto3  # type: ignore
 from botocore.exceptions import ClientError, NoCredentialsError  # type: ignore
 from pprint import pformat
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class SageMakerDeployTarget(DeployTarget):
-    SAGEMAKER_NAME_PREFIX = "rs"
+    SAGEMAKER_NAME_PREFIX = "brdg"
     execution_role = "bridge-sagemaker-execution"
     execution_role_policy_arn = (
         "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
@@ -77,7 +77,7 @@ class SageMakerDeployTarget(DeployTarget):
         output: Dict[str, Model] = {}
 
         for endpoint in endpoints:
-            endpoint_name = endpoint["EndpointName"]  # eg: rs-modelA-Staging
+            endpoint_name = endpoint["EndpointName"]  # eg: brdg-modelA-Staging
             stage = endpoint_name.split("-")[-1]  # eg: Staging
 
             model_name = endpoint_name.removeprefix(
@@ -99,11 +99,11 @@ class SageMakerDeployTarget(DeployTarget):
                         version_id=self._version_from_sagemaker_model_name(
                             sagemaker_model_name=variant["ModelName"],
                             model_name=model_name,
-                        ),  # eg: 1 from rs-modelC-1
+                        ),  # eg: 1 from brdg-modelC-1
                     )
                     for variant in endpoint_config[
                         "ProductionVariants"
-                    ]  # eg: rs-modelA-1
+                    ]  # eg: brdg-modelA-1
                 ]
             )
 
@@ -530,7 +530,9 @@ class SageMakerDeployTarget(DeployTarget):
         return f"{self.SAGEMAKER_NAME_PREFIX}-{model_name}-{stage}"
 
     def _sagemaker_model_name_for_version(self, version: ModelVersion) -> str:
-        return self._sagemaker_model_name(version.model_name, version.version_id)
+        return self._sagemaker_model_name(
+            version.model_name, version.version_id
+        )
 
     def _sagemaker_model_name(self, model_name: str, version_id: str) -> str:
         return "-".join([self.SAGEMAKER_NAME_PREFIX, model_name, version_id])
@@ -539,7 +541,7 @@ class SageMakerDeployTarget(DeployTarget):
         self, sagemaker_model_name: str, model_name: str
     ) -> str:
         model_version_prefix = (
-            f"{self.SAGEMAKER_NAME_PREFIX}-{model_name}-"  # eg: rs-ModelA-
+            f"{self.SAGEMAKER_NAME_PREFIX}-{model_name}-"  # eg: brdg-ModelA-
         )
         return sagemaker_model_name.removeprefix(model_version_prefix)
 

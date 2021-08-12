@@ -9,7 +9,7 @@ In this directory:
 pip install -e .
 
 # Run control loop
-LOG_LEVEL=DEBUG APP_REGISTRY_URI=http://localhost:5000 regsync
+LOG_LEVEL=DEBUG APP_REGISTRY_URI=http://localhost:5000 bridge
 ```
 
 Any changes you make to the code will be picked up on restart.
@@ -20,10 +20,10 @@ Any changes you make to the code will be picked up on restart.
 pip install -r requirements-dev.txt
 
 # Type check
-mypy regsync
+mypy bridge
 
 # Lint
-flake regsync
+flake bridge
 
 # Unit tests
 python -m pytest

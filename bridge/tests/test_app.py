@@ -1,5 +1,5 @@
-from regsync.deploy.sagemaker import SageMakerDeployTarget
-from regsync.types import Artifact, ModelVersion
+from bridge.deploy.sagemaker import SageMakerDeployTarget
+from bridge.types import Artifact, ModelVersion
 from typing import Dict, Set, List
 import pytest  # type: ignore
 import boto3  # type: ignore
@@ -17,7 +17,7 @@ except NoCredentialsError:
 
 a_path = (
     "/Users/joshuabroomberg/work/Domino/domino-research"
-    + "/regsync/examples/mlflow_model/model.tar.gz"
+    + "/bridge/examples/mlflow_model/model.tar.gz"
 )
 artifact = Artifact(a_path)
 

@@ -4,14 +4,14 @@ import os
 import sys
 from pprint import pformat
 from typing import List, Dict, Set
-from regsync.types import (
+from bridge.types import (
     Model,
     ModelVersion,
     Artifact,
     DEFAULT_MODEL_CACHE_PATH,
 )
 import shutil
-from regsync.deploy.registry import DEPLOY_REGISTRY
+from bridge.deploy.registry import DEPLOY_REGISTRY
 
 logger = logging.getLogger(__name__)
 
@@ -22,27 +22,27 @@ def main():
     logging.basicConfig(level=level)
 
     MODEL_CACHE_PATH = os.environ.get(
-        "REGSYNC_MODEL_CACHE_PATH", DEFAULT_MODEL_CACHE_PATH
+        "BRIDGE_MODEL_CACHE_PATH", DEFAULT_MODEL_CACHE_PATH
     )
     shutil.rmtree(MODEL_CACHE_PATH, ignore_errors=True)
 
-    REGISTRY_KIND = os.environ.get("REGSYNC_REGISTRY_KIND", "mlflow").lower()
+    REGISTRY_KIND = os.environ.get("BRIDGE_REGISTRY_KIND", "mlflow").lower()
     if REGISTRY_KIND == "mlflow":
-        from regsync.registry.mlflow import Client
+        from bridge.registry.mlflow import Client
 
         registry_client = Client(MODEL_CACHE_PATH)
     else:
-        logger.error(f"Unrecognized REGSYNC_REGISTRY_KIND '{REGISTRY_KIND}'")
+        logger.error(f"Unrecognized BRIDGE_REGISTRY_KIND '{REGISTRY_KIND}'")
         sys.exit(1)
 
-    DEPLOY_KIND = os.environ.get("REGSYNC_DEPLOY_KIND", "sagemaker").lower()
+    DEPLOY_KIND = os.environ.get("BRIDGE_DEPLOY_KIND", "sagemaker").lower()
     try:
         deploy_client = DEPLOY_REGISTRY[DEPLOY_KIND]()
     except KeyError:
-        logger.error(f"Unrecognized REGSYNC_REGISTRY_KIND '{REGISTRY_KIND}'")
+        logger.error(f"Unrecognized BRIDGE_REGISTRY_KIND '{REGISTRY_KIND}'")
         sys.exit(1)
 
-    SCAN_INTERVAL = float(os.environ.get("REGSYNC_SCAN_INTERVAL_S", "15"))
+    SCAN_INTERVAL = float(os.environ.get("BRIDGE_SCAN_INTERVAL_S", "15"))
     while True:
         try:
             logger.info("Reading models from registry")

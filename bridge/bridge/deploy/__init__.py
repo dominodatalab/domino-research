@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Set
-from regsync.types import Model, ModelVersion, Artifact
+from bridge.types import Model, ModelVersion, Artifact
 
 
 class DeployTarget(ABC):
