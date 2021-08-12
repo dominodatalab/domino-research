@@ -9,5 +9,7 @@ class ModelRegistry(ABC):
         pass
 
     @abstractmethod
-    def fetch_version(sefl, model_name: str, version: str) -> Artifact:
+    def fetch_version_artifact(
+        sefl, model_name: str, version: str
+    ) -> Artifact:
         pass

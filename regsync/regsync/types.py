@@ -27,7 +27,6 @@ class Model:
 @dataclass
 class Artifact:
     path: str
-    kind: str
 
 
 LATEST_STAGE_NAME = "Latest"

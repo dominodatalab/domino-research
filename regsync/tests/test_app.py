@@ -1,7 +1,7 @@
 from regsync.deploy.sagemaker import SageMakerDeployTarget
-from regsync.types import Artifact, ModelVersion, Model
+from regsync.types import Artifact, ModelVersion
 from typing import Dict, Set
-import pytest
+import pytest  # type: ignore
 import boto3  # type: ignore
 from botocore.exceptions import NoCredentialsError  # type: ignore
 
