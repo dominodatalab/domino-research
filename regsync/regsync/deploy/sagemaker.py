@@ -20,6 +20,36 @@ class SageMakerDeployTarget(DeployTarget):
         self.sagemaker_client = session.client("sagemaker")
         self.s3_client = session.client("s3")
 
+    def teardown(self):
+        endpoints = self.sagemaker_client.list_endpoints(
+            MaxResults=100,  # handle pagination
+            NameContains=f"{self.SAGEMAKER_NAME_PREFIX}-",
+        )["Endpoints"]
+
+        for endpoint in endpoints:
+            self.sagemaker_client.delete_endpoint(
+                EndpointName=endpoint["EndpointName"]
+            )
+
+        endpoint_configs = self.sagemaker_client.list_endpoint_configs(
+            MaxResults=100,  # handle pagination
+            NameContains=f"{self.SAGEMAKER_NAME_PREFIX}-",
+        )["EndpointConfigs"]
+
+        for endpoint_config in endpoint_configs:
+            self.sagemaker_client.delete_endpoint_config(
+                EndpointConfigName=endpoint_config["EndpointConfigName"]
+            )
+
+        models = self.sagemaker_client.list_models(
+            # NextToken='string',
+            MaxResults=100,
+            NameContains=f"{self.SAGEMAKER_NAME_PREFIX}-",
+        )["Models"]
+
+        for model in models:
+            self.sagemaker_client.delete_model(ModelName=model["ModelName"])
+
     def list_models(self) -> List[Model]:
         endpoint_prefix = f"{self.SAGEMAKER_NAME_PREFIX}-"
 
@@ -97,6 +127,8 @@ class SageMakerDeployTarget(DeployTarget):
         current_routing: Dict[str, Dict[str, Set[str]]],
         desired_routing: Dict[str, Dict[str, Set[str]]],
     ):
+        # Iterate through desired state and create/update endpoints
+        # that are new/modified relative to current state.
         for (
             model_name,
             desired_model_stage_versions,
@@ -105,33 +137,39 @@ class SageMakerDeployTarget(DeployTarget):
                 stage,
                 desired_versions,
             ) in desired_model_stage_versions.items():
-                if current_model_stage_versions := current_routing.get(
-                    model_name
+
+                # Check if the model appears in current state and if stage
+                # is present
+                if current_versions := current_routing.get(model_name, {}).get(
+                    stage
                 ):
-                    if current_versions := current_model_stage_versions.get(
-                        stage
-                    ):
-                        if current_versions == desired_versions:
-                            pass  # no action needed
-                        else:
-                            # stage exists but versions have changed
-                            self._update_endpoint(
-                                model_name, stage, desired_versions
-                            )
-                    else:
-                        # stage is new for this model
-                        # create model-stage endpoint
-                        self._create_endpoint(
+                    # If model-stage exists, check if versions are correct
+                    if current_versions != desired_versions:
+                        # model-stage exists but versions are out-of-date.
+                        self._update_endpoint(
                             model_name, stage, desired_versions
                         )
                 else:
-                    # model is new, must create model-stage endpoint
+                    # model-stage is new, create model-stage endpoint
                     self._create_endpoint(model_name, stage, desired_versions)
+
+        # Iterate through current state and remove endpoints for
+        # model-stage pairs not in the desired state
+        for (
+            model_name,
+            current_model_stage_versions,
+        ) in current_routing.items():
+            for (
+                stage,
+                current_versions,
+            ) in current_model_stage_versions.items():
+                if desired_routing.get(model_name, {}).get(stage) is None:
+                    self._delete_endpoint(model_name, stage)
 
     def _create_endpoint(
         self, model_name: str, stage: str, version_ids: Set[str]
     ):
-        self._create_endpoint_config(model_name, stage, version_ids)
+        self._new_endpoint_config(model_name, stage, version_ids)
         try:
             self.sagemaker_client.create_endpoint(
                 EndpointName=self._endpoint_name(model_name, stage),
@@ -146,7 +184,7 @@ class SageMakerDeployTarget(DeployTarget):
     def _update_endpoint(
         self, model_name: str, stage: str, version_ids: Set[str]
     ):
-        self._create_endpoint_config(
+        self._new_endpoint_config(
             model_name, stage, version_ids, overwrite=True
         )
         try:
@@ -156,23 +194,24 @@ class SageMakerDeployTarget(DeployTarget):
                     model_name, stage
                 ),
                 RetainAllVariantProperties=False,  # overwrite variant props
-                # Consider smart default canary and auto-rollback options here
-                DeploymentConfig={
-                    "BlueGreenUpdatePolicy": {
-                        "TrafficRoutingConfiguration": {
-                            "Type": "ALL_AT_ONCE",
-                            "WaitIntervalInSeconds": 120,
-                        },
-                        "TerminationWaitInSeconds": 240,
-                        "MaximumExecutionTimeoutInSeconds": 240,
-                    }
-                },
+                # TODO Consider smart default canary and auto-rollback using
+                # DeploymentConfig options here
             )
         except ClientError as e:
             logging.error(e)
             raise e
 
-    def _create_endpoint_config(
+    def _delete_endpoint(self, model_name: str, stage: str):
+        self._delete_endpoint_config(model_name, stage)
+        try:
+            self.sagemaker_client.delete_endpoint(
+                EndpointName=self._endpoint_name(model_name, stage)
+            )
+        except ClientError as e:
+            logging.error(e)
+            raise e
+
+    def _new_endpoint_config(
         self,
         model_name: str,
         stage: str,
@@ -181,26 +220,26 @@ class SageMakerDeployTarget(DeployTarget):
     ):
         endpoint_config_name = self._endpoint_config_name(model_name, stage)
 
-        # If mode is replace, then attempt a delete and catch the resulting
-        # error if the config is missing.
+        # If overwrite, then attempt to delete and catch the resulting
+        # error if the config is missing. Most efficient way to overwrite.
         if overwrite:
             try:
                 self.sagemaker_client.delete_endpoint_config(
                     EndpointConfigName=endpoint_config_name
                 )
             except ClientError as e:
-                if e["Error"]["Message"].startswith(
+                if e.response["Error"]["Message"].startswith(
                     "Could not find endpoint configuration"
                 ):
                     logging.warn(
-                        "_create_endpoint_config set to overwrite"
+                        "_new_endpoint_config set to overwrite "
                         + "but config didn't exist."
                     )
                 else:
                     logging.error(e)
                     raise e
 
-        # if mode is create or replace
+        # create new config
         try:
             variants: List[Dict[str, Union[str, int]]] = []
             for version_id in version_ids:
@@ -220,10 +259,18 @@ class SageMakerDeployTarget(DeployTarget):
                 )
 
             self.sagemaker_client.create_endpoint_config(
-                EndpointConfigName=self._endpoint_config_name(
-                    model_name, stage
-                ),
+                EndpointConfigName=endpoint_config_name,
                 ProductionVariants=variants,
+            )
+        except ClientError as e:
+            logging.error(e)
+            raise e
+
+    def _delete_endpoint_config(self, model_name: str, stage: str):
+        endpoint_config_name = self._endpoint_config_name(model_name, stage)
+        try:
+            self.sagemaker_client.delete_endpoint_config(
+                EndpointConfigName=endpoint_config_name
             )
         except ClientError as e:
             logging.error(e)
@@ -327,39 +374,130 @@ class SageMakerDeployTarget(DeployTarget):
         return f"https://{self.S3_BUCKET_NAME}.s3.{self.S3_BUCKET_REGION}.amazonaws.com/{self._s3_subpath_for_version_artifact(version)}"  # noqa: E501
 
 
-# s = SageMakerDeployTarget()
+if __name__ == "__main__":
+    s = SageMakerDeployTarget()
+    a_path = (
+        "/Users/joshuabroomberg/work/Domino/domino-research"
+        + "/regsync/examples/mlflow_model/model.tar.gz"
+    )
 
-# art = Artifact(
-#     "/Users/joshuabroomberg/work/Domino/domino-research/regsync/examples/mlflow_model/model.tar.gz",
-#     "",
-# )
+    artifact = Artifact(a_path, "")
 
-# # Step 1
-# s.create_versions(
-#     {
-#         ModelVersion("modelG", "1"): art,
-#         ModelVersion("modelG", "2"): art,
-#     }
-# )
+    import random
+    import string
 
-# s.update_version_stage({}, {"modelG": {"Staging": {"1"}, "Production": {"2"}}})
+    m1 = f"model-{''.join(random.choices(string.ascii_uppercase, k=8))}"
+    m2 = f"model-{''.join(random.choices(string.ascii_uppercase, k=8))}"
+    m3 = f"model-{''.join(random.choices(string.ascii_uppercase, k=8))}"
 
-# # Step 2
-# # s.create_versions({})
+    m1_v1 = "1"
+    m1_v2 = "2"
+    m1_v3 = "3"
+    m2_v1 = "1"
+    m3_v1 = "1"
 
-# # s.update_version_stage(
-# #     {
-# #         "modelF": {
-# #             "Staging": {"1"},
-# #             "Production": {"2"}
-# #         }
-# #     },
-# #     {
-# #         "modelF": {
-# #             "Staging": {"1"},
-# #             "Production": {"1", "2"}
-# #         }
-# #     }
-# # )
+    stage_Prod = "Prod"
+    stage_Staging = "Staging"
+    stage_Latest = "Latest"
 
-# # s.delete_versions({ModelVersion("modelD", "1")})
+    s0: Dict[str, Dict[str, Set[str]]] = {}
+    s1 = {
+        m1: {stage_Prod: {m1_v1}, stage_Staging: {m1_v1}},
+        m2: {stage_Prod: {m2_v1}},
+    }
+    s2 = {
+        m1: {stage_Prod: {m1_v1, m1_v2}, stage_Latest: {m1_v3}},
+        m3: {stage_Prod: {m3_v1}},
+    }
+
+    # Step 1
+    s.create_versions(
+        {
+            ModelVersion(m1, m1_v1): artifact,
+            ModelVersion(m2, m2_v1): artifact,
+        }
+    )
+
+    s.update_version_stage(s0, s1)
+
+    models_s1 = s.list_models()
+
+    print("Validating s1 state is correct")
+    assert {m.name for m in models_s1}.issuperset({m1, m2})
+    for m in models_s1:
+        if m.name == m1:
+            assert m.versions[stage_Prod] == {ModelVersion(m1, m1_v1)}
+            assert m.versions[stage_Staging] == {ModelVersion(m1, m1_v1)}
+        if m.name == m2:
+            assert m.versions[stage_Prod] == {ModelVersion(m2, m2_v1)}
+
+    print("Validated s1 state is correct")
+
+    # Step 2
+    print("Polling until s1 state stabilizes")
+    import time
+
+    while True:
+        r1 = s.sagemaker_client.describe_endpoint(
+            EndpointName=s._endpoint_name(m1, stage_Prod)
+        )["EndpointStatus"]
+        r2 = s.sagemaker_client.describe_endpoint(
+            EndpointName=s._endpoint_name(m1, stage_Staging)
+        )["EndpointStatus"]
+        r3 = s.sagemaker_client.describe_endpoint(
+            EndpointName=s._endpoint_name(m2, stage_Prod)
+        )["EndpointStatus"]
+        status_set = {r1, r2, r3}
+        if status_set == {"InService"}:
+            break
+        else:
+            print(f"Statuses {status_set}. Waiting 10s.")
+            time.sleep(10)
+
+    # Step 3
+    s.create_versions(
+        {
+            ModelVersion(m1, m1_v2): artifact,
+            ModelVersion(m1, m1_v3): artifact,
+            ModelVersion(m3, m3_v1): artifact,
+        }
+    )
+
+    s.update_version_stage(s1, s2)
+
+    s.delete_versions({ModelVersion(m2, m2_v1)})
+
+    print("Validating s2 state is correct")
+    models_s2 = s.list_models()
+    assert {m.name for m in models_s2}.issuperset({m1, m3})
+    assert m2 not in {m.name for m in models_s2}
+    for m in models_s2:
+        if m.name == m1:
+            assert m.versions[stage_Prod] == {
+                ModelVersion(m1, m1_v1),
+                ModelVersion(m1, m1_v2),
+            }
+            assert m.versions[stage_Latest] == {ModelVersion(m1, m1_v3)}
+        if m.name == m3:
+            assert m.versions[stage_Prod] == {ModelVersion(m3, m3_v1)}
+    print("Validated s2 state is correct")
+
+    # Step 4
+    while True:
+        r1 = s.sagemaker_client.describe_endpoint(
+            EndpointName=s._endpoint_name(m1, stage_Prod)
+        )["EndpointStatus"]
+        r2 = s.sagemaker_client.describe_endpoint(
+            EndpointName=s._endpoint_name(m1, stage_Latest)
+        )["EndpointStatus"]
+        r3 = s.sagemaker_client.describe_endpoint(
+            EndpointName=s._endpoint_name(m3, stage_Prod)
+        )["EndpointStatus"]
+        status_set = {r1, r2, r3}
+        if status_set == {"InService"}:
+            break
+        else:
+            print(f"Statuses {status_set}. Waiting 10s.")
+            time.sleep(10)
+
+    s.teardown()
