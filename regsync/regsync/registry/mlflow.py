@@ -1,5 +1,5 @@
 import logging
-from typing import List, Dict
+from typing import List, Dict, Optional
 from regsync.types import Model, ModelVersion, Artifact, LATEST_STAGE_NAME
 from regsync.registry import ModelRegistry
 from regsync.util import compress
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class Client(ModelRegistry):
-    def __init__(self, uri: str, model_cache_path: str = "models"):
+    def __init__(self, model_cache_path: str):
         registry_uri = os.environ.get("REGSYNC_MLFLOW_REGISTRY_URI")
         tracking_uri = os.environ.get("REGSYNC_MLFLOW_TRACKING_URI")
 
@@ -52,6 +52,13 @@ class Client(ModelRegistry):
             output.append(Model(name=model.name, versions=versions))
         return output
 
+    def find_model_root(self, directory: str) -> Optional[str]:
+        for path, dirs, files in os.walk(directory):
+            for f in files:
+                if f == "MLmodel":
+                    return path
+        return None
+
     def fetch_version_artifact(
         self, model_name: str, version: str
     ) -> Artifact:
@@ -60,6 +67,12 @@ class Client(ModelRegistry):
         directory = os.path.join(self.model_cache_path, model_name, version)
         os.makedirs(directory, exist_ok=False)
         path = self.client.download_artifacts(mv.run_id, "", directory)
-        model_dir = os.listdir(directory)[0]
-        outpath = compress(os.path.join(path, model_dir))
-        return Artifact(outpath)
+        outpath = os.path.join(path, "model.tar.gz")
+        if model_path := self.find_model_root(directory):
+            logger.info(f"Found model path {model_path}.")
+            compress(model_path, outpath)
+            return Artifact(outpath)
+        else:
+            raise Exception(
+                "Could not determine model root path. No MLmodel definition."
+            )

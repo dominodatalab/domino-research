@@ -2,8 +2,7 @@ import tarfile
 import os
 
 
-def compress(path: str) -> str:
-    outpath = path + ".tar.gz"
+def compress(model_path: str, outpath: str) -> str:
     with tarfile.open(outpath, "w:gz") as tar:
-        tar.add(path, arcname=os.path.basename(path))
+        tar.add(model_path, arcname=os.path.basename(model_path))
     return outpath
