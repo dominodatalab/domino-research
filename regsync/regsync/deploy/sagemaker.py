@@ -96,7 +96,7 @@ class SageMakerDeployTarget(DeployTarget):
                 [
                     ModelVersion(
                         model_name=model_name,
-                        version=self._version_from_sagemaker_model_name(
+                        version_id=self._version_from_sagemaker_model_name(
                             sagemaker_model_name=variant["ModelName"],
                             model_name=model_name,
                         ),  # eg: 1 from rs-modelC-1
@@ -530,7 +530,7 @@ class SageMakerDeployTarget(DeployTarget):
         return f"{self.SAGEMAKER_NAME_PREFIX}-{model_name}-{stage}"
 
     def _sagemaker_model_name_for_version(self, version: ModelVersion) -> str:
-        return self._sagemaker_model_name(version.model_name, version.version)
+        return self._sagemaker_model_name(version.model_name, version.version_id)
 
     def _sagemaker_model_name(self, model_name: str, version_id: str) -> str:
         return "-".join([self.SAGEMAKER_NAME_PREFIX, model_name, version_id])
@@ -544,7 +544,7 @@ class SageMakerDeployTarget(DeployTarget):
         return sagemaker_model_name.removeprefix(model_version_prefix)
 
     def _s3_subpath_for_version_artifact(self, version: ModelVersion) -> str:
-        return f"{version.model_name}/{version.version}/artifact.tar.gz"
+        return f"{version.model_name}/{version.version_id}/artifact.tar.gz"
 
     def _s3_path_for_version_artifact(self, version: ModelVersion) -> str:
         return f"https://{self.bucket_name}.s3.{self.region}.amazonaws.com/{self._s3_subpath_for_version_artifact(version)}"  # noqa: E501

@@ -45,7 +45,7 @@ class Client(ModelRegistry):
                     [
                         ModelVersion(
                             model_name=model.name,
-                            version=version.version,
+                            version_id=version.version_id,
                         )
                     ]
                 )

@@ -71,12 +71,12 @@ def main():
             for version in new_versions:
                 logger.info(
                     (
-                        f"Fetching {version.model_name}:{version.version} "
+                        f"Fetching {version.model_name}:{version.version_id} "
                         "artifact."
                     )
                 )
                 artifact = registry_client.fetch_version_artifact(
-                    version.model_name, version.version
+                    version.model_name, version.version_id
                 )
                 logger.info(artifact)
                 new_versions_map[version] = artifact
@@ -105,7 +105,7 @@ def main():
 def routing_from_models(models: List[Model]) -> Dict[str, Dict[str, Set[str]]]:
     return {
         model.name: {
-            stage: {version.version for version in versions}
+            stage: {version.version_id for version in versions}
             for stage, versions in model.versions.items()
         }
         for model in models

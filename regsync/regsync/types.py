@@ -5,11 +5,10 @@ from typing import Dict, Set
 @dataclass
 class ModelVersion:
     model_name: str
-    # TODO: rename to version_id
-    version: str
+    version_id: str
 
     def __hash__(self):
-        return hash((self.model_name, self.version))
+        return hash((self.model_name, self.version_id))
 
 
 @dataclass
