@@ -20,36 +20,6 @@ class SageMakerDeployTarget(DeployTarget):
         self.sagemaker_client = session.client("sagemaker")
         self.s3_client = session.client("s3")
 
-    def teardown(self):
-        endpoints = self.sagemaker_client.list_endpoints(
-            MaxResults=100,  # handle pagination
-            NameContains=f"{self.SAGEMAKER_NAME_PREFIX}-",
-        )["Endpoints"]
-
-        for endpoint in endpoints:
-            self.sagemaker_client.delete_endpoint(
-                EndpointName=endpoint["EndpointName"]
-            )
-
-        endpoint_configs = self.sagemaker_client.list_endpoint_configs(
-            MaxResults=100,  # handle pagination
-            NameContains=f"{self.SAGEMAKER_NAME_PREFIX}-",
-        )["EndpointConfigs"]
-
-        for endpoint_config in endpoint_configs:
-            self.sagemaker_client.delete_endpoint_config(
-                EndpointConfigName=endpoint_config["EndpointConfigName"]
-            )
-
-        models = self.sagemaker_client.list_models(
-            # NextToken='string',
-            MaxResults=100,
-            NameContains=f"{self.SAGEMAKER_NAME_PREFIX}-",
-        )["Models"]
-
-        for model in models:
-            self.sagemaker_client.delete_model(ModelName=model["ModelName"])
-
     def list_models(self) -> List[Model]:
         endpoint_prefix = f"{self.SAGEMAKER_NAME_PREFIX}-"
 
@@ -84,9 +54,6 @@ class SageMakerDeployTarget(DeployTarget):
                 )
             )
 
-            # TODO: verify the right versions are returned during the
-            # update phase to avoid a situation where the controller
-            # tries to create the same version multiple times.
             versions = set(
                 [
                     ModelVersion(
@@ -111,6 +78,44 @@ class SageMakerDeployTarget(DeployTarget):
                 )
 
         return list(output.values())
+
+    def teardown(self):
+        resource_prefix = f"{self.SAGEMAKER_NAME_PREFIX}-"
+        endpoints = self.sagemaker_client.list_endpoints(
+            MaxResults=100,  # handle pagination
+            NameContains=resource_prefix,
+        )["Endpoints"]
+
+        for endpoint in endpoints:
+            if (endpoint_name := endpoint["EndpointName"]).startswith(
+                resource_prefix
+            ):
+                self.sagemaker_client.delete_endpoint(
+                    EndpointName=endpoint_name
+                )
+
+        endpoint_configs = self.sagemaker_client.list_endpoint_configs(
+            MaxResults=100,  # handle pagination
+            NameContains=resource_prefix,
+        )["EndpointConfigs"]
+
+        for endpoint_config in endpoint_configs:
+            if (
+                endpoint_config_name := endpoint_config["EndpointConfigName"]
+            ).startswith(resource_prefix):
+                self.sagemaker_client.delete_endpoint_config(
+                    EndpointConfigName=endpoint_config_name
+                )
+
+        models = self.sagemaker_client.list_models(
+            # NextToken='string',
+            MaxResults=100,
+            NameContains=resource_prefix,
+        )["Models"]
+
+        for model in models:
+            if (model_name := model["ModelName"]).startswith(resource_prefix):
+                self.sagemaker_client.delete_model(ModelName=model_name)
 
     def create_versions(self, new_versions: Dict[ModelVersion, Artifact]):
         for version, artifact in new_versions.items():
