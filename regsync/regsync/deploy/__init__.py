@@ -9,6 +9,10 @@ class DeployTarget(ABC):
         pass
 
     @abstractmethod
+    def teardown(self):
+        pass
+
+    @abstractmethod
     def create_versions(self, new_versions: Dict[ModelVersion, Artifact]):
         pass
 
