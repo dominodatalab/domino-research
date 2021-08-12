@@ -100,14 +100,18 @@ class SageMakerDeployTarget(DeployTarget):
 
         return list(output.values())
 
-    def teardown(self):
-        resource_prefix = f"{self.SAGEMAKER_NAME_PREFIX}-"
+    def teardown(self, scoped_resource_prefix=None):
+        resource_prefix = (
+            scoped_resource_prefix or f"{self.SAGEMAKER_NAME_PREFIX}-"
+        )
+
         endpoints = self.sagemaker_client.list_endpoints(
             MaxResults=100,  # handle pagination
             NameContains=resource_prefix,
         )["Endpoints"]
 
         for endpoint in endpoints:
+            # The API returns all that *contain* not those that *start with*
             if (endpoint_name := endpoint["EndpointName"]).startswith(
                 resource_prefix
             ):

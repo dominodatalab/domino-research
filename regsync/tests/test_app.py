@@ -100,7 +100,7 @@ def test_sagemaker_update_handles_failed_endpoint():
     for m in models_s2:
         if m.name == m1:
             assert m.versions[stage_Prod] == {ModelVersion(m1, m1_v2)}
-    print("Validated in s1 state")
+    print("Validated in s2 state")
 
     # step 4
     _poll_until_status(
@@ -109,7 +109,7 @@ def test_sagemaker_update_handles_failed_endpoint():
         ],
         desired_status_set={"InService"},
     )
-    s.teardown()
+    s.teardown(scoped_resource_prefix=f"{s.SAGEMAKER_NAME_PREFIX}-{m1}")
 
 
 @pytest.mark.skipif(not aws_creds_present, reason="no aws creds")
@@ -229,7 +229,7 @@ def test_sagemaker_update_handles_creating_updating_status_endpoint():
         ],
         desired_status_set={"InService"},
     )
-    s.teardown()
+    s.teardown(scoped_resource_prefix=f"{s.SAGEMAKER_NAME_PREFIX}-{m1}")
 
 
 @pytest.mark.skipif(not aws_creds_present, reason="no aws creds")
@@ -333,4 +333,6 @@ def test_sagemaker_creates_and_updates_endpoints():
         desired_status_set={"InService"},
     )
 
-    s.teardown()
+    s.teardown(scoped_resource_prefix=f"{s.SAGEMAKER_NAME_PREFIX}-{m1}")
+    s.teardown(scoped_resource_prefix=f"{s.SAGEMAKER_NAME_PREFIX}-{m2}")
+    s.teardown(scoped_resource_prefix=f"{s.SAGEMAKER_NAME_PREFIX}-{m3}")
