@@ -4,7 +4,12 @@ import os
 import sys
 from pprint import pformat
 from typing import List, Dict, Set
-from regsync.types import Model, ModelVersion, Artifact
+from regsync.types import (
+    Model,
+    ModelVersion,
+    Artifact,
+    DEFAULT_MODEL_CACHE_PATH,
+)
 import shutil
 
 logger = logging.getLogger(__name__)
@@ -15,7 +20,9 @@ def main():
     level = logging.getLevelName(LOG_LEVEL)
     logging.basicConfig(level=level)
 
-    MODEL_CACHE_PATH = os.environ.get("REGSYNC_MODEL_CACHE_PATH", "./models")
+    MODEL_CACHE_PATH = os.environ.get(
+        "REGSYNC_MODEL_CACHE_PATH", DEFAULT_MODEL_CACHE_PATH
+    )
     shutil.rmtree(MODEL_CACHE_PATH, ignore_errors=True)
 
     REGISTRY_KIND = os.environ.get("REGSYNC_REGISTRY_KIND", "mlflow").lower()
