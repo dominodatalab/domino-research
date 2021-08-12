@@ -9,5 +9,5 @@ setuptools.setup(
     url="https://github.com/dominodatalab/domino-research/regsync",
     packages=setuptools.find_packages(),
     install_requires=["mlflow==1.19", "boto3==1.18.*", "requests==2.26"],
-    entry_points={"console_scripts": ["regsync = regsync.app:main"]},
+    entry_points={"console_scripts": ["bridge = regsync.cli:main"]},
 )

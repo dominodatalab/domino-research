@@ -34,7 +34,7 @@ class SageMakerDeployTarget(DeployTarget):
         try:
             sts = session.client("sts")
             self.identity = sts.get_caller_identity()
-            logger.info(pformat(self.identity))
+            logger.debug(pformat(self.identity))
             account_id = self.identity["Account"]
             self.bucket_name = f"bridge-models-{account_id}-{self.region}"
 
@@ -226,11 +226,11 @@ class SageMakerDeployTarget(DeployTarget):
             response = self.iam_client.create_role(
                 RoleName=RoleName,
                 AssumeRolePolicyDocument="""{
-    "Ver    sion": "2012-10-17",
-    "Sta    tement": {
-            "Effect": "Allow",
-            "Principal": {"Service": "sagemaker.amazonaws.com" },
-            "Action": "sts:AssumeRole"
+    "Version": "2012-10-17",
+    "Statement": {
+        "Effect": "Allow",
+        "Principal": {"Service": "sagemaker.amazonaws.com" },
+        "Action": "sts:AssumeRole"
     }
 }""",
             )
