@@ -22,5 +22,11 @@ with mlflow.start_run() as run:
 
 # create model version
 print(run.info)
-client = mlflow.tracking.MlflowClient(tracking_uri=remote_server_uri, registry_uri=remote_server_uri)
-print(client.create_model_version("CatPicDetector", run.info.artifact_uri, run.info.run_id))
+client = mlflow.tracking.MlflowClient(
+    tracking_uri=remote_server_uri, registry_uri=remote_server_uri
+)
+print(
+    client.create_model_version(
+        "CatPicDetector", run.info.artifact_uri, run.info.run_id
+    )
+)
