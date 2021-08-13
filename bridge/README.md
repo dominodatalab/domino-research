@@ -1,6 +1,6 @@
 # Bridge
 
-The easiest way to deploy from MLFlow to SageMaker
+The easiest way to deploy and sync models between MLFlow and SageMaker.
 
 ![build](https://github.com/dominodatalab/domino-research/actions/workflows/bridge.yml/badge.svg?branch=main)
 [![Docker Repository on Quay](https://quay.io/repository/domino/bridge/status "Docker Repository on Quay")](https://quay.io/repository/domino/bridge)
@@ -10,7 +10,7 @@ The easiest way to deploy from MLFlow to SageMaker
 First, create the AWS resources that Bridge needs to operate:
 
 * S3 bucket for model artifacts.
-* IAM role for Sagemaker execution, `bridge-sagemaker-execution`, (with Sagemaker Full Access policy).
+* IAM role for Sagemaker execution, `bridge-sagemaker-execution`, (with Sagemaker Full Access policy). See the [AWS IAM docs](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction_quick-links-common-tasks.html) for help with configuring IAM credentials.
 
 This only needs to be run once for a given AWS account and region.
 
@@ -24,7 +24,6 @@ docker run -it \
 
 Next, start the Bridge server:
 
-
 ```
 docker run -it \
     -e BRIDGE_MLFLOW_REGISTRY_URI=${MLFLOW_REGISTRY_URI} \
@@ -35,12 +34,12 @@ docker run -it \
     quay.io/domino/bridge:latest
 ```
 
-That's it! Bridge will begin syncing tagged model versions from Mlflow to
+That's it! Bridge will begin syncing model versions tagged as "Production" from MLFlow to
 Sagemaker!
 
 ## Cleanup
 
-If you are done using Bridge in a given AWS account and region, you can run:
+If you are done using Bridge in a given AWS account and region, you can run the following command to shut it down:
 
 ```
 docker run -it \
@@ -66,17 +65,17 @@ pip install -e .
 ```
 
 2. Next, configure any environment variables, most importantly AWS credentials
-   and Mlflow tracking and registry URIs:
+   and MLFlow tracking and registry URIs:
 
-* `BRDG_DEPLOY_AWS_PROFILE`: AWS profile for Sagemaker deployer (if different from Mlflow backend).
+* `BRDG_DEPLOY_AWS_PROFILE`: AWS profile for Sagemaker deployer (if different from MLFlow backend).
 * `BRDG_DEPLOY_AWS_INSTANCE_TYPE`: AWS instance type for Sagemaker endpoints (default ml.t2.medium).
 * `LOG_LEVEL`: Customize log level (default INFO).
 * `BRIDGE_MODEL_CACHE_PATH`: Path for caching model artifacts (default .brdg-models)
 * `BRIDGE_SCAN_INTERVAL_S`: Control loop refresh interval (default 15s).
-* `BRIDGE_MLFLOW_REGISTRY_URI`: Mlflow registry uri.
-* `BRIDGE_MLFLOW_TRACKING_URI`: Mlflow tracking uri.
+* `BRIDGE_MLFLOW_REGISTRY_URI`: MLFlow registry uri.
+* `BRIDGE_MLFLOW_TRACKING_URI`: MLFlow tracking uri.
 
-In addition, you can use any standard `boto3` or Mlflow environment variables.
+In addition, you can use any standard `boto3` or MLFlow environment variables.
 
 3. Finally, run the control loop:
 
