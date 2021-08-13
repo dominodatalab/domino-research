@@ -7,10 +7,11 @@ RUN pip install --upgrade pip
 
 WORKDIR /app
 COPY setup.py .
-COPY src src
+COPY bridge bridge
 RUN pip install -e .
 
 RUN chown -R 1000:1000 /app
 USER 1000
 
 ENTRYPOINT ["bridge"]
+CMD ["run"]

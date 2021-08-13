@@ -95,7 +95,7 @@ def main():
                 current_routing, desired_routing
             )
             deploy_client.delete_versions(expired_versions)
-            break
+            logger.info("Update complete.")
         except Exception as e:
             logger.exception(e)
 

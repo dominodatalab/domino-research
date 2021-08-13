@@ -415,6 +415,10 @@ class SageMakerDeployTarget(DeployTarget):
                     logging.error(e)
                     raise e
 
+        InstanceType = os.environ.get(
+            "BRDG_DEPLOY_AWS_INSTANCE_TYPE", "ml.t2.medium"
+        )
+
         # create new config
         try:
             variants: List[Dict[str, Union[str, int]]] = []
@@ -427,7 +431,7 @@ class SageMakerDeployTarget(DeployTarget):
                         "VariantName": sagemaker_model_name,
                         "ModelName": sagemaker_model_name,
                         "InitialInstanceCount": 1,
-                        "InstanceType": "ml.t2.medium",
+                        "InstanceType": InstanceType,
                         # will create a uniform split across all
                         # versions in this stage
                         "InitialVariantWeight": 1,
@@ -487,11 +491,14 @@ class SageMakerDeployTarget(DeployTarget):
     def _create_sagemaker_model(self, version: ModelVersion):
         # TODO: better error handling
         try:
+            account_id = self.identity["Account"]
+            execution_role_arn = (
+                f"arn:aws:iam::{account_id}:role/{self.execution_role}"
+            )
             self.sagemaker_client.create_model(
                 ModelName=self._sagemaker_model_name_for_version(version),
                 PrimaryContainer={
-                    # TODO: this shouldn't be hard coded
-                    "Image": "667552661262.dkr.ecr.us-east-2.amazonaws.com/mlflow-pyfunc:1.19.0",  # noqa: E501
+                    "Image": f"667552661262.dkr.ecr.{self.region}.amazonaws.com/bridge-mlflow-runtime:latest",  # noqa: E501
                     "ImageConfig": {
                         "RepositoryAccessMode": "Platform",
                     },
@@ -503,8 +510,7 @@ class SageMakerDeployTarget(DeployTarget):
                         "MLFLOW_DEPLOYMENT_FLAVOR_NAME": "python_function"
                     },
                 },
-                # TODO: this shouldn't be hard coded
-                ExecutionRoleArn="arn:aws:iam::667552661262:role/kevin_sagemaker_execution",  # noqa: E501
+                ExecutionRoleArn=execution_role_arn,
                 Tags=[],
             )
         except ClientError as e:

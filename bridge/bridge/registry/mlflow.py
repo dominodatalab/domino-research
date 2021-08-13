@@ -45,7 +45,7 @@ class Client(ModelRegistry):
                     [
                         ModelVersion(
                             model_name=model.name,
-                            version_id=version.version_id,
+                            version_id=version.version,
                         )
                     ]
                 )
@@ -65,9 +65,11 @@ class Client(ModelRegistry):
         mv = self.client.get_model_version(model_name, version)
         logger.info(mv)
         directory = os.path.join(self.model_cache_path, model_name, version)
+        outpath = os.path.join(directory, "model.tar.gz")
+        if os.path.exists(directory):
+            return Artifact(outpath)
         os.makedirs(directory, exist_ok=False)
-        path = self.client.download_artifacts(mv.run_id, "", directory)
-        outpath = os.path.join(path, "model.tar.gz")
+        self.client.download_artifacts(mv.run_id, "", directory)
         if model_path := self.find_model_root(directory):
             logger.info(f"Found model path {model_path}.")
             compress(model_path, outpath)
