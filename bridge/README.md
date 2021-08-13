@@ -71,12 +71,12 @@ pip install -e .
 * `BRDG_DEPLOY_AWS_PROFILE`: AWS profile for Sagemaker deployer (if different from Mlflow backend).
 * `BRDG_DEPLOY_AWS_INSTANCE_TYPE`: AWS instance type for Sagemaker endpoints (default ml.t2.medium).
 * `LOG_LEVEL`: Customize log level (default INFO).
-* `BRIDGE_MODEL_CACHE_PATH`: Path for downloading model artifacts (default .brdg-models)
+* `BRIDGE_MODEL_CACHE_PATH`: Path for caching model artifacts (default .brdg-models)
 * `BRIDGE_SCAN_INTERVAL_S`: Control loop refresh interval (default 15s).
 * `BRIDGE_MLFLOW_REGISTRY_URI`: Mlflow registry uri.
 * `BRIDGE_MLFLOW_TRACKING_URI`: Mlflow tracking uri.
 
-In addition, you can yse any standard `boto3` or Mlflow environment variables.
+In addition, you can use any standard `boto3` or Mlflow environment variables.
 
 3. Finally, run the control loop:
 
