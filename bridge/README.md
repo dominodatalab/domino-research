@@ -7,12 +7,15 @@ The easiest way to deploy from MLFlow to SageMaker
 
 ## Quickstart
 
-First, create the AWS resources that Bridge needs to operate:
+First, use `bridge init` to create the AWS resources that Bridge needs to operate.
+Runing this command will create:
 
-* S3 bucket for model artifacts.
-* IAM role for Sagemaker execution, `bridge-sagemaker-execution`, (with Sagemaker Full Access policy).
+* An S3 bucket for model artifacts.
+* An IAM role for Sagemaker execution, `bridge-sagemaker-execution`, (with Sagemaker Full Access policy).
 
 This only needs to be run once for a given AWS account and region.
+The snippet below assumes you have an `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` in your environment
+with sufficient permissions to create S3 bucks and the IAM role.
 
 ```
 docker run -it \
@@ -23,7 +26,6 @@ docker run -it \
 ```
 
 Next, start the Bridge server:
-
 
 ```
 docker run -it \
@@ -36,7 +38,8 @@ docker run -it \
 ```
 
 That's it! Bridge will begin syncing tagged model versions from Mlflow to
-Sagemaker!
+Sagemaker! To stop syncing, simply exit the container process. If you want
+to resume, re-run the same command.
 
 ## Cleanup
 
@@ -58,7 +61,7 @@ This will remove:
 
 ## Development
 
-1. In this directory: 
+1. In this directory (`domino-research/bridge`): 
 
 ```bash
 # Install as local package
@@ -85,7 +88,7 @@ bridge init sagemaker
 bridge run
 ```
 
-Any changes you make to the code will be picked up on restart.
+Any changes you make to the code will be picked up only on a restart of `bridge run`.
 
 ## Linting / Testing
 
