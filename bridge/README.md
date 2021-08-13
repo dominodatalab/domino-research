@@ -25,7 +25,9 @@ through git and CI logs or worrying about keeping things up to
 date manually
 
 
-## Quickstart
+## Quick Start
+
+[Check out a Loom recording of this Quick Start!](https://www.loom.com/share/c4498403c2794664a91be0d8e5119ecf)
 
 First, run the `bridge init` to create the AWS resources that Bridge needs to operate.
 Runing this command will create:
@@ -124,7 +126,7 @@ pip install -r requirements-dev.txt
 mypy bridge
 
 # Lint
-flake bridge
+flake8 bridge
 
 # Unit tests (only run when AWS credentials present and take 20+ minutes)
 python -m pytest
