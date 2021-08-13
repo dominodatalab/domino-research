@@ -27,6 +27,7 @@ class SageMakerDeployTarget(DeployTarget):
         self.region = session.region_name
         self.sagemaker_client = session.client("sagemaker")
         self.s3_client = session.client("s3")
+        self.s3_resource = session.resource("s3")
         self.iam_client = session.client("iam")
 
         try:
@@ -122,6 +123,7 @@ class SageMakerDeployTarget(DeployTarget):
             scoped_resource_prefix or f"{self.SAGEMAKER_NAME_PREFIX}-"
         )
 
+        # Teardown endpoints
         endpoints = self.sagemaker_client.list_endpoints(
             MaxResults=100,  # handle pagination
             NameContains=resource_prefix,
@@ -136,6 +138,7 @@ class SageMakerDeployTarget(DeployTarget):
                     EndpointName=endpoint_name
                 )
 
+        # Teardown endpoint configs
         endpoint_configs = self.sagemaker_client.list_endpoint_configs(
             MaxResults=100,  # handle pagination
             NameContains=resource_prefix,
@@ -149,6 +152,7 @@ class SageMakerDeployTarget(DeployTarget):
                     EndpointConfigName=endpoint_config_name
                 )
 
+        # Teardown models
         models = self.sagemaker_client.list_models(
             # NextToken='string',
             MaxResults=100,
@@ -159,16 +163,21 @@ class SageMakerDeployTarget(DeployTarget):
             if (model_name := model["ModelName"]).startswith(resource_prefix):
                 self.sagemaker_client.delete_model(ModelName=model_name)
 
+        # Teardown S3 bucket
         try:
-            Bucket = self.bucket_name
-            logger.info(f"Removing S3 Bucket {Bucket}")
-            response = self.s3_client.delete_bucket(Bucket=Bucket)
+            logger.info(f"Removing all items in S3 Bucket {self.bucket_name}")
+            bucket_resource = self.s3_resource.Bucket(self.bucket_name)
+            bucket_resource.objects.all().delete()
+
+            logger.info(f"Removing S3 Bucket {self.bucket_name}")
+            response = self.s3_client.delete_bucket(Bucket=self.bucket_name)
             logger.debug(pformat(response))
         except self.s3_client.exceptions.NoSuchBucket:
             logger.info("No bucket found.")
         except Exception as e:
             logger.exception(e)
 
+        # Teardown IAM role policy
         try:
             RoleName = self.execution_role
             PolicyArn = self.execution_role_policy_arn
@@ -182,6 +191,7 @@ class SageMakerDeployTarget(DeployTarget):
         except Exception as e:
             logger.exception(e)
 
+        # Teardown IAM role
         try:
             RoleName = self.execution_role
             logger.info(f"Removing Execution Role {RoleName}")
