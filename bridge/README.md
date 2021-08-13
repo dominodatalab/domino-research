@@ -15,14 +15,24 @@ First, create the AWS resources that Bridge needs to operate:
 This only needs to be run once for a given AWS account and region.
 
 ```
-docker run -it -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} -e AWS_DEFAULT_REGION=${AWS_REGION} quay.io/domino/bridge:latest init sagemaker
+docker run -it \
+    -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+    -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+    -e AWS_DEFAULT_REGION=${AWS_REGION} \
+    quay.io/domino/bridge:latest init sagemaker
 ```
 
 Next, start the Bridge server:
 
 
 ```
-docker run -it -e BRIDGE_MLFLOW_REGISTRY_URI=${MLFLOW_REGISTRY_URI} -e BRIDGE_MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} -e AWS_DEFAULT_REGION=${AWS_REGION} quay.io/domino/bridge:latest
+docker run -it \
+    -e BRIDGE_MLFLOW_REGISTRY_URI=${MLFLOW_REGISTRY_URI} \
+    -e BRIDGE_MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI} \
+    -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+    -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+    -e AWS_DEFAULT_REGION=${AWS_REGION} \
+    quay.io/domino/bridge:latest
 ```
 
 That's it! Bridge will begin syncing tagged model versions from Mlflow to
@@ -33,7 +43,11 @@ Sagemaker!
 If you are done using Bridge in a given AWS account and region, you can run:
 
 ```
-docker run -it -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} -e AWS_DEFAULT_REGION=${AWS_REGION} quay.io/domino/bridge:latest destroy sagemaker
+docker run -it \
+    -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+    -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+    -e AWS_DEFAULT_REGION=${AWS_REGION} quay.io/domino/bridge:latest \
+    destroy sagemaker
 ```
 
 This will remove:
