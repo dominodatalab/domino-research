@@ -3,7 +3,11 @@ from typing import List, Dict, Set, Union, Any
 from bridge.types import Model, ModelVersion, Artifact
 from bridge.deploy import DeployTarget
 import boto3  # type: ignore
-from botocore.exceptions import ClientError, NoCredentialsError  # type: ignore
+from botocore.exceptions import (  # type: ignore
+    ClientError,
+    NoCredentialsError,
+    NoRegionError,
+)
 from pprint import pformat
 import os
 import time
@@ -12,26 +16,27 @@ logger = logging.getLogger(__name__)
 
 
 class SageMakerDeployTarget(DeployTarget):
-    SAGEMAKER_NAME_PREFIX = "brdg"
     execution_role = "bridge-sagemaker-execution"
     execution_role_policy_arn = (
         "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
     )
 
-    def __init__(self):
+    def __init__(self, sagemaker_resource_name_prefix: str = "brdg"):
         if profile := os.environ.get("BRDG_DEPLOY_AWS_PROFILE"):
             logger.info(f"Using deploy AWS profile {profile}")
             session = boto3.Session(profile_name=profile)
         else:
             session = boto3.session.Session()
 
+        self.sagemaker_name_prefix = sagemaker_resource_name_prefix
         self.region = session.region_name
-        self.sagemaker_client = session.client("sagemaker")
-        self.s3_client = session.client("s3")
-        self.s3_resource = session.resource("s3")
-        self.iam_client = session.client("iam")
 
         try:
+            self.sagemaker_client = session.client("sagemaker")
+            self.s3_client = session.client("s3")
+            self.s3_resource = session.resource("s3")
+            self.iam_client = session.client("iam")
+
             sts = session.client("sts")
             self.identity = sts.get_caller_identity()
             logger.debug(pformat(self.identity))
@@ -41,12 +46,15 @@ class SageMakerDeployTarget(DeployTarget):
             logger.info(
                 f"SageMakerDeployTarget initialized for region {self.region}"
             )
+        except NoRegionError as e:
+            logger.error("No AWS Region set, cannot initialize.")
+            raise e
         except NoCredentialsError as e:
             logger.error("No AWS Credentials, cannot initialize.")
             raise e
 
     def list_models(self) -> List[Model]:
-        endpoint_prefix = f"{self.SAGEMAKER_NAME_PREFIX}-"
+        endpoint_prefix = f"{self.sagemaker_name_prefix}-"
 
         endpoints: List[Dict[Any, Any]] = []
 
@@ -119,10 +127,8 @@ class SageMakerDeployTarget(DeployTarget):
 
         return list(output.values())
 
-    def teardown(self, scoped_resource_prefix=None):
-        resource_prefix = (
-            scoped_resource_prefix or f"{self.SAGEMAKER_NAME_PREFIX}-"
-        )
+    def teardown(self):
+        resource_prefix = f"{self.sagemaker_name_prefix}-"
 
         logger.info("Removing all Sagemaker Endpoints")
         endpoints = self.sagemaker_client.list_endpoints(
@@ -160,7 +166,7 @@ class SageMakerDeployTarget(DeployTarget):
             MaxResults=100,  # handle pagination
             NameContains=resource_prefix,
         )["EndpointConfigs"]
-        
+
         for endpoint_config in endpoint_configs:
             if (
                 endpoint_config_name := endpoint_config["EndpointConfigName"]
@@ -183,8 +189,7 @@ class SageMakerDeployTarget(DeployTarget):
         for model in models:
             if (model_name := model["ModelName"]).startswith(resource_prefix):
                 logger.info(
-                    "Removing Sagemaker Model "
-                    + f"with name {endpoint_config_name}"
+                    "Removing Sagemaker Model " + f"with name {model_name}"
                 )
                 self.sagemaker_client.delete_model(ModelName=model_name)
 
@@ -590,10 +595,10 @@ class SageMakerDeployTarget(DeployTarget):
     # NOTE: we happen to use the same name for the endpoint
     # and endpoint config but this may not always be the case
     def _endpoint_name(self, model_name: str, stage: str) -> str:
-        return f"{self.SAGEMAKER_NAME_PREFIX}-{model_name}-{stage}"
+        return f"{self.sagemaker_name_prefix}-{model_name}-{stage}"
 
     def _endpoint_config_name(self, model_name: str, stage: str) -> str:
-        return f"{self.SAGEMAKER_NAME_PREFIX}-{model_name}-{stage}"
+        return f"{self.sagemaker_name_prefix}-{model_name}-{stage}"
 
     def _sagemaker_model_name_for_version(self, version: ModelVersion) -> str:
         return self._sagemaker_model_name(
@@ -601,13 +606,13 @@ class SageMakerDeployTarget(DeployTarget):
         )
 
     def _sagemaker_model_name(self, model_name: str, version_id: str) -> str:
-        return "-".join([self.SAGEMAKER_NAME_PREFIX, model_name, version_id])
+        return "-".join([self.sagemaker_name_prefix, model_name, version_id])
 
     def _version_from_sagemaker_model_name(
         self, sagemaker_model_name: str, model_name: str
     ) -> str:
         model_version_prefix = (
-            f"{self.SAGEMAKER_NAME_PREFIX}-{model_name}-"  # eg: brdg-ModelA-
+            f"{self.sagemaker_name_prefix}-{model_name}-"  # eg: brdg-ModelA-
         )
         return sagemaker_model_name.removeprefix(model_version_prefix)
 

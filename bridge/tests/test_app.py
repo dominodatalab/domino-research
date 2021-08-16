@@ -2,29 +2,38 @@ from bridge.deploy.sagemaker import SageMakerDeployTarget
 from bridge.types import Artifact, ModelVersion
 from typing import Dict, Set
 import pytest  # type: ignore
-import boto3  # type: ignore
-from botocore.exceptions import NoCredentialsError  # type: ignore
+from botocore.exceptions import (  # type: ignore
+    NoCredentialsError,
+    NoRegionError,
+)
 import random
 import string
 import time
+import os
+
 
 try:
-    sts = boto3.client("sts")
-    sts.get_caller_identity()
+    SageMakerDeployTarget()
     aws_creds_present = True
-except NoCredentialsError:
+except (NoRegionError, NoCredentialsError):
     aws_creds_present = False
 
-a_path = (
-    "/Users/joshuabroomberg/work/Domino/domino-research"
-    + "/bridge/examples/mlflow_model/model.tar.gz"
+artifact_relative_path = "../bridge/examples/mlflow_model/model.tar.gz"
+artifact_path = os.path.abspath(artifact_relative_path)
+
+TEST_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_DIR = os.path.abspath(os.path.join(TEST_DIR, os.pardir))
+ARTIFACT_PATH = os.path.abspath(
+    os.path.join(PROJECT_DIR, "examples/mlflow_model/model.tar.gz")
 )
-artifact = Artifact(a_path)
+artifact = Artifact(ARTIFACT_PATH)
 
 
 @pytest.mark.skipif(not aws_creds_present, reason="no aws creds")
 def test_sagemaker_update_handles_failed_endpoint():
     s = SageMakerDeployTarget()
+    s.teardown()
+    s.init()
 
     m1 = f"model-{''.join(random.choices(string.ascii_uppercase, k=8))}"
 
@@ -85,12 +94,14 @@ def test_sagemaker_update_handles_failed_endpoint():
         ],
         desired_status_set={"InService"},
     )
-    s.teardown(scoped_resource_prefix=f"{s.SAGEMAKER_NAME_PREFIX}-{m1}")
+    s.teardown()
 
 
 @pytest.mark.skipif(not aws_creds_present, reason="no aws creds")
 def test_sagemaker_update_handles_creating_updating_status_endpoint():
     s = SageMakerDeployTarget()
+    s.teardown()
+    s.init()
 
     m1 = f"model-{''.join(random.choices(string.ascii_uppercase, k=8))}"
 
@@ -205,12 +216,14 @@ def test_sagemaker_update_handles_creating_updating_status_endpoint():
         ],
         desired_status_set={"InService"},
     )
-    s.teardown(scoped_resource_prefix=f"{s.SAGEMAKER_NAME_PREFIX}-{m1}")
+    s.teardown()
 
 
 @pytest.mark.skipif(not aws_creds_present, reason="no aws creds")
 def test_sagemaker_creates_and_updates_endpoints():
     s = SageMakerDeployTarget()
+    s.teardown()
+    s.init()
 
     m1 = f"model-{''.join(random.choices(string.ascii_uppercase, k=8))}"
     m2 = f"model-{''.join(random.choices(string.ascii_uppercase, k=8))}"
@@ -309,6 +322,6 @@ def test_sagemaker_creates_and_updates_endpoints():
         desired_status_set={"InService"},
     )
 
-    s.teardown(scoped_resource_prefix=f"{s.SAGEMAKER_NAME_PREFIX}-{m1}")
-    s.teardown(scoped_resource_prefix=f"{s.SAGEMAKER_NAME_PREFIX}-{m2}")
-    s.teardown(scoped_resource_prefix=f"{s.SAGEMAKER_NAME_PREFIX}-{m3}")
+    s.teardown()
+    s.teardown()
+    s.teardown()
