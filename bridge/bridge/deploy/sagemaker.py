@@ -6,6 +6,7 @@ import boto3  # type: ignore
 from botocore.exceptions import ClientError, NoCredentialsError  # type: ignore
 from pprint import pformat
 import os
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -123,36 +124,56 @@ class SageMakerDeployTarget(DeployTarget):
             scoped_resource_prefix or f"{self.SAGEMAKER_NAME_PREFIX}-"
         )
 
-        # Teardown endpoints
+        logger.info("Removing all Sagemaker Endpoints")
         endpoints = self.sagemaker_client.list_endpoints(
             MaxResults=100,  # handle pagination
             NameContains=resource_prefix,
         )["Endpoints"]
 
-        for endpoint in endpoints:
-            # The API returns all that *contain* not those that *start with*
-            if (endpoint_name := endpoint["EndpointName"]).startswith(
-                resource_prefix
-            ):
-                self.sagemaker_client.delete_endpoint(
-                    EndpointName=endpoint_name
-                )
+        if len(endpoints) > 0:
+            endpoint_names = [e["EndpointName"] for e in endpoints]
 
-        # Teardown endpoint configs
+            logger.info("Waiting for all Sagemaker Endpoints to be deletable")
+
+            self._poll_endpoints_until_status(
+                endpoint_names=endpoint_names,
+                desired_status_set={"InService"},
+            )
+
+            logger.info("All Sagemaker Endpoints are deletable")
+            for endpoint_name in endpoint_names:
+                # The API returns all that *contain* not those
+                # that *start with* the prefix
+                if endpoint_name.startswith(resource_prefix):
+                    logger.info(
+                        "Removing Sagemaker Endpoint"
+                        + f"with name {endpoint_name}"
+                    )
+                    self.sagemaker_client.delete_endpoint(
+                        EndpointName=endpoint_name
+                    )
+        else:
+            logger.info("No endpoints found")
+
+        logger.info("Removing all Sagemaker Endpoint Configs")
         endpoint_configs = self.sagemaker_client.list_endpoint_configs(
             MaxResults=100,  # handle pagination
             NameContains=resource_prefix,
         )["EndpointConfigs"]
-
+        
         for endpoint_config in endpoint_configs:
             if (
                 endpoint_config_name := endpoint_config["EndpointConfigName"]
             ).startswith(resource_prefix):
+                logger.info(
+                    "Removing Sagemaker Endpoint Config "
+                    + f"with name {endpoint_config_name}"
+                )
                 self.sagemaker_client.delete_endpoint_config(
                     EndpointConfigName=endpoint_config_name
                 )
 
-        # Teardown models
+        logger.info("Removing all Sagemaker Models")
         models = self.sagemaker_client.list_models(
             # NextToken='string',
             MaxResults=100,
@@ -161,9 +182,12 @@ class SageMakerDeployTarget(DeployTarget):
 
         for model in models:
             if (model_name := model["ModelName"]).startswith(resource_prefix):
+                logger.info(
+                    "Removing Sagemaker Model "
+                    + f"with name {endpoint_config_name}"
+                )
                 self.sagemaker_client.delete_model(ModelName=model_name)
 
-        # Teardown S3 bucket
         try:
             logger.info(f"Removing all items in S3 Bucket {self.bucket_name}")
             bucket_resource = self.s3_resource.Bucket(self.bucket_name)
@@ -396,6 +420,32 @@ class SageMakerDeployTarget(DeployTarget):
         except ClientError as e:
             logging.error(e)
             raise e
+
+    def _poll_endpoints_until_status(
+        self,
+        endpoint_names: List[str],
+        desired_status_set: Set[str],
+        max_wait_seconds: int = 20 * 60,
+        polling_delay: int = 30,
+    ):
+        iters = max_wait_seconds // polling_delay
+
+        for _ in range(iters):
+            status_set: Set[str] = set()
+            for endpoint_name in endpoint_names:
+                status = self.sagemaker_client.describe_endpoint(
+                    EndpointName=endpoint_name
+                )["EndpointStatus"]
+                status_set.add(status)
+
+            if (status_set == desired_status_set) or (len(status_set) == 0):
+                break
+            else:
+                print(
+                    f"Current Status Set {status_set}. "
+                    + f"Desired Set {desired_status_set}. Waiting 10s."
+                )
+                time.sleep(10)
 
     def _new_endpoint_config(
         self,

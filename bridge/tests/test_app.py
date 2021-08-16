@@ -1,6 +1,6 @@
 from bridge.deploy.sagemaker import SageMakerDeployTarget
 from bridge.types import Artifact, ModelVersion
-from typing import Dict, Set, List
+from typing import Dict, Set
 import pytest  # type: ignore
 import boto3  # type: ignore
 from botocore.exceptions import NoCredentialsError  # type: ignore
@@ -20,30 +20,6 @@ a_path = (
     + "/bridge/examples/mlflow_model/model.tar.gz"
 )
 artifact = Artifact(a_path)
-
-
-def _poll_until_status(
-    endpoint_names: List[str], desired_status_set: Set[str]
-):
-    s = SageMakerDeployTarget()
-
-    delay = 10
-    max_wait = 20 * 60
-    iters = max_wait // delay
-
-    for _ in range(iters):
-        status_set: Set[str] = set()
-        for endpoint_name in endpoint_names:
-            status = s.sagemaker_client.describe_endpoint(
-                EndpointName=endpoint_name
-            )["EndpointStatus"]
-            status_set.add(status)
-
-        if status_set == desired_status_set:
-            break
-        else:
-            print(f"Statuses {status_set}. Waiting 10s.")
-            time.sleep(10)
 
 
 @pytest.mark.skipif(not aws_creds_present, reason="no aws creds")
@@ -76,7 +52,7 @@ def test_sagemaker_update_handles_failed_endpoint():
     # delete model out from under the endpoint so that it fails
     s.delete_versions({ModelVersion(m1, m1_v1)})
 
-    _poll_until_status(
+    s._poll_endpoints_until_status(
         endpoint_names=[
             s._endpoint_name(m1, stage_Prod),
         ],
@@ -103,7 +79,7 @@ def test_sagemaker_update_handles_failed_endpoint():
     print("Validated in s2 state")
 
     # step 4
-    _poll_until_status(
+    s._poll_endpoints_until_status(
         endpoint_names=[
             s._endpoint_name(m1, stage_Prod),
         ],
@@ -153,7 +129,7 @@ def test_sagemaker_update_handles_creating_updating_status_endpoint():
     print("Validated s1 state is correct")
 
     # Step 2 - update while state creating, expect state to remain unchanged
-    _poll_until_status(
+    s._poll_endpoints_until_status(
         endpoint_names=[
             s._endpoint_name(m1, stage_Prod),
         ],
@@ -171,7 +147,7 @@ def test_sagemaker_update_handles_creating_updating_status_endpoint():
     print("Validated still in s1 state")
 
     # step 3 - wait for state to stabilize and update
-    _poll_until_status(
+    s._poll_endpoints_until_status(
         endpoint_names=[
             s._endpoint_name(m1, stage_Prod),
         ],
@@ -188,7 +164,7 @@ def test_sagemaker_update_handles_creating_updating_status_endpoint():
     print("Validated in s2 state")
 
     # step 4 - update again before waiting to stabilize
-    _poll_until_status(
+    s._poll_endpoints_until_status(
         endpoint_names=[
             s._endpoint_name(m1, stage_Prod),
         ],
@@ -206,7 +182,7 @@ def test_sagemaker_update_handles_creating_updating_status_endpoint():
 
     # step 5 - wait for state to stabilize from updating to inservice
     # then update
-    _poll_until_status(
+    s._poll_endpoints_until_status(
         endpoint_names=[
             s._endpoint_name(m1, stage_Prod),
         ],
@@ -223,7 +199,7 @@ def test_sagemaker_update_handles_creating_updating_status_endpoint():
     print("Validated in s3 state")
 
     # step 6
-    _poll_until_status(
+    s._poll_endpoints_until_status(
         endpoint_names=[
             s._endpoint_name(m1, stage_Prod),
         ],
@@ -286,7 +262,7 @@ def test_sagemaker_creates_and_updates_endpoints():
     # Step 2
     print("Polling until s1 state stabilizes")
 
-    _poll_until_status(
+    s._poll_endpoints_until_status(
         endpoint_names=[
             s._endpoint_name(m1, stage_Prod),
             s._endpoint_name(m1, stage_Staging),
@@ -324,7 +300,7 @@ def test_sagemaker_creates_and_updates_endpoints():
     print("Validated s2 state is correct")
 
     # Step 4
-    _poll_until_status(
+    s._poll_endpoints_until_status(
         endpoint_names=[
             s._endpoint_name(m1, stage_Prod),
             s._endpoint_name(m1, stage_Latest),
