@@ -85,7 +85,7 @@ to resume, re-run the same command above.
 **Note:** Bridge deploys the *models* in MLflow (not runs).
 Models must use the MLflow [storage format](https://www.mlflow.org/docs/latest/models.html#storage-format).
 I.E., the model must have a valid [MLmodel](https://www.mlflow.org/docs/latest/models.html)
-file in the artifacts of each of its versions. This is
+file in the artifacts stored in each of its versions. This is
 usually achieved by calling `mlflow.<framework>.log_model`
 or using the `create_model_version` command with appropriate inputs.
 
