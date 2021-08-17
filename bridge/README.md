@@ -30,13 +30,13 @@ date manually
 [Check out a Loom recording of this Quick Start!](https://www.loom.com/share/c4498403c2794664a91be0d8e5119ecf)
 
 This quickstart assumes that you already have an MLflow registry to work with.
-If do not have a registry, or would like to create a new registry for testing,
+If you do not have a registry, or would like to create a new registry for testing,
 please follow our [guide to setting up MLflow for local testing](#mlflow-quickstart).
 
 #### 1. Initialize Bridge
 
 First, run the `bridge init` to create the AWS resources that Bridge needs to operate.
-Runing this command will create:
+Running this command will create:
 
 * An S3 bucket for model artifacts.
 * An IAM role for Sagemaker execution, `bridge-sagemaker-execution`, (with Sagemaker Full Access policy).
@@ -57,7 +57,7 @@ docker run -it \
 
 Next, start the Bridge server.
 Don't forget to set environment variables named `MLFLOW_REGISTRY_URI` and `MLFLOW_TRACKING_URI`
-with the correct values for your MLflow registry. If you'd like to set up a new registery, follow
+with the correct values for your MLflow registry. If you'd like to set up a new registry, follow
 [our guide](#mlflow-quickstart):
 
 ```
@@ -85,7 +85,7 @@ to resume, re-run the same command above.
 **Note:** Bridge deploys the *models* in MLflow (not runs).
 Models must use the MLflow [storage format](https://www.mlflow.org/docs/latest/models.html#storage-format).
 I.E., the model must have a valid [MLmodel](https://www.mlflow.org/docs/latest/models.html)
-file in the artifacts of each its versions. This is
+file in the artifacts stored in each of its versions. This is
 usually achieved by calling `mlflow.<framework>.log_model`
 or using the `create_model_version` command with appropriate inputs.
 
@@ -231,7 +231,7 @@ at `examples/mlflow_model/code/train_and_version.py`.
 This trains a simple linear regression model in context of an MLflow
 run, creates the `SimpleLinearRegression` in MLflow, and registers
 the run as a new version of this model. Running the script again will
-create another version of the the same model.
+create another version of the same model.
 
 If you are going to register your own models into MLflow,
 make sure they follow the guidelines in the [quickstart](#quick-start).
