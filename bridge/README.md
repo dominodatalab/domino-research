@@ -152,7 +152,7 @@ installation consists of 3 components:
 
 * Mlflow tracking server / model registry
 * Database backend -  stores run and model metadata
-* Storage backend. 
+* Storage backend - stores run and model artifacts
 
 While it is possible to run just the Mlflow server, the database backend is
 required to use the model registry. Furthermore, for Bridge to be able to fetch
