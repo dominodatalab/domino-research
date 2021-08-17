@@ -31,7 +31,7 @@ date manually
 
 This quickstart assumes that you already have an Mlflow registry to work with.
 If do not have a registry, or would like to create a new registry for testing,
-please follow our [guide to setting up Mlflow for local testing.](#mlflow-quickstart).
+please follow our [guide to setting up Mlflow for local testing](#mlflow-quickstart).
 
 First, run the `bridge init` to create the AWS resources that Bridge needs to operate.
 Runing this command will create:
