@@ -1,12 +1,13 @@
-from pprint import pprint
 import numpy as np
 from sklearn.linear_model import LinearRegression
 import mlflow
-import os
+
 
 # configure Mlflow client
-remote_server_uri = "http://mlflow.gambit-sandbox.domino.tech"
-mlflow.set_tracking_uri(remote_server_uri)
+REMOTE_SERVER_URI = "http://localhost:5000"
+MODEL_NAME = "SimpleLinearRegression"
+
+mlflow.set_tracking_uri(REMOTE_SERVER_URI)
 
 # enable autologging
 mlflow.sklearn.autolog()
@@ -23,10 +24,13 @@ with mlflow.start_run() as run:
 # create model version
 print(run.info)
 client = mlflow.tracking.MlflowClient(
-    tracking_uri=remote_server_uri, registry_uri=remote_server_uri
+    tracking_uri=REMOTE_SERVER_URI, registry_uri=REMOTE_SERVER_URI
 )
-print(
-    client.create_model_version(
-        "CatPicDetector", run.info.artifact_uri, run.info.run_id
-    )
-)
+
+try:
+    client.create_registered_model(MODEL_NAME)
+except mlflow.exceptions.MlflowException:
+    # model already exists
+    pass
+
+client.create_model_version(MODEL_NAME, run.info.artifact_uri, run.info.run_id)

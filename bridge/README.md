@@ -33,6 +33,8 @@ This quickstart assumes that you already have an MLflow registry to work with.
 If do not have a registry, or would like to create a new registry for testing,
 please follow our [guide to setting up MLflow for local testing](#mlflow-quickstart).
 
+#### 1. Initialize Bridge
+
 First, run the `bridge init` to create the AWS resources that Bridge needs to operate.
 Runing this command will create:
 
@@ -51,7 +53,12 @@ docker run -it \
     quay.io/domino/bridge:latest init sagemaker
 ```
 
-Next, start the Bridge server:
+#### 2. Run Bridge
+
+Next, start the Bridge server.
+Don't forget to set environment variables named `MLFLOW_REGISTRY_URI` and `MLFLOW_TRACKING_URI`
+with the correct values for your MLflow registry. If you'd like to set up a new registery, follow
+[our guide](#mlflow-quickstart):
 
 ```
 docker run -it \
@@ -67,8 +74,20 @@ That's it! Bridge will begin syncing model versions from MlFlow to
 Sagemaker! By default, it will sync versions assigned to Production and
 Staging as well as the most recent version auto-tagged as `Latest`.
 
+If you push a new version to a model in your registry, you will see
+the `Latest` endpoint for that model create/update in SageMaker with that
+version. If you then tag that version as `Staging` it will create/update the
+`Staging` endpoint for the model with the version. Welcome to RegistryOps.
+
 To stop syncing, simply exit the container process. If you want
-to resume, re-run the same command.
+to resume, re-run the same command above.
+
+**Note:** Bridge deploys the *models* in MLflow (not runs).
+Models must use the MLflow [storage format](https://www.mlflow.org/docs/latest/models.html#storage-format).
+I.E., the model must have a valid [MLmodel](https://www.mlflow.org/docs/latest/models.html)
+file in the artifacts of each its versions. This is
+usually achieved by calling `mlflow.<framework>.log_model`
+or using the `create_model_version` command with appropriate inputs.
 
 ## Cleanup
 
@@ -92,14 +111,14 @@ The command will remove:
 
 ## Development
 
-1. In this directory (`domino-research/bridge`): 
+#### 1. In this directory (`domino-research/bridge`): 
 
 ```bash
 # Install as local package
 pip install -e .
 ```
 
-2. Next, configure any environment variables, most importantly AWS credentials
+#### 2. Next, configure any environment variables, most importantly AWS credentials
    and MlFlow tracking and registry URIs:
 
 * `BRDG_DEPLOY_AWS_PROFILE`: AWS profile for Sagemaker deployer (if different from MlFlow backend).
@@ -112,7 +131,7 @@ pip install -e .
 
 In addition, you can use any standard `boto3` or MlFlow environment variables.
 
-3. Finally, run the control loop:
+#### 3. Finally, run the control loop:
 
 ```bash
 bridge init sagemaker
@@ -182,26 +201,55 @@ This guide assumes that you have:
 
 **This is not a production deployment.**
 
-### Steps 
-
-1. Set environment variables:
+#### 1. Set environment variables:
 
 ```
-export AWS_REGION=
-export AWS_BUCKET_NAME=
-export AWS_ACCESS_KEY_ID=
-export AWS_SECRET_ACCESS_KEY=
+export AWS_REGION=XXX
+export AWS_BUCKET_NAME=XXX
+export AWS_ACCESS_KEY_ID=XXX
+export AWS_SECRET_ACCESS_KEY=XXX
 ```
 
-2. Create S3 bucket:
+#### 2. Create S3 bucket:
 
 ```
 aws s3api create-bucket --bucket $AWS_BUCKET_NAME --acl private --create-bucket-configuration "{\"LocationConstraint\":\"${AWS_REGION}\"}"
 ```
 
-3. Change to the `bridge/examples/mlflow` directory and run `docker-compose up -d`.
+#### 3. Change to the `bridge/examples/mlflow` directory and run `docker-compose up -d`.
 
-It should take about 30 seconds to start up and that's it! You should be able
-to navigate to `http://localhost:5000` to see the MLflow UI. When configuring
-Bridge and any Python MLflow clients, you should use `http://localhost:5000`
-for your tracking and registry URLs. 
+MLflow will take about 30-60 seconds to start up and that's it! You should be able
+to navigate to `http://localhost:5000` to see the MLflow UI.
+
+#### 4. Add model versions to the local MLFlow Registry.
+
+When configuring any Python MLflow clients, you should use
+`http://localhost:5000` for your tracking and registry URLs.
+
+The easiest way to get started with Bridge is to run the script
+at `examples/mlflow_model/code/train_and_version.py`.
+This trains a simple linear regression model in context of an MLflow
+run, creates the `SimpleLinearRegression` in MLflow, and registers
+the run as a new version of this model. Running the script again will
+create another version of the the same model.
+
+If you are going to register your own models into MLflow,
+make sure they follow the guidelines in the [quickstart](#quick-start).
+
+#### 5. Configuring Bridge to use the local MLflow registry
+
+Finally, run Bridge configured to look at your local registry. Do this by
+following the steps in the [quickstart](#quick-start) with the environment
+variables below:
+
+For Linux:
+```
+export MLFLOW_REGISTRY_URI=http://localhost:5000
+export MLFLOW_TRACKING_URI=http://localhost:5000
+```
+
+For macOS:
+```
+export MLFLOW_REGISTRY_URI=http://host.docker.internal:5000
+export MLFLOW_TRACKING_URI=http://host.docker.internal:5000
+```
