@@ -151,7 +151,7 @@ This is a quick guide to running Mlflow locally for testing. A full Mlflow
 installation consists of 3 components:
 
 * Mlflow tracking server / model registry
-* Database backend.
+* Database backend -  stores run and model metadata
 * Storage backend. 
 
 While it is possible to run just the Mlflow server, the database backend is
