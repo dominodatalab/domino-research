@@ -29,6 +29,10 @@ date manually
 
 [Check out a Loom recording of this Quick Start!](https://www.loom.com/share/c4498403c2794664a91be0d8e5119ecf)
 
+This quickstart assumes that you already have an Mlflow registry to work with.
+If do not have a registry, or would like to create a new registry for testing,
+please follow our [guide to setting up Mlflow for local testing.](#mlflow-quickstart).
+
 First, run the `bridge init` to create the AWS resources that Bridge needs to operate.
 Runing this command will create:
 
@@ -140,3 +144,49 @@ black .
 ```
 docker build .
 ```
+
+## Mlflow Quickstart
+
+This is a quick guide to running Mlflow locally for testing. A full Mlflow
+installation consists of 3 components:
+
+* Mlflow tracking server / model registry
+* Database backend.
+* Storage backend. 
+
+While it is possible to run just the Mlflow server, the database backend is
+required to use the model registry. Furthermore, for Bridge to be able to fetch
+artifacts, you must use a non-local storage backend. We believe the simplest
+option is to configure an S3 bucket for this artifact storage.
+
+This guide assumes that you have:
+
+* Docker installed on your machine.
+* `docker-compose` installed on your machine.
+* AWS credentials for creating and accessing S3 buckets. 
+
+**This is not a production deployment.**
+
+### Steps 
+
+1. Set environment variables:
+
+```
+export AWS_REGION=
+export AWS_BUCKET_NAME=
+export AWS_ACCESS_KEY_ID=
+export AWS_SECRET_ACCESS_KEY=
+```
+
+1. Create S3 bucket:
+
+```
+aws s3api create-bucket --bucket $AWS_BUCKET_NAME --acl private --create-bucket-configuration "{\"LocationConstraint\":\"${AWS_REGION}\"}"
+```
+
+1. Change to the `bridge/examples/mlflow` directory and run `docker-compose up -d`.
+
+It should take about 30 seconds to start up and that's it! You should be able
+to navigate to `http://localhost:5000` to see the Mlflow UI. When configuring
+Bridge and any Python Mlflow clients, you should use `http://localhost:5000`
+for your tracking and registry URLs. 
