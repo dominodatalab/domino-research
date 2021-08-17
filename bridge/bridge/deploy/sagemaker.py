@@ -68,7 +68,6 @@ class SageMakerDeployTarget(DeployTarget):
             "Updating",
             "SystemUpdating",
             "InService",
-            "Deleting",
             "Failed",
         ]
 
@@ -563,6 +562,10 @@ class SageMakerDeployTarget(DeployTarget):
 
     def _create_sagemaker_model(self, version: ModelVersion):
         # TODO: better error handling
+        # Handle rare case where model is deleted, endpoints
+        # enters deleting state, no longer appears in list_models
+        # and is then re-created, leading to an error due to name
+        # conflict.
         try:
             account_id = self.identity["Account"]
             execution_role_arn = (
