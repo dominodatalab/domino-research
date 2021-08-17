@@ -1,6 +1,6 @@
 # Bridge
 
-The easiest way to deploy from MLFlow to SageMaker 
+The easiest way to deploy from MLflow to SageMaker 
 
 ![build](https://github.com/dominodatalab/domino-research/actions/workflows/bridge.yml/badge.svg?branch=main)
 [![Docker Repository on Quay](https://quay.io/repository/domino/bridge/status "Docker Repository on Quay")](https://quay.io/repository/domino/bridge)
@@ -28,6 +28,10 @@ date manually
 ## Quick Start
 
 [Check out a Loom recording of this Quick Start!](https://www.loom.com/share/c4498403c2794664a91be0d8e5119ecf)
+
+This quickstart assumes that you already have an MLflow registry to work with.
+If do not have a registry, or would like to create a new registry for testing,
+please follow our [guide to setting up MLflow for local testing](#mlflow-quickstart).
 
 First, run the `bridge init` to create the AWS resources that Bridge needs to operate.
 Runing this command will create:
@@ -155,3 +159,49 @@ The checks above will run on each git commit.
 ```
 docker build .
 ```
+
+## MLflow Quickstart
+
+This is a quick guide to running MLflow locally for testing. A full MLflow
+installation consists of 3 components:
+
+* MLflow tracking server / model registry
+* Database backend -  stores run and model metadata
+* Storage backend - stores run and model artifacts
+
+While it is possible to run just the MLflow server, the database backend is
+required to use the model registry. Furthermore, for Bridge to be able to fetch
+artifacts, you must use a non-local storage backend. We believe the simplest
+option is to configure an S3 bucket for this artifact storage.
+
+This guide assumes that you have:
+
+* Docker installed on your machine.
+* `docker-compose` installed on your machine.
+* AWS credentials for creating and accessing S3 buckets. 
+
+**This is not a production deployment.**
+
+### Steps 
+
+1. Set environment variables:
+
+```
+export AWS_REGION=
+export AWS_BUCKET_NAME=
+export AWS_ACCESS_KEY_ID=
+export AWS_SECRET_ACCESS_KEY=
+```
+
+2. Create S3 bucket:
+
+```
+aws s3api create-bucket --bucket $AWS_BUCKET_NAME --acl private --create-bucket-configuration "{\"LocationConstraint\":\"${AWS_REGION}\"}"
+```
+
+3. Change to the `bridge/examples/mlflow` directory and run `docker-compose up -d`.
+
+It should take about 30 seconds to start up and that's it! You should be able
+to navigate to `http://localhost:5000` to see the MLflow UI. When configuring
+Bridge and any Python MLflow clients, you should use `http://localhost:5000`
+for your tracking and registry URLs. 

@@ -1,0 +1,35 @@
+version: '3.2'
+services:
+  db:
+    restart: always
+    image: mysql/mysql-server:5.7.28
+    container_name: mlflow_db
+    expose:
+    - "3306"
+    environment:
+    - MYSQL_DATABASE=mlflow
+    - MYSQL_USER=user
+    - MYSQL_PASSWORD=pass
+    - MYSQL_ROOT_PASSWORD=rootpass
+    volumes:
+    - ./dbdata:/var/lib/mysql
+    networks:
+    - demo
+  mlflow:
+    container_name: tracker_mlflow
+    image: tracker_ml
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+    - "5000:5000"
+    environment: 
+    - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+    - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    - AWS_DEFAULT_REGION=${AWS_REGION}
+    networks:
+    - demo
+    entrypoint: mlflow server --backend-store-uri mysql+pymysql://user:pass@db:3306/mlflow --default-artifact-root s3://${AWS_BUCKET_NAME}/ -h 0.0.0.0
+networks:
+  demo:
+    driver: bridge
