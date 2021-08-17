@@ -83,7 +83,7 @@ To stop syncing, simply exit the container process. If you want
 to resume, re-run the same command above.
 
 **Note:** Bridge deploys the *models* in MLflow (not runs).
-Models must use the MLflow [storage format](https://www.mlflow.org/docs/latest/models.html#storage-format)
+Models must use the MLflow [storage format](https://www.mlflow.org/docs/latest/models.html#storage-format).
 I.E., the model must have a valid [MLmodel](https://www.mlflow.org/docs/latest/models.html)
 file in the artifacts of each its versions. This is
 usually achieved by calling `mlflow.<framework>.log_model`
@@ -218,7 +218,7 @@ aws s3api create-bucket --bucket $AWS_BUCKET_NAME --acl private --create-bucket-
 
 #### 3. Change to the `bridge/examples/mlflow` directory and run `docker-compose up -d`.
 
-It should take about 30 seconds to start up and that's it! You should be able
+MLflow will take about 30-60 seconds to start up and that's it! You should be able
 to navigate to `http://localhost:5000` to see the MLflow UI.
 
 #### 4. Add model versions to the local MLFlow Registry.

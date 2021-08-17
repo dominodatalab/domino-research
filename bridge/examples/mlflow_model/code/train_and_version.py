@@ -1,8 +1,7 @@
-from pprint import pprint
 import numpy as np
 from sklearn.linear_model import LinearRegression
 import mlflow
-import os
+
 
 # configure Mlflow client
 REMOTE_SERVER_URI = "http://localhost:5000"
@@ -34,6 +33,4 @@ except mlflow.exceptions.MlflowException:
     # model already exists
     pass
 
-client.create_model_version(
-    MODEL_NAME, run.info.artifact_uri, run.info.run_id
-)
+client.create_model_version(MODEL_NAME, run.info.artifact_uri, run.info.run_id)
