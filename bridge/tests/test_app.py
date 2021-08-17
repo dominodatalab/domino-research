@@ -28,12 +28,16 @@ ARTIFACT_PATH = os.path.abspath(
 )
 artifact = Artifact(ARTIFACT_PATH)
 
+SETUP_WAIT_TIME = 10
+
 
 @pytest.mark.skipif(not aws_creds_present, reason="no aws creds")
 def test_sagemaker_update_handles_failed_endpoint():
     s = SageMakerDeployTarget()
     s.teardown()
+    time.sleep(SETUP_WAIT_TIME)
     s.init()
+    time.sleep(SETUP_WAIT_TIME)
 
     m1 = f"model-{''.join(random.choices(string.ascii_uppercase, k=8))}"
 
@@ -101,7 +105,9 @@ def test_sagemaker_update_handles_failed_endpoint():
 def test_sagemaker_update_handles_creating_updating_status_endpoint():
     s = SageMakerDeployTarget()
     s.teardown()
+    time.sleep(SETUP_WAIT_TIME)
     s.init()
+    time.sleep(SETUP_WAIT_TIME)
 
     m1 = f"model-{''.join(random.choices(string.ascii_uppercase, k=8))}"
 
@@ -223,7 +229,9 @@ def test_sagemaker_update_handles_creating_updating_status_endpoint():
 def test_sagemaker_creates_and_updates_endpoints():
     s = SageMakerDeployTarget()
     s.teardown()
+    time.sleep(SETUP_WAIT_TIME)
     s.init()
+    time.sleep(SETUP_WAIT_TIME)
 
     m1 = f"model-{''.join(random.choices(string.ascii_uppercase, k=8))}"
     m2 = f"model-{''.join(random.choices(string.ascii_uppercase, k=8))}"
@@ -322,6 +330,4 @@ def test_sagemaker_creates_and_updates_endpoints():
         desired_status_set={"InService"},
     )
 
-    s.teardown()
-    s.teardown()
     s.teardown()

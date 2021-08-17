@@ -143,7 +143,8 @@ class SageMakerDeployTarget(DeployTarget):
 
             self._poll_endpoints_until_status(
                 endpoint_names=endpoint_names,
-                desired_status_set={"InService"},
+                desired_status_set={"InService", "Failed"},
+                allow_subset_to_match=True,
             )
 
             logger.info("All Sagemaker Endpoints are deletable")
@@ -430,6 +431,7 @@ class SageMakerDeployTarget(DeployTarget):
         self,
         endpoint_names: List[str],
         desired_status_set: Set[str],
+        allow_subset_to_match: bool = False,
         max_wait_seconds: int = 20 * 60,
         polling_delay: int = 30,
     ):
@@ -443,14 +445,20 @@ class SageMakerDeployTarget(DeployTarget):
                 )["EndpointStatus"]
                 status_set.add(status)
 
-            if (status_set == desired_status_set) or (len(status_set) == 0):
+            if allow_subset_to_match:
+                matches = status_set.issubset(desired_status_set)
+            else:
+                matches = status_set == desired_status_set
+
+            if matches or (len(status_set) == 0):
                 break
             else:
-                print(
+                logger.info(
                     f"Current Status Set {status_set}. "
-                    + f"Desired Set {desired_status_set}. Waiting 10s."
+                    + f"Desired Set {desired_status_set}. "
+                    + f"Waiting {polling_delay}s."
                 )
-                time.sleep(10)
+                time.sleep(polling_delay)
 
     def _new_endpoint_config(
         self,
