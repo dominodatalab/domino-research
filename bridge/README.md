@@ -129,6 +129,8 @@ mypy bridge
 flake8 bridge
 
 # Unit tests (only run when AWS credentials present and take 20+ minutes)
+# WARNING: the tests will teardown all brdg resources in the target account
+# and region, so only use in an account/region without production models.
 python -m pytest
 
 # Automatically fix lints
