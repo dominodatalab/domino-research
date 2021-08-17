@@ -178,13 +178,13 @@ export AWS_ACCESS_KEY_ID=
 export AWS_SECRET_ACCESS_KEY=
 ```
 
-1. Create S3 bucket:
+2. Create S3 bucket:
 
 ```
 aws s3api create-bucket --bucket $AWS_BUCKET_NAME --acl private --create-bucket-configuration "{\"LocationConstraint\":\"${AWS_REGION}\"}"
 ```
 
-1. Change to the `bridge/examples/mlflow` directory and run `docker-compose up -d`.
+3. Change to the `bridge/examples/mlflow` directory and run `docker-compose up -d`.
 
 It should take about 30 seconds to start up and that's it! You should be able
 to navigate to `http://localhost:5000` to see the Mlflow UI. When configuring
