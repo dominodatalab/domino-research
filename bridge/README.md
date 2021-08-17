@@ -119,6 +119,8 @@ Any changes you make to the code will be picked up only on a restart of `bridge 
 
 ## Linting / Testing
 
+To run our linting/testing:
+
 ```
 pip install -r requirements-dev.txt
 
@@ -134,6 +136,17 @@ python -m pytest
 # Automatically fix lints
 black .
 ```
+
+We also have these set up as pre-commit hooks. To use pre-commit:
+
+```
+pip install -r requirements-dev.txt
+
+# install pre-commit
+pre-commit install
+```
+
+The checks above will run on each git commit.
 
 ## Build Docker Image
 
