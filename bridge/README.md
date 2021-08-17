@@ -234,7 +234,7 @@ the run as a new version of this model. Running the script again will
 create another version of the same model.
 
 If you are going to register your own models into MLflow,
-make sure they follow the guidelines in the [quickstart](#quick-start).
+make sure they follow the guidelines in the [quickstart](#2-run-bridge).
 
 #### 5. Configuring Bridge to use the local MLflow registry
 
