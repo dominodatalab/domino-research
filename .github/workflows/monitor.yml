@@ -1,0 +1,42 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: tests
+
+on: push
+
+jobs:
+  lint_and_test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: monitor
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest mypy black==20.8b1 requests
+        pip install -e .
+    - name: Lint project with black
+      run: |
+        black --check --diff .
+    - name: Lint application with flake8
+      run: |
+        flake8 monitor --count --show-source --statistics
+    - name: Check application with mypy
+      run: |
+        mypy monitor
+    - name: Lint tests with flake8
+      run: |
+        flake8 tests --count --show-source --statistics
+    - name: Check tests with mypy
+      run: |
+        mypy tests
+    - name: Test with pytest
+      run: |
+        python -m pytest
