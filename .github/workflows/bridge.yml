@@ -3,7 +3,10 @@
 
 name: tests
 
-on: push
+on:
+  push:
+    paths:
+    - "bridge/**"
 
 jobs:
   bridge:
