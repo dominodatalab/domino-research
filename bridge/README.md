@@ -109,6 +109,42 @@ The command will remove:
 * The Bridge S3 model artifact bucket.
 * The Bridge Sagemaker IAM role.
 
+## Analytics
+
+Bridge collects *completely anonymous* usage metrics by default.
+
+We collect the following metrics:
+
+- Count of Bridge deploy target init/destroys. Collected when you run `bridge init/destroy XXX`.
+- Count of Bridge model versions deployed by Bridge. Collected when you run `bridge run`.
+
+Here is a sample of the data collected for a single
+iteration of the `bridge run` control loop:
+
+```
+{
+    'deploy_kind': 'sagemaker',
+    'num_deployments': 3,
+    'num_deployments_created': 0,
+    'num_deployments_deleted': 0,
+    'execution_time': 0.7254068851470947
+}
+```
+
+To opt out, set the environment variable `BRIDGE_ANALYTICS_OPT_OUT=1`. You can do this by adding
+`-e BRIDGE_ANALYTICS_OPT_OUT=1` when you run Bridge in docker. For example:
+
+```
+docker run -it \
+    -e BRIDGE_MLFLOW_REGISTRY_URI=${MLFLOW_REGISTRY_URI} \
+    -e BRIDGE_MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI} \
+    -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+    -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+    -e AWS_DEFAULT_REGION=${AWS_REGION} \
+    -e BRIDGE_ANALYTICS_OPT_OUT=1 \
+    quay.io/domino/bridge:latest
+```
+
 ## Development
 
 #### 1. In this directory (`domino-research/bridge`): 

@@ -22,7 +22,8 @@ class AnalyticsClient:
     def __init__(self, deploy_target: DeployTarget):
         mp_api_key = os.environ.get("MIXPANEL_API_KEY")
 
-        analytics_configured = mp_api_key is not None
+        analytics_configured = bool(mp_api_key)  # false if None (unset) or ""
+
         analytics_opted_out = (
             os.environ.get("BRIDGE_ANALYTICS_OPT_OUT") is not None
         )
