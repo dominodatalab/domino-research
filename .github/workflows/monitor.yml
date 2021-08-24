@@ -6,14 +6,14 @@ name: tests
 on:
   push:
     paths:
-    - "bridge/**"
+    - "monitor/**"
 
 jobs:
-  bridge:
+  lint_and_test:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: bridge
+        working-directory: monitor
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.9
@@ -30,10 +30,10 @@ jobs:
         black --check --diff .
     - name: Lint application with flake8
       run: |
-        flake8 bridge --count --show-source --statistics
+        flake8 monitor --count --show-source --statistics
     - name: Check application with mypy
       run: |
-        mypy bridge
+        mypy monitor
     - name: Lint tests with flake8
       run: |
         flake8 tests --count --show-source --statistics

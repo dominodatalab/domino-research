@@ -2,9 +2,6 @@ FROM quay.io/domino/python-public:3.9.6-slim
 
 ARG MIXPANEL_KEY=""
 
-RUN apt-get update \
-    && apt-get install --no-install-recommends -y git \
-    && rm -rf /var/lib/apt/lists/*
 RUN pip install --upgrade pip
 
 WORKDIR /app
