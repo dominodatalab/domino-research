@@ -4,12 +4,17 @@ import os
 import sys
 from pprint import pformat
 from typing import List, Dict, Set
+from bridge.analytics import (
+    track_model_versions_created,
+    track_model_versions_deleted,
+    track_control_loop_executed,
+)
 from bridge.types import (
     Model,
     ModelVersion,
     Artifact,
-    DEFAULT_MODEL_CACHE_PATH,
 )
+from bridge.constants import DEFAULT_MODEL_CACHE_PATH
 import shutil
 from bridge.deploy.registry import DEPLOY_REGISTRY
 
@@ -39,7 +44,7 @@ def main():
     try:
         deploy_client = DEPLOY_REGISTRY[DEPLOY_KIND]()
     except KeyError:
-        logger.error(f"Unrecognized BRIDGE_REGISTRY_KIND '{REGISTRY_KIND}'")
+        logger.error(f"Unrecognized BRIDGE_DEPLOY_KIND '{DEPLOY_KIND}'")
         sys.exit(1)
 
     SCAN_INTERVAL = float(os.environ.get("BRIDGE_SCAN_INTERVAL_S", "15"))
@@ -96,6 +101,19 @@ def main():
             )
             deploy_client.delete_versions(expired_versions)
             logger.info("Update complete.")
+
+            # Analytics
+            if num_new_versions := len(new_versions_map) > 0:
+                track_model_versions_created(deploy_client, num_new_versions)
+
+            if num_deleted_versions := len(expired_versions) > 0:
+                track_model_versions_deleted(
+                    deploy_client, num_deleted_versions
+                )
+
+            track_control_loop_executed(
+                deploy_client, len(desired_models), len(current_models)
+            )
         except Exception as e:
             logger.exception(e)
 

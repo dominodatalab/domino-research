@@ -1,4 +1,4 @@
 from bridge.deploy.sagemaker import SageMakerDeployTarget
 
-
-DEPLOY_REGISTRY = {"sagemaker": SageMakerDeployTarget}
+SAGEMAKER = "sagemaker"
+DEPLOY_REGISTRY = {SageMakerDeployTarget.target_name: SageMakerDeployTarget}

@@ -26,8 +26,3 @@ class Model:
 @dataclass
 class Artifact:
     path: str
-
-
-LATEST_STAGE_NAME = "Latest"
-
-DEFAULT_MODEL_CACHE_PATH = ".brdg-models"

@@ -1,5 +1,12 @@
 import logging
 from typing import List, Dict, Set, Union, Any
+from bridge.analytics import (
+    track_deploy_client_init,
+    track_deploy_client_destroy,
+    track_model_routing_created,
+    track_model_routing_updated,
+    track_model_routing_deleted,
+)
 from bridge.types import Model, ModelVersion, Artifact
 from bridge.deploy import DeployTarget
 import boto3  # type: ignore
@@ -16,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class SageMakerDeployTarget(DeployTarget):
+    target_name = "sagemaker"
     execution_role = "bridge-sagemaker-execution"
     execution_role_policy_arn = (
         "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
@@ -40,8 +48,8 @@ class SageMakerDeployTarget(DeployTarget):
             sts = session.client("sts")
             self.identity = sts.get_caller_identity()
             logger.debug(pformat(self.identity))
-            account_id = self.identity["Account"]
-            self.bucket_name = f"bridge-models-{account_id}-{self.region}"
+            self.account_id = self.identity["Account"]
+            self.bucket_name = f"bridge-models-{self.account_id}-{self.region}"
 
             logger.info(
                 f"SageMakerDeployTarget initialized for region {self.region}"
@@ -52,6 +60,10 @@ class SageMakerDeployTarget(DeployTarget):
         except NoCredentialsError as e:
             logger.error("No AWS Credentials, cannot initialize.")
             raise e
+
+    @property
+    def target_id(self) -> str:
+        return self.account_id
 
     def list_models(self) -> List[Model]:
         endpoint_prefix = f"{self.sagemaker_name_prefix}-"
@@ -231,6 +243,8 @@ class SageMakerDeployTarget(DeployTarget):
         except Exception as e:
             logger.exception(e)
 
+        track_deploy_client_destroy(self)
+
     def init(self):
         # Create S3 Bucket ${ACCOUNT_ID}-${REGION}-bridge-models
         # This does not appear to cause errors when the bucket already exists.
@@ -284,6 +298,8 @@ class SageMakerDeployTarget(DeployTarget):
         )
         logger.debug(response)
 
+        track_deploy_client_init(self)
+
     def create_versions(self, new_versions: Dict[ModelVersion, Artifact]):
         for version, artifact in new_versions.items():
             self._upload_version_artifact(version, artifact)
@@ -321,9 +337,11 @@ class SageMakerDeployTarget(DeployTarget):
                         self._update_endpoint(
                             model_name, stage, desired_versions
                         )
+                        track_model_routing_updated(self)
                 else:
                     # model-stage is new, create model-stage endpoint
                     self._create_endpoint(model_name, stage, desired_versions)
+                    track_model_routing_created(self)
 
         # Iterate through current state and remove endpoints for
         # model-stage pairs not in the desired state
@@ -337,6 +355,7 @@ class SageMakerDeployTarget(DeployTarget):
             ) in current_model_stage_versions.items():
                 if desired_routing.get(model_name, {}).get(stage) is None:
                     self._delete_endpoint(model_name, stage)
+                    track_model_routing_deleted(self)
 
     def _create_endpoint(
         self, model_name: str, stage: str, version_ids: Set[str]
@@ -567,9 +586,8 @@ class SageMakerDeployTarget(DeployTarget):
         # and is then re-created, leading to an error due to name
         # conflict.
         try:
-            account_id = self.identity["Account"]
             execution_role_arn = (
-                f"arn:aws:iam::{account_id}:role/{self.execution_role}"
+                f"arn:aws:iam::{self.account_id}:role/{self.execution_role}"
             )
             self.sagemaker_client.create_model(
                 ModelName=self._sagemaker_model_name_for_version(version),
