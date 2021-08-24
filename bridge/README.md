@@ -131,10 +131,6 @@ pip install -e .
 
 In addition, you can use any standard `boto3` or MlFlow environment variables.
 
-If you do use any new variables not listed above and
-that a user will need to use to use bridge, then add
-them to the quickstart above.
-
 #### 3. Finally, run the control loop:
 
 ```bash

@@ -1,12 +1,5 @@
 import logging
 from typing import List, Dict, Set, Union, Any
-from bridge.analytics import (
-    track_deploy_client_init,
-    track_deploy_client_destroy,
-    track_model_routing_created,
-    track_model_routing_updated,
-    track_model_routing_deleted,
-)
 from bridge.types import Model, ModelVersion, Artifact
 from bridge.deploy import DeployTarget
 import boto3  # type: ignore
@@ -243,8 +236,6 @@ class SageMakerDeployTarget(DeployTarget):
         except Exception as e:
             logger.exception(e)
 
-        track_deploy_client_destroy(self)
-
     def init(self):
         # Create S3 Bucket ${ACCOUNT_ID}-${REGION}-bridge-models
         # This does not appear to cause errors when the bucket already exists.
@@ -298,8 +289,6 @@ class SageMakerDeployTarget(DeployTarget):
         )
         logger.debug(response)
 
-        track_deploy_client_init(self)
-
     def create_versions(self, new_versions: Dict[ModelVersion, Artifact]):
         for version, artifact in new_versions.items():
             self._upload_version_artifact(version, artifact)
@@ -337,11 +326,9 @@ class SageMakerDeployTarget(DeployTarget):
                         self._update_endpoint(
                             model_name, stage, desired_versions
                         )
-                        track_model_routing_updated(self)
                 else:
                     # model-stage is new, create model-stage endpoint
                     self._create_endpoint(model_name, stage, desired_versions)
-                    track_model_routing_created(self)
 
         # Iterate through current state and remove endpoints for
         # model-stage pairs not in the desired state
@@ -355,7 +342,6 @@ class SageMakerDeployTarget(DeployTarget):
             ) in current_model_stage_versions.items():
                 if desired_routing.get(model_name, {}).get(stage) is None:
                     self._delete_endpoint(model_name, stage)
-                    track_model_routing_deleted(self)
 
     def _create_endpoint(
         self, model_name: str, stage: str, version_ids: Set[str]

@@ -3,6 +3,7 @@ import logging
 import os
 from pprint import pformat
 from bridge.deploy.registry import DEPLOY_REGISTRY
+from bridge.analytics import AnalyticsClient
 
 
 def cli_init(args):
@@ -10,6 +11,7 @@ def cli_init(args):
     deploy_client = DEPLOY_REGISTRY[args.deploy_service]()
     logger.info(f"Initializing Bridge '{pformat(args)}'.")
     deploy_client.init()
+    AnalyticsClient(deploy_client).track_deploy_client_init()
 
 
 def cli_destroy(args):
@@ -17,6 +19,7 @@ def cli_destroy(args):
     deploy_client = DEPLOY_REGISTRY[args.deploy_service]()
     logger.info(f"Destroying Bridge '{pformat(args)}'.")
     deploy_client.teardown()
+    AnalyticsClient(deploy_client).track_deploy_client_destroy()
 
 
 def cli_run(args):
