@@ -4,6 +4,16 @@ from bridge.types import Model, ModelVersion, Artifact
 
 
 class DeployTarget(ABC):
+    @property
+    @abstractmethod
+    def target_name(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def target_id(self) -> str:
+        pass
+
     @abstractmethod
     def list_models(self) -> List[Model]:
         pass

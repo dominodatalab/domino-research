@@ -10,5 +10,7 @@ RUN pip install -e .
 RUN chown -R 1000:1000 /app
 USER 1000
 
+ENV MIXPANEL_API_KEY=6e8b7ccdef38e1905c270f13f0604111
+
 ENTRYPOINT ["bridge"]
 CMD ["run"]
