@@ -1,8 +1,8 @@
-# Monitor
+# Flare
 
 Lightweight model monitoring and alerting framework.
 
-![build](https://github.com/dominodatalab/domino-research/actions/workflows/monitor.yml/badge.svg?branch=main)
+![build](https://github.com/dominodatalab/domino-research/actions/workflows/flare.yml/badge.svg?branch=main)
 
 ## Why
 
@@ -10,7 +10,7 @@ Lightweight model monitoring and alerting framework.
 
 ## Development
 
-#### 1. In this directory (`domino-research/monitor`): 
+#### 1. In this directory (`domino-research/flare`): 
 
 ```bash
 # Install as local package
@@ -25,10 +25,10 @@ To run our linting/testing:
 pip install -r requirements-dev.txt
 
 # Type check
-mypy monitor
+mypy flare
 
 # Lint
-flake8 monitor
+flake8 flare
 
 python -m pytest
 
