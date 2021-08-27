@@ -4,9 +4,10 @@ import json
 import pytest
 from dataclasses import asdict
 import os
-import pandas as pd
+import pandas as pd  # type: ignore
 from monitor.runtime import FLARE_STATISTICS_PATH_VAR
 import logging
+from monitor.alerting import FeatureAlert
 
 
 def generate_statistics():
@@ -105,9 +106,13 @@ def statistics():
         yield f.name
 
 
-def test_outlier(statistics):
+def test_bound(statistics):
     os.environ[FLARE_STATISTICS_PATH_VAR] = statistics
     level = logging.getLevelName("TRACE")
     logging.basicConfig(level=level)
-    x = pd.DataFrame([[-1.0, 2, "3"]], columns=["float", "int", "string"])
+    x = pd.DataFrame([[-1.0, 4, "3"]], columns=["float", "int", "string"])
     session = Flare(x)
+    assert session.feature_alerts == [
+        FeatureAlert(name="float", kind="Bound"),
+        FeatureAlert(name="int", kind="Bound"),
+    ]
