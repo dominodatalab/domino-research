@@ -62,23 +62,28 @@ class NumericalStatistics:
     std_dev: float
     min: float
     max: float
-    distribution: NumericalDistribution
+
+    # TODO: make this non-optional when we
+    # decide to tackle sketches
+    distribution: Optional[NumericalDistribution] = None
 
 
 @dataclass
 class StringStatistics:
     common: CommonStatistics
     distinct_count: int
-    distribution: StringDistribution
+
+    # TODO: make this non-optional when we
+    # decide to tackle string distros
+    distribution: Optional[StringDistribution] = None
 
 
 @dataclass
 class Feature:
     name: str
-    # 'Fractional' | 'Integral' | 'String' | 'Unknown'
     inferred_type: str
-    numerical_statistics: Optional[NumericalStatistics]
-    string_statistics: Optional[StringStatistics]
+    numerical_statistics: Optional[NumericalStatistics] = None
+    string_statistics: Optional[StringStatistics] = None
 
 
 @dataclass

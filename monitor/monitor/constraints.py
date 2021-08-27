@@ -35,13 +35,12 @@ class MonitoringConfig:
 @dataclass
 class Feature:
     name: str
-    # 'Fractional' | 'Integral' | 'String' | 'Unknown'
     inferred_type: str
     # denotes observed non-null value percentage
     completeness: float
-    num_constraints: NumericalConstraints
-    string_constraints: StringConstraints
-    monitoringConfigOverrides: Optional[MonitoringConfig]
+    num_constraints: Optional[NumericalConstraints] = None
+    string_constraints: Optional[StringConstraints] = None
+    monitoringConfigOverrides: Optional[MonitoringConfig] = None
 
 
 @dataclass
