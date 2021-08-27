@@ -1,8 +1,8 @@
 from typing import Optional
-from monitor.utils import (
-    generate_sample_dataframe,
-    SAMPLE_DF_NULL_PERCENTS,
-    SAMPLE_DF_STRING_DOMAINS,
+from monitor.examples import (
+    generate_example_dataframe,
+    EXAMPLE_DF_NULL_PERCENTS,
+    EXAMPLE_DF_STRING_DOMAINS,
 )
 
 from monitor.types import FeatureType
@@ -13,7 +13,7 @@ from monitor.constraints import Feature as ConstraintsFeature
 
 
 def test_type_inference():
-    test_df = generate_sample_dataframe()
+    test_df = generate_example_dataframe()
     constraints = gen_constraints(test_df)
 
     # Integer column with no missing values is
@@ -46,30 +46,31 @@ def test_type_inference():
 
 
 def test_completeness_inference():
-    test_df = generate_sample_dataframe()
+    test_df = generate_example_dataframe()
     constraints = gen_constraints(test_df)
 
     float_0_feature = fetch_constrain_feature("float_0", constraints)
 
     assert (
-        float_0_feature.completeness - (1 - SAMPLE_DF_NULL_PERCENTS["float_0"])
+        float_0_feature.completeness
+        - (1 - EXAMPLE_DF_NULL_PERCENTS["float_0"])
         <= 0.1  # allow some room for rounding
     )
 
 
 def test_string_constraints_inference():
-    test_df = generate_sample_dataframe()
+    test_df = generate_example_dataframe()
     constraints = gen_constraints(test_df)
 
     str_0_feature = fetch_constrain_feature("str_0", constraints)
 
     assert set(str_0_feature.string_constraints.domains) == set(
-        SAMPLE_DF_STRING_DOMAINS
+        EXAMPLE_DF_STRING_DOMAINS
     )
 
 
 def test_numerical_constraints():
-    test_df = generate_sample_dataframe()
+    test_df = generate_example_dataframe()
     constraints = gen_constraints(test_df)
 
     int_0_feature = fetch_constrain_feature("int_0", constraints)
