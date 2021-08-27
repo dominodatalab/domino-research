@@ -8,6 +8,11 @@ setuptools.setup(
     description="Automatically configure serving infrastructure based on model registry.",
     url="https://github.com/dominodatalab/domino-research/bridge",
     packages=setuptools.find_packages(),
-    install_requires=["mlflow==1.19", "boto3==1.18.*", "requests==2.26"],
+    install_requires=[
+        "mlflow==1.19",
+        "boto3==1.18.*",
+        "requests==2.26",
+        "mixpanel==4.9.0",
+    ],
     entry_points={"console_scripts": ["bridge = bridge.cli:main"]},
 )

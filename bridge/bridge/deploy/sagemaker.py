@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class SageMakerDeployTarget(DeployTarget):
+    target_name = "sagemaker"
     execution_role = "bridge-sagemaker-execution"
     execution_role_policy_arn = (
         "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
@@ -40,8 +41,8 @@ class SageMakerDeployTarget(DeployTarget):
             sts = session.client("sts")
             self.identity = sts.get_caller_identity()
             logger.debug(pformat(self.identity))
-            account_id = self.identity["Account"]
-            self.bucket_name = f"bridge-models-{account_id}-{self.region}"
+            self.account_id = self.identity["Account"]
+            self.bucket_name = f"bridge-models-{self.account_id}-{self.region}"
 
             logger.info(
                 f"SageMakerDeployTarget initialized for region {self.region}"
@@ -52,6 +53,10 @@ class SageMakerDeployTarget(DeployTarget):
         except NoCredentialsError as e:
             logger.error("No AWS Credentials, cannot initialize.")
             raise e
+
+    @property
+    def target_id(self) -> str:
+        return self.account_id
 
     def list_models(self) -> List[Model]:
         endpoint_prefix = f"{self.sagemaker_name_prefix}-"
@@ -567,9 +572,8 @@ class SageMakerDeployTarget(DeployTarget):
         # and is then re-created, leading to an error due to name
         # conflict.
         try:
-            account_id = self.identity["Account"]
             execution_role_arn = (
-                f"arn:aws:iam::{account_id}:role/{self.execution_role}"
+                f"arn:aws:iam::{self.account_id}:role/{self.execution_role}"
             )
             self.sagemaker_client.create_model(
                 ModelName=self._sagemaker_model_name_for_version(version),

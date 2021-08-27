@@ -3,13 +3,14 @@ import time
 import os
 import sys
 from pprint import pformat
-from typing import List, Dict, Set
+from typing import List, Dict, Set, Tuple
+from bridge.analytics import AnalyticsClient
 from bridge.types import (
     Model,
     ModelVersion,
     Artifact,
-    DEFAULT_MODEL_CACHE_PATH,
 )
+from bridge.constants import DEFAULT_MODEL_CACHE_PATH
 import shutil
 from bridge.deploy.registry import DEPLOY_REGISTRY
 
@@ -39,12 +40,16 @@ def main():
     try:
         deploy_client = DEPLOY_REGISTRY[DEPLOY_KIND]()
     except KeyError:
-        logger.error(f"Unrecognized BRIDGE_REGISTRY_KIND '{REGISTRY_KIND}'")
+        logger.error(f"Unrecognized BRIDGE_DEPLOY_KIND '{DEPLOY_KIND}'")
         sys.exit(1)
+
+    analytics_client = AnalyticsClient(deploy_client)
 
     SCAN_INTERVAL = float(os.environ.get("BRIDGE_SCAN_INTERVAL_S", "15"))
     while True:
         try:
+            start_time = time.time()
+
             logger.info("Reading models from registry")
             desired_models = registry_client.list_models()
             logger.info(f"Found {len(desired_models)} desired model(s).")
@@ -96,6 +101,25 @@ def main():
             )
             deploy_client.delete_versions(expired_versions)
             logger.info("Update complete.")
+            end_time = time.time()
+
+            # Calculate counts of changes for analytics
+            desired_deployments = deployments_from_routing(desired_routing)
+            current_deployments = deployments_from_routing(current_routing)
+
+            logger.debug(f"Desired deployments: {desired_deployments}")
+            logger.debug(f"Current deployments: {current_deployments}")
+
+            deleted_deployments = current_deployments - desired_deployments
+            created_deployments = desired_deployments - current_deployments
+
+            analytics_client.track_control_loop_executed(
+                len(current_deployments),
+                len(created_deployments),
+                len(deleted_deployments),
+                end_time - start_time,
+            )
+
         except Exception as e:
             logger.exception(e)
 
@@ -110,3 +134,15 @@ def routing_from_models(models: List[Model]) -> Dict[str, Dict[str, Set[str]]]:
         }
         for model in models
     }
+
+
+def deployments_from_routing(
+    state_dict: Dict[str, Dict[str, Set[str]]]
+) -> Set[Tuple[str, str, str]]:
+    tuples: Set[Tuple[str, str, str]] = set()
+    for model, stage_versions in state_dict.items():
+        for stage, versions in stage_versions.items():
+            for version in versions:
+                tuples.add((model, stage, version))
+
+    return tuples

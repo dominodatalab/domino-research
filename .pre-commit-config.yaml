@@ -6,7 +6,7 @@ repos:
   rev: 21.7b0
   hooks:
   - id: black
-    files: ^bridge/bridge|^bridge/tests|^bridge/examples
+    files: ^bridge
 
 - repo: https://gitlab.com/pycqa/flake8
   rev: 3.9.2

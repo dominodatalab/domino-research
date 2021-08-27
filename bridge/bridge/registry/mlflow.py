@@ -1,6 +1,7 @@
 import logging
 from typing import List, Dict, Optional
-from bridge.types import Model, ModelVersion, Artifact, LATEST_STAGE_NAME
+from bridge.types import Model, ModelVersion, Artifact
+from bridge.constants import LATEST_STAGE_NAME
 from bridge.registry import ModelRegistry
 from bridge.util import compress
 from mlflow.tracking import MlflowClient  # type: ignore
@@ -17,7 +18,7 @@ class Client(ModelRegistry):
 
         logger.info(
             (
-                f"Registry client initialized with resistry uri "
+                f"Registry client initialized with registry uri "
                 f"'{registry_uri}' and tracking uri '{tracking_uri}'"
             )
         )
