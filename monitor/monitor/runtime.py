@@ -66,17 +66,19 @@ class Flare(object):
                 self.constraints = None
 
         self.feature_alerts: List[FeatureAlert] = []
-        self.feature_alerts.extend(self._check_statistics(x))
         self.feature_alerts.extend(self._check_constraints(x))
+        self.feature_alerts.extend(self._check_statistics(x))
 
     def _check_statistics(self, x: pd.DataFrame) -> List[FeatureAlert]:
         if self.statistics is None:
+            logger.info("Skipping statistical checks.")
             return []
 
         result = []
         for feature in self.statistics.features:
             col = x[feature.name]
             result.extend(self._check_feature_statistics(feature, col))
+        logger.info(f"Found {len(result)} statistical alerts.")
         return result
 
     def _check_feature_statistics(
@@ -90,10 +92,12 @@ class Flare(object):
         if numerical_statistic := statistic.numerical_statistics:
             # Check outlier
             if (
-                abs(col - numerical_statistic.mean)
-                / numerical_statistic.std_dev
+                (
+                    abs(col - numerical_statistic.mean)
+                    / numerical_statistic.std_dev
+                )
                 > outlier_cutoff
-            ):
+            ).any():
                 result.append(
                     FeatureAlert(
                         name=col.name, kind=FeatureAlertKind.OUTLIER.value
