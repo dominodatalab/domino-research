@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
-from monitor.types import FeatureType
 
 
 @dataclass
@@ -82,7 +81,7 @@ class StringStatistics:
 @dataclass
 class Feature:
     name: str
-    inferred_type: FeatureType
+    inferred_type: str
     numerical_statistics: Optional[NumericalStatistics] = None
     string_statistics: Optional[StringStatistics] = None
 

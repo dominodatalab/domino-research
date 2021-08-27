@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from typing import List, Optional
-from monitor.types import FeatureType
 
 
 @dataclass
@@ -36,7 +35,7 @@ class MonitoringConfig:
 @dataclass
 class Feature:
     name: str
-    inferred_type: FeatureType
+    inferred_type: str
     # denotes observed non-null value percentage
     completeness: float
     num_constraints: Optional[NumericalConstraints] = None

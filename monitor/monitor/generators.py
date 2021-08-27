@@ -51,7 +51,9 @@ def _create_statistics_feature(feature_series: pd.Series) -> StatisticsFeature:
     feature_name = feature_series.name
     feature_type = _infer_feature_type(feature_series)
 
-    feature = StatisticsFeature(name=feature_name, inferred_type=feature_type)
+    feature = StatisticsFeature(
+        name=feature_name, inferred_type=feature_type.value
+    )
 
     # NOTE (Josh): this is duplicative of the completeness
     # constraint and also seems internally redundant?
@@ -72,7 +74,7 @@ def _create_statistics_feature(feature_series: pd.Series) -> StatisticsFeature:
 
     elif feature_type == FeatureType.STRING:
         feature.string_statistics = StringStatistics(
-            common=common, distinct_count=len(feature_series.unique())
+            common=common, distinct_count=len(feature_series.dropna().unique())
         )
 
     return feature
@@ -92,7 +94,7 @@ def _create_constraints_feature(
 
     feature = ConstraintFeature(
         name=feature_name,
-        inferred_type=feature_type,
+        inferred_type=feature_type.value,
         completeness=feature_completeness,
     )
 
@@ -103,7 +105,7 @@ def _create_constraints_feature(
         )
 
     elif feature_type == FeatureType.STRING:
-        uniques = feature_series.unique()
+        uniques = feature_series.dropna().unique()
         if len(uniques) <= MAX_UNIQUES_THRESHOLD:
             feature.string_constraints = StringConstraints(
                 domains=list(uniques)
@@ -124,7 +126,8 @@ def _infer_feature_type(feature_series: pd.Series) -> FeatureType:
     elif dtype_name.startswith("float"):
         feature_type = FeatureType.FRACTIONAL
 
-    elif dtype_name == "string":
+    # {"string", "<U16/32/...", ">U16/32/...", "=U16/32/..."}
+    elif (dtype_name == "string") or (dtype_name[:2] in {"<U", ">U", "=U"}):
         feature_type = FeatureType.STRING
 
     elif dtype_name == "object":
@@ -136,8 +139,7 @@ def _infer_feature_type(feature_series: pd.Series) -> FeatureType:
         # If dataset is small-ish, attempt to infer
         # if object dtype is actually strings
         if len(feature_series) <= MAX_ROWS_FOR_OBJECT_TYPE_INFERENCE:
-            types = set(map(type, feature_series))
-
+            types = set(map(type, feature_series.dropna()))
             if types == {str}:
                 feature_type = FeatureType.STRING
 

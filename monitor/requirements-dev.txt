@@ -3,4 +3,3 @@ flake8==3.8.4
 mypy==0.800
 pre-commit==2.14.0
 pytest==6.2.2
-jupyter==1.0.0

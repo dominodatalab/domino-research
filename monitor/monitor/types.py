@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class FeatureType(Enum):
-    FRACTIONAL = "fractional"
-    INTEGRAL = "integral"
-    STRING = "string"
-    UNKNOWN = "unknown"
+    FRACTIONAL = "Fractional"
+    INTEGRAL = "Integral"
+    STRING = "String"
+    UNKNOWN = "Unknown"
