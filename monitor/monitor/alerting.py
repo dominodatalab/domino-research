@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 import requests  # type: ignore
 from typing import Dict, List, Optional, Any
 import logging
-from pprint import pprint
+
 
 logger = logging.getLogger("flare")
 
@@ -82,19 +82,6 @@ class SlackAlertTarget(AlertWebhookTarget):
     def _alert_webhook_url(self) -> str:
         return f"https://hooks.slack.com/services{self.slack_webhook_path}"
 
-    # def _format_alert(self, alert: Alert) -> Dict[str, Any]:
-    #     return {
-    #         "blocks": [
-    #             {
-    #                 "type": "section",
-    #                 "text": {
-    #                     "type": "mrkdwn",
-    #                     "text": "Hi David :wave:"
-    #                 }
-    #             }
-    #         ]
-    #     }
-
     def _format_alert(self, alert: Alert) -> Dict[str, Any]:
         msg_structure: Dict[str, Any] = {
             "blocks": [
@@ -114,7 +101,10 @@ class SlackAlertTarget(AlertWebhookTarget):
                 [
                     {
                         "type": "header",
-                        "text": {"type": "plain_text", "text": "Runtime Exception"},
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Runtime Exception",
+                        },
                     },
                     {
                         "type": "section",
@@ -145,7 +135,8 @@ class SlackAlertTarget(AlertWebhookTarget):
                             "type": "mrkdwn",
                             "text": "\n".join(
                                 [
-                                    f"- Feature: {fa.name}. " + f"Alert kind: {fa.kind}"
+                                    f"- Feature: {fa.name}. "
+                                    + f"Alert kind: {fa.kind}"
                                     for fa in alert.features
                                 ]
                             ),
