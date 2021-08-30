@@ -8,5 +8,10 @@ setuptools.setup(
     description="Lightweight model monitoring framework.",
     url="https://github.com/dominodatalab/domino-research/monitor",
     packages=setuptools.find_packages(),
-    install_requires=["dacite==1.6", "numpy==1.21", "pandas==1.3"],
+    install_requires=[
+        "dacite==1.6",
+        "pandas==1.3.1",
+        "numpy==1.21.1",
+        "requests==2.26.0",
+    ],
 )
