@@ -34,5 +34,6 @@ class InferenceException:
 
 @dataclass
 class Alert:
+    model_name: str
     features: List[FeatureAlert]
     exception: Optional[InferenceException]
