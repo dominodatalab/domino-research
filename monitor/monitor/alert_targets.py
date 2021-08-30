@@ -1,6 +1,6 @@
-from dataclass import dataclass, asdict
+from dataclasses import dataclass, asdict
 from abc import ABC, abstractmethod
-import requests
+import requests  # type: ignore
 from typing import Dict
 import logging
 
@@ -35,7 +35,8 @@ class AlertWebhookTarget(ABC):
         else:
             logger.error(
                 f"Failed to send alert to {type(self).__name__}. "
-                + f"Code: {resp.status_code}. Body: {resp.text}")
+                + f"Code: {resp.status_code}. Body: {resp.text}"
+            )
 
 
 class SlackAlertTarget(AlertWebhookTarget):
