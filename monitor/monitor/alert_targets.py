@@ -5,7 +5,7 @@ from typing import Dict
 import logging
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("flare")
 
 
 @dataclass
