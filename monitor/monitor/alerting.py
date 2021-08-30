@@ -2,6 +2,10 @@ from dataclass import dataclass, asdict
 from abc import ABC, abstractmethod
 import requests
 from typing import Dict
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -11,25 +15,37 @@ class Alert:
     kind: str = "Type"
 
 
-class AlertTarget(ABC):
-    # NOTE (Josh): who should be responsible for retries?
-    # If not this class, then this method needs to return
-    # a success/failure state.
+class AlertWebhookTarget(ABC):
     @abstractmethod
-    def send_alert(self, alert: Alert):
+    def _alert_webhook_url(self) -> str:
         pass
 
-
-class SlackAlertTarget(AlertTarget):
-    def __init__(self, webhook_path: str):
-        # this is everything after slack.com/services
-        # I.E: /XXXXX/XXXXXX/XXXXXXXXXXXXXXXXXXXX
-        self.webhook_path = webhook_path
+    @abstractmethod
+    def _format_alert(self, alert: Alert) -> Dict[str, str]:
+        pass
 
     def send_alert(self, alert: Alert):
-        requests.post(
-            f"https://hooks.slack.com/services{self.webhook_path}",
-            data=self._format_alert(alert))
+        formatted_alert = self._format_alert(alert)
+        logger.debug(formatted_alert)
+
+        resp = requests.post(self._alert_webhook_url(), data=formatted_alert)
+
+        if resp.ok:
+            logger.info(f"Sent alert to {type(self).__name__}")
+        else:
+            logger.error(
+                f"Failed to send alert to {type(self).__name__}. "
+                + f"Code: {resp.status_code}. Body: {resp.text}")
+
+
+class SlackAlertTarget(AlertWebhookTarget):
+    def __init__(self, slack_webhook_path: str):
+        # Everything after https://hooks.slack.com/services
+        # FORMAT: /XXXXX/XXXXXX/XXXXXXXXXXXXXXXXXXXX
+        self.slack_webhook_path = slack_webhook_path
+
+    def _alert_webhook_url(self) -> str:
+        return f"https://hooks.slack.com/services{self.slack_webhook_path}"
 
     def _format_alert(self, alert: Alert) -> Dict[str, str]:
         return {
@@ -40,16 +56,26 @@ class SlackAlertTarget(AlertTarget):
             )
         }
 
-class ZapierAlertTarget(AlertTarget):
-    def __init__(self, webhook_path: str):
-        # this is everything after https://hooks.zapier.com/hooks/catch
-        # I.E: /XXXXX/XXXXXX
-        self.webhook_path = webhook_path
 
-    def send_alert(self, alert: Alert):
-        requests.post(
-            f"https://hooks.zapier.com/services{self.webhook_path}",
-            data=self._format_alert(alert))
+class ZapierAlertTarget(AlertWebhookTarget):
+    def __init__(self, zapier_webhook_path: str):
+        # this is everything after https://hooks.zapier.com/hooks/catch
+        # FORMAT: /XXXXX/XXXXXX
+        self.zapier_webhook_path = zapier_webhook_path
+
+    def _alert_webhook_url(self) -> str:
+        return f"https://hooks.zapier.com/services{self.zapier_webhook_path}"
+
+    def _format_alert(self, alert: Alert) -> Dict[str, str]:
+        return asdict(alert)
+
+
+class CustomAlertTarget(AlertWebhookTarget):
+    def __init__(self, webhook_url: str):
+        self.webhook_url = webhook_url
+
+    def _alert_webhook_url(self) -> str:
+        return self.webhook_url
 
     def _format_alert(self, alert: Alert) -> Dict[str, str]:
         return asdict(alert)
