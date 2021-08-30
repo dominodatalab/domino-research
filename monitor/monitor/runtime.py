@@ -165,7 +165,39 @@ class Flare(object):
                     )
 
         # Check for type
-        # TODO
+        dtype_name = str(col.dtype)
+        if constraint.inferred_type == "Fractional":
+            if not dtype_name.startswith("float"):
+                result.append(
+                    FeatureAlert(
+                        name=col.name,
+                        kind=FeatureAlertKind.TYPE.value,
+                    )
+                )
+
+        elif constraint.inferred_type == "Integral":
+            if not (
+                dtype_name.startswith("int") or dtype_name.startswith("uint")
+            ):
+                result.append(
+                    FeatureAlert(
+                        name=col.name,
+                        kind=FeatureAlertKind.TYPE.value,
+                    )
+                )
+
+        elif constraint.inferred_type == "String":
+            if not (dtype_name == "string") or (
+                dtype_name[:2] in {"<U", ">U", "=U"}
+            ):
+                types = set(map(type, col.dropna()))
+                if types != {str}:
+                    result.append(
+                        FeatureAlert(
+                            name=col.name,
+                            kind=FeatureAlertKind.TYPE.value,
+                        )
+                    )
 
         return result
 
