@@ -1,5 +1,6 @@
 import pandas as pd  # type: ignore
 from typing import Optional, List
+import traceback
 import os
 import logging
 import json
@@ -23,11 +24,17 @@ logger = logging.getLogger("flare")
 
 
 class Flare(object):
+    model_name: str
     constraints: Optional[Constraints]
     statistics: Optional[Statistics]
     feature_alerts: List[FeatureAlert]
+    target: AlertWebhookTarget
 
-    def __init__(self, x: pd.DataFrame, target: AlertWebhookTarget):
+    def __init__(
+        self, model_name: str, x: pd.DataFrame, target: AlertWebhookTarget
+    ):
+        self.model_name = model_name
+        self.target = target
         statistics_path = os.environ.get(
             FLARE_STATISTICS_PATH_VAR, "statistics.json"
         )
@@ -193,17 +200,22 @@ class Flare(object):
     def __enter__(self):
         pass
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, type, value, tb):
         inference_exception = None
         if type is not None:
             logger.exception(
                 f"Exception occured during model inference: {value}"
             )
             inference_exception = InferenceException(
-                message=value, traceback=traceback
+                message=value,
+                traceback="\n".join(
+                    traceback.format_exception(type, value, tb)
+                ),
             )
 
-        alert = Alert(self.feature_alerts, inference_exception)
+        alert = Alert(
+            self.model_name, self.feature_alerts, inference_exception
+        )
 
         if len(alert.features) > 0 or alert.exception is not None:
             self.target.send_alert(alert)
