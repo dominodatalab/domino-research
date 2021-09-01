@@ -112,7 +112,7 @@ def test_bound(statistics):
     logging.basicConfig(level=level)
     x = pd.DataFrame([[-1.0, 4, "3"]], columns=["float", "int", "string"])
     target = CustomAlertTarget("")
-    session = Flare(x, target)
+    session = Flare("test-model", x, target)
     assert session.feature_alerts == [
         FeatureAlert(name="float", kind="Bound"),
         FeatureAlert(name="int", kind="Bound"),
