@@ -4,11 +4,11 @@ import os
 import logging
 import json
 from dacite import from_dict
-from monitor.statistics import Statistics
-from monitor.statistics import Feature as FeatureStatistics
-from monitor.constraints import Constraints
-from monitor.constraints import Feature as FeatureConstraint
-from monitor.alerting import (
+from flare.statistics import Statistics
+from flare.statistics import Feature as FeatureStatistics
+from flare.constraints import Constraints
+from flare.constraints import Feature as FeatureConstraint
+from flare.alerting import (
     FeatureAlert,
     Alert,
     InferenceException,

@@ -1,21 +1,21 @@
-from monitor.constraints import (
+from flare.constraints import (
     Constraints,
     NumericalConstraints,
     StringConstraints,
     MonitoringConfig,
     DistributionConstraints,
 )
-from monitor.constraints import Feature as ConstraintFeature
-from monitor.statistics import (
+from flare.constraints import Feature as ConstraintFeature
+from flare.statistics import (
     Statistics,
     Dataset,
     NumericalStatistics,
     StringStatistics,
     CommonStatistics,
 )
-from monitor.statistics import Feature as StatisticsFeature
+from flare.statistics import Feature as StatisticsFeature
 
-from monitor.types import FeatureType
+from flare.types import FeatureType
 import pandas as pd  # type: ignore
 from dataclasses import asdict
 import json

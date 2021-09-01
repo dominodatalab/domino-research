@@ -1,17 +1,17 @@
-from monitor.runtime import Flare
+from flare.runtime import Flare
 import tempfile
 import json
 import pytest
 from dataclasses import asdict
 import os
 import pandas as pd  # type: ignore
-from monitor.runtime import FLARE_STATISTICS_PATH_VAR
+from flare.runtime import FLARE_STATISTICS_PATH_VAR
 import logging
-from monitor.alerting import FeatureAlert
+from flare.alerting import FeatureAlert
 
 
 def generate_statistics():
-    from monitor.statistics import (
+    from flare.statistics import (
         Dataset,
         StringStatistics,
         CommonStatistics,
