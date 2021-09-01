@@ -13,11 +13,11 @@ from monitor.alerting import (
     Alert,
     InferenceException,
     FeatureAlertKind,
+    AlertWebhookTarget,
 )
 
 FLARE_STATISTICS_PATH_VAR = "FLARE_STATISTICS_PATH"
 FLARE_CONSTRAINTS_PATH_VAR = "FLARE_CONSTRAINTS_PATH"
-FLARE_NOTIFICATION_TOKEN_VAR = "FLARE_NOTIFICATION_TOKEN"
 
 logger = logging.getLogger("flare")
 
@@ -27,43 +27,32 @@ class Flare(object):
     statistics: Optional[Statistics]
     feature_alerts: List[FeatureAlert]
 
-    def __init__(self, x: pd.DataFrame):
-        if FLARE_NOTIFICATION_TOKEN_VAR not in os.environ:
-            logger.warning("No notification token configured.")
-            self.token = None
-        else:
-            self.token = os.environ[FLARE_NOTIFICATION_TOKEN_VAR]
+    def __init__(self, x: pd.DataFrame, target: AlertWebhookTarget):
+        statistics_path = os.environ.get(
+            FLARE_STATISTICS_PATH_VAR, "statistics.json"
+        )
+        try:
+            with open(statistics_path, "r") as f:
+                data = json.load(f)
+            self.statistics = from_dict(data_class=Statistics, data=data)
+            logger.debug(f"Loaded statistics baseline: {self.statistics}")
 
-        if FLARE_STATISTICS_PATH_VAR not in os.environ:
-            logger.warning("No statistics file specified.")
+        except Exception as e:
+            logger.exception(f"Could not load statistics baseline: {e}")
             self.statistics = None
-        else:
-            path = os.environ[FLARE_STATISTICS_PATH_VAR]
-            try:
-                with open(path, "r") as f:
-                    data = json.load(f)
-                self.statistics = from_dict(data_class=Statistics, data=data)
-                logger.debug(f"Loaded statistics baseline: {self.statistics}")
 
-            except Exception as e:
-                logger.exception(f"Could not load statistics baseline: {e}")
-                self.statistics = None
+        constraints_path = os.environ.get(
+            FLARE_CONSTRAINTS_PATH_VAR, "constraints.json"
+        )
 
-        if FLARE_CONSTRAINTS_PATH_VAR not in os.environ:
-            logger.warning("No constraints file specified.")
+        try:
+            with open(constraints_path, "r") as f:
+                data = json.load(f)
+            self.constraints = from_dict(data_class=Constraints, data=data)
+            logger.debug(f"Loaded constraints baseline: {self.constraints}")
+        except Exception as e:
+            logger.exception(f"Could not load constraints baseline: {e}")
             self.constraints = None
-        else:
-            path = os.environ[FLARE_CONSTRAINTS_PATH_VAR]
-            try:
-                with open(path, "r") as f:
-                    data = json.load(f)
-                self.constraints = from_dict(data_class=Constraints, data=data)
-                logger.debug(
-                    f"Loaded constraints baseline: {self.constraints}"
-                )
-            except Exception as e:
-                logger.exception(f"Could not load constraints baseline: {e}")
-                self.constraints = None
 
         self.feature_alerts: List[FeatureAlert] = []
         self.feature_alerts.extend(self._check_constraints(x))
@@ -217,5 +206,4 @@ class Flare(object):
         alert = Alert(self.feature_alerts, inference_exception)
 
         if len(alert.features) > 0 or alert.exception is not None:
-            pass
-            # Emit alert
+            self.target.send_alert(alert)
