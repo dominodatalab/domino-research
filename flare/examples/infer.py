@@ -7,7 +7,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Create alert client
-alert = SlackAlertTarget("/XXXXX/XXXXXX/XXXXXXXXXXXXXXXXXXXX")
+alert_target = SlackAlertTarget("/XXXXX/XXXXXX/XXXXXXXXXXXXXXXXXXXX")
 
 # Load sample data
 x = pd.read_csv("winequality-red.csv", sep=";").head(1)
@@ -17,7 +17,7 @@ del x["quality"]
 model = load("model.joblib")
 
 # Valid Data; No Alerts
-with Flare("wine-quality", x, alert):
+with Flare("wine-quality", x, alert_target):
     output = model.predict(x)
 
 
@@ -25,5 +25,5 @@ with Flare("wine-quality", x, alert):
 x["fixed acidity"] = 3.0
 
 # Generates an error notification
-with Flare("wine-quality", x, alert):
+with Flare("wine-quality", x, alert_target):
     output = model.predict(x)
