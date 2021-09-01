@@ -2,7 +2,7 @@ import setuptools
 import os
 
 setuptools.setup(
-    name="flare",
+    name="domino-flare",
     version=os.environ.get("RELEASE_VERSION", "SNAPSHOT"),
     author="Kevin Flansburg, Josh Broomberg",
     author_email="kevin.flansburg@dominodatalab.com,josh.broomberg@dominodatalab.com",
