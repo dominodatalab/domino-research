@@ -27,7 +27,7 @@ date manually
 
 ## Quick Start
 
-[Check out a Loom recording of this Quick Start!](https://www.loom.com/share/c4498403c2794664a91be0d8e5119ecf)
+[Check out a 7 min demo of this Quick Start!](https://www.loom.com/share/c4498403c2794664a91be0d8e5119ecf)
 
 This quickstart assumes that you already have an MLflow registry to work with.
 If you do not have a registry, or would like to create a new registry for testing,
@@ -35,7 +35,7 @@ please follow our [guide to setting up MLflow for local testing](#mlflow-quickst
 
 #### 1. Initialize Bridge
 
-First, run the `bridge init` to create the AWS resources that Bridge needs to operate.
+First, run the `init` command to create the AWS resources that Bridge needs to operate.
 Running this command will create:
 
 * An S3 bucket for model artifacts.
