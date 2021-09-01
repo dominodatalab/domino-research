@@ -1,4 +1,4 @@
-# Bridge
+# :bridge_at_night: Bridge
 
 The easiest way to deploy from MLflow to SageMaker 
 
