@@ -9,8 +9,8 @@ repos:
     name: black-bridge
     files: ^bridge
   - id: black
-    name: black-monitor
-    files: ^monitor
+    name: black-flare
+    files: ^flare
 
 - repo: https://gitlab.com/pycqa/flake8
   rev: 3.9.2
@@ -19,8 +19,8 @@ repos:
     name: flake8-bridge
     files: ^bridge/bridge|^bridge/tests|^bridge/examples
   - id: flake8
-    name: flake8-monitor
-    files: ^monitor/monitor|^monitor/tests|^monitor/examples
+    name: flake8-flare
+    files: ^flare/flare|^flare/tests|^flare/examples
 
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v0.910
@@ -29,5 +29,5 @@ repos:
     name: flake8-bridge
     files: ^bridge/bridge|^bridge/tests|^bridge/examples
   - id: mypy
-    name: flake8-monitor
-    files: ^monitor/monitor|^monitor/tests|^monitor/examples
+    name: flake8-flare
+    files: ^flare/flare|^flare/tests|^flare/examples

@@ -1,15 +1,15 @@
 from typing import Optional
-from monitor.examples import (
+from flare.examples import (
     generate_example_dataframe,
     EXAMPLE_DF_NULL_PERCENTS,
     EXAMPLE_DF_STRING_DOMAINS,
 )
 
-from monitor.types import FeatureType
-from monitor.generators import gen_constraints
+from flare.types import FeatureType
+from flare.generators import gen_constraints
 
-from monitor.constraints import Constraints
-from monitor.constraints import Feature as ConstraintsFeature
+from flare.constraints import Constraints
+from flare.constraints import Feature as ConstraintsFeature
 
 
 def test_type_inference():

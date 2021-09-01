@@ -1,25 +1,50 @@
-from monitor.constraints import (
+from flare.constraints import (
     Constraints,
     NumericalConstraints,
     StringConstraints,
     MonitoringConfig,
     DistributionConstraints,
 )
-from monitor.constraints import Feature as ConstraintFeature
-from monitor.statistics import (
+from flare.constraints import Feature as ConstraintFeature
+from flare.statistics import (
     Statistics,
     Dataset,
     NumericalStatistics,
     StringStatistics,
     CommonStatistics,
 )
-from monitor.statistics import Feature as StatisticsFeature
+from flare.statistics import Feature as StatisticsFeature
 
-from monitor.types import FeatureType
+from flare.types import FeatureType
 import pandas as pd  # type: ignore
+from dataclasses import asdict
+import json
+import numpy as np
 
 MAX_UNIQUES_THRESHOLD = 20
 MAX_ROWS_FOR_OBJECT_TYPE_INFERENCE = 10 ** 5
+
+
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+
+
+def baseline(df: pd.DataFrame):
+    statistics = gen_statistics(df)
+    constraints = gen_constraints(df)
+
+    with open("constraints.json", "w") as f:
+        json.dump(asdict(constraints), f, cls=NumpyEncoder)
+
+    with open("statistics.json", "w") as f:
+        json.dump(asdict(statistics), f, cls=NumpyEncoder)
 
 
 def gen_statistics(df: pd.DataFrame) -> Statistics:
@@ -101,7 +126,7 @@ def _create_constraints_feature(
     # 3. Enrich with type-specific constraints
     if feature_type in {FeatureType.INTEGRAL, FeatureType.FRACTIONAL}:
         feature.num_constraints = NumericalConstraints(
-            is_non_negative=(feature_series.min() >= 0)
+            is_non_negative=bool(feature_series.min() >= 0)
         )
 
     elif feature_type == FeatureType.STRING:
