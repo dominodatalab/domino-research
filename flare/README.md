@@ -32,9 +32,10 @@ pip install domino-flare
 ### 1. Generate constraints and statistics
 
 Flare runs two kinds of checks at inference-time. `Constraints`
-validate the presence, type, and bounds/values of incoming data.
-They apply to one data point at a time. `Statistics` refer to values
-calculated by aggregating many data points and are used to detect drift.
+validate the presence, type, and unique values of incoming data.
+`Statistics` refer to statistical properties of the training data
+and are currently used to detect bounds/outliers. We plan to support
+data drift detection in an upcoming release.
 
 Flare automatically generates constraints and statistics from a Pandas DataFrame
 containing your training data. To do this, run the code below in your training
@@ -54,11 +55,17 @@ You can explore these in your text editor of choice or explore the notebook
 [here](https://github.com/dominodatalab/domino-research/blob/main/flare/examples/gen_constraints.ipynb)
 for a deeper dive into how we generate the values and the structure of the JSON objects.
 
+*Note*: Flare uses the same format that AWS SageMaker Monitoring uses for these files. This means
+that if you have already used AWS Sagemaker's baselining functonality, we can ingest the baselines
+in JSON format. Unlike SageMaker monitoring, Flare DOES NOT require storing your production data,
+which means it is cheaper to run and preserves the security of production data.
+
 ### 2. Annotate your inference code
 
 Each time your model is executed for inference, Flare will analyze the incoming features
-and through an alert if constraints/statistics are violated. This requires configuring
-an alert target and then executing your model in a Flare context:
+and through an alert if constraints/statistics are violated. It will also capture and report
+any exceptions that occur within the context. This functionality requires configuring an alert target and then
+executing your inference code inside a Flare context.
 
 *Notes:*
 
@@ -88,7 +95,7 @@ access to a Slack Workspace:
    to select the Slack channel alerts will be sent to.
 6. Navigate to "Incoming Webhooks" in the left menu and copy the part of your
    unique URL after `https://hooks.slack.com/services`. The format
-   will be: `/XXXXX/XXXXXX/XXXXXXXXXXXXXXXXXXXX`
+   will be: `/XXXXX/XXXXXX/XXXXXXXXXXXXXXXXXXXX` with a leading slash.
 
 ```
 _metadata:
@@ -115,6 +122,43 @@ When you have the URL path, paste the following into your inference code:
 ```python
 from flare.alerting import SlackAlertTarget
 alert_target = SlackAlertTarget("/XXXXX/XXXXXX/XXXXXXXXXXXXXXXXXXXX")
+```
+
+**Zapier**
+
+Configure a Zap that connects the "Webhooks by Zapier" service to
+a service of your choice. Select the "Catch Hook" type when asked.
+
+Copy the URL and use the part after `https://hooks.zapier.com/hooks/catch`:
+
+```python
+from flare.alerting import ZapierAlertTarget
+alert_target = ZapierAlertTarget("/XXXXX/XXXXXX")
+```
+
+This is an example of the Payload that will be sent to the webhook on an alert:
+
+```JSON
+{
+  "model_name": "wine-quality",
+  "features": [
+    {
+      "name": "fixed acidity",
+      "kind": "Bound"
+    }
+  ],
+  "exception": null
+}
+```
+
+**Custom Webhook**
+
+You can send a webhook to any URL that accepts POST requests. The alert payload
+will be JSON formatted (see the example above):
+
+```python
+from flare.alerting import CustomAlertTarget
+alert_target = CustomAlertTarget("https://yourserver.com/incoming/hooks")
 ```
 
 #### Configure the Flare Context
