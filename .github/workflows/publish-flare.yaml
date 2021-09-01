@@ -3,7 +3,7 @@ name: Upload Flare Package
 on:
   push:
     tags:
-      - "flare-v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-flare"
 
 jobs:
   deploy:
@@ -22,7 +22,7 @@ jobs:
         run: python -m build
       - name: Set Release Version
         shell: bash
-        run: echo "RELEASE_VERSION=${GITHUB_REF/refs\/tags\/flare-/}" >> $GITHUB_ENV
+        run: TAG="${GITHUB_REF/refs\/tags\/v/}";VERSION="${TAG%-flare}"; echo "RELEASE_VERSION=${VERSION}" >> $GITHUB_ENV
       - name: Publish package
         uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
         with:
