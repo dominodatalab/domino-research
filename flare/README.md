@@ -11,7 +11,7 @@ It requires no additional infrastructure and does not capture/exfiltrate product
 
 - Model authors generate constraints and statistics locally using
   the model's training data. These are stored and packaged alongside the model inference code.
-  When constraint violation / statistical drift is detected, alerts are sent through slack/zapier
+  When constraint violation / outliers are detected, alerts are sent through Slack/Zapier
   or to any other webhook target.
 
 - ML/DevOps Engineers host or execute the model using whatever tool/runtime they prefer.
@@ -50,9 +50,9 @@ flare_baseline(X)
 ```
 
 This will create two files in your working directory - `constraints.json` and `statistics.json`.
-You can explore these in your text editor of choice. You can also checkout the notebook
+You can explore these in your text editor of choice or explore the notebook
 [here](https://github.com/dominodatalab/domino-research/blob/main/flare/examples/gen_constraints.ipynb)
-for a deeper dive into how we generate the values and the structure of the json objects.
+for a deeper dive into how we generate the values and the structure of the JSON objects.
 
 ### 2. Annotate your inference code
 
@@ -86,7 +86,7 @@ access to a Slack Workspace:
 4. Paste the manifest below
 5. Click the "Install in Workspace" button and follow the flow
    to select the Slack channel alerts will be sent to.
-6. Naigate to "Incoming Webhooks" in left menu and copy the part of your
+6. Navigate to "Incoming Webhooks" in the left menu and copy the part of your
    unique URL after `https://hooks.slack.com/services`. The format
    will be: `/XXXXX/XXXXXX/XXXXXXXXXXXXXXXXXXXX`
 
@@ -119,7 +119,7 @@ alert_target = SlackAlertTarget("/XXXXX/XXXXXX/XXXXXXXXXXXXXXXXXXXX")
 
 #### Configure the Flare Context
 
-Once your have configure your alert target, add the following to your
+Once you have configure your alert target, add the following to your
 inference code. Note that we expect your inference data to be formatted
 as a Pandas DataFrame. This should work for most modeling frameworks
 that follow the Scikit Learn predict API.
@@ -145,7 +145,7 @@ That's it! Try triggering a test alert by sending some data that violates your c
 If you don't want to deploy your own model, try our example code by doing the following:
 
 1. Clone this repo `git clone https://github.com/dominodatalab/domino-research.git`
-2. Install reqs `pip install scikit-learn pandas domino-flare`
+2. Install the required packages `pip install scikit-learn pandas domino-flare`
 3. `cd domino-research/flare/examples`
 4. Run `python train.py`
 5. Edit `infer.py` to add your Slack webhook path from the step above.
