@@ -11,6 +11,9 @@ repos:
   - id: black
     name: black-flare
     files: ^flare
+  - id: black
+    name: black-checkpoint
+    files: ^checkpoint
 
 - repo: https://gitlab.com/pycqa/flake8
   rev: 3.9.2
@@ -21,13 +24,19 @@ repos:
   - id: flake8
     name: flake8-flare
     files: ^flare/flare|^flare/tests|^flare/examples
+  - id: flake8
+    name: flake8-checkpoint
+    files: ^checkpoint/checkpoint|^checkpoint/tests|^checkpoint/examples
 
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v0.910
   hooks:
   - id: mypy
-    name: flake8-bridge
+    name: mypy-bridge
     files: ^bridge/bridge|^bridge/tests|^bridge/examples
   - id: mypy
-    name: flake8-flare
+    name: mypy-flare
     files: ^flare/flare|^flare/tests|^flare/examples
+  - id: mypy
+    name: mypy-checkpoint
+    files: ^checkpoint/checkpoint|^checkpoint/tests|^checkpoint/examples
