@@ -3,10 +3,10 @@ from sklearn.linear_model import LinearRegression
 import mlflow
 
 
-# configure Mlflow client
 REMOTE_SERVER_URI = "http://localhost:5000"
 MODEL_NAME = "SimpleLinearRegression"
 
+# configure Mlflow client
 mlflow.set_tracking_uri(REMOTE_SERVER_URI)
 
 # enable autologging
@@ -21,16 +21,7 @@ model = LinearRegression()
 with mlflow.start_run() as run:
     model.fit(X, y)
 
-# create model version
-print(run.info)
-client = mlflow.tracking.MlflowClient(
-    tracking_uri=REMOTE_SERVER_URI, registry_uri=REMOTE_SERVER_URI
-)
-
-try:
-    client.create_registered_model(MODEL_NAME)
-except mlflow.exceptions.MlflowException:
-    # model already exists
-    pass
-
-client.create_model_version(MODEL_NAME, run.info.artifact_uri, run.info.run_id)
+# Create new model version for model MODEL_NAME
+# In the call below '/model' refers to the folder in the
+# run's artifacts that contains the MLmodel file.
+mlflow.register_model(f"runs:/{run.info.run_id}/model", MODEL_NAME)
