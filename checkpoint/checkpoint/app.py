@@ -1,10 +1,10 @@
 from flask import Flask
 from flask import request, Response, send_file
-from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy  # type: ignore
 import requests  # type: ignore
+from bs4 import BeautifulSoup  # type: ignore
 import json
 import os
-from bs4 import BeautifulSoup  # type: ignore
 
 
 app = Flask(
@@ -17,7 +17,6 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////tmp/test.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
-
 
 REGISTRY_URL = os.environ.get(
     "CHECKPOINT_REGISTRY_URL", "http://mlflow.gambit-sandbox.domino.tech"
