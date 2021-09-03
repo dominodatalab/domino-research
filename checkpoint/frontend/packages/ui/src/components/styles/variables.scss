@@ -1,0 +1,42 @@
+// colors
+$palette--dark-grey: #383838;
+$palette--grey-light-1: #7D7D7D;
+$palette--grey-light-2: #B3B3B3;
+$palette--grey-light-3: #E0E0E0;
+$palette--grey-light-4: #F5F5F5;
+$palette--grey-light-5: #FAFBFC;
+$palette--grey-light-6: #BFBFBF;
+$palette--grey-light-7: #8C8C8C;
+$palette--grey-light-9: #262626;
+$palette--white: #FFFFFF;
+$palette--black: #000000;
+$palette--green-success: #5EBE5E;
+$palette--orange-warning: #EEA341;
+$palette--orange-warning-light: #F5C88D;
+$palette--red-error: #D64D63;
+$palette--navy-blue-dark-1: #293763;
+$palette--navy-blue-dark-2: #151F4D;
+$palette--navy-blue-light-1: #62719F;
+$palette--navy-blue-light-2: #9CABDB;
+$palette--primary-blue: #4568f6;
+$palette--primary-blue-dark-1: #3655D2;
+$palette--primary-blue-dark-2: #2A43AA;
+$palette--primary-blue-light: #ECF3FF;
+$palette--background: #F9FAFC; 
+
+// font
+$html--font-size: 10px;
+$body--font-size: 1.4rem;
+$body--font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+$font-weight-bold: 700;
+$font-weight-normal: 500; 
+$font-weight-light: 400;
+
+// theme
+$primary-color: $palette--primary-blue;
+$border-color: $palette--grey-light-3;
+$url-color: $palette--primary-blue;
+$success-color: $palette--green-success;
+$error-color: $palette--red-error;
+$warning-color: $palette--orange-warning;
+$panel-background: $palette--grey-light-4;

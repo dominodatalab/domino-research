@@ -1,0 +1,85 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "homepage": "/checkpoint",
+  "dependencies": {
+    "@ant-design/icons": "^4.6.1",
+    "@craco/craco": "^6.1.1",
+    "@domino-research/ui": "file:packages/ui",
+    "@types/node": "^12.20.4",
+    "@types/react": "^17.0.2",
+    "@types/react-dom": "^17.0.1",
+    "antd": "^4.13.1",
+    "axios": "^0.21.1",
+    "craco-antd": "^1.19.0",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "react-redux": "^7.2.2",
+    "react-router-dom": "^5.2.0",
+    "react-scripts": "4.0.3",
+    "redux": "^4.0.5",
+    "redux-thunk": "^2.3.0",
+    "typesafe-actions": "^5.1.0",
+    "typescript": "^4.2.2"
+  },
+  "scripts": {
+    "dev": "npm run build:ui && npm-run-all --parallel watch:ui start",
+    "start": "craco start",
+    "build:spa": "craco build",
+    "build": "npm run build:polaris/ui && craco build",
+    "build:ui": "cd packages/ui && npm i && npm run build",
+    "watch:ui": "cd packages/ui && npm run build:watch",
+    "test": "craco test",
+    "lint": "tsc --noEmit && eslint src/**/*.ts{,x}",
+    "lint:fix": "tsc --noEmit && eslint 'src/**/*.{js,ts}' --quiet --fix",
+    "eject": "react-scripts eject"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@reduxjs/toolkit": "^1.5.0",
+    "@testing-library/jest-dom": "^5.11.9",
+    "@testing-library/react": "^11.2.5",
+    "@testing-library/user-event": "12.7.3",
+    "@types/intercom-web": "^2.8.11",
+    "@types/jest": "^26.0.20",
+    "@types/react-redux": "^7.1.16",
+    "@types/react-router-dom": "^5.1.7",
+    "@types/redux": "^3.6.0",
+    "@types/redux-thunk": "^2.1.0",
+    "@typescript-eslint/eslint-plugin": "^4.17.0",
+    "@typescript-eslint/parser": "^4.17.0",
+    "craco": "0.0.3",
+    "eslint": "^7.21.0",
+    "eslint-config-prettier": "^8.1.0",
+    "eslint-plugin-prettier": "^3.3.1",
+    "eslint-plugin-react": "^7.22.0",
+    "husky": "^5.1.3",
+    "lint-staged": "^10.5.4",
+    "node-sass": "^5.0.0",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.2.1",
+    "typescript-plugin-css-modules": "^3.2.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.ts{x}": [
+      "eslint --fix"
+    ]
+  }
+}

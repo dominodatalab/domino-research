@@ -1,0 +1,102 @@
+admin:
+  address:
+    socket_address:
+      protocol: TCP
+      address: 0.0.0.0
+      port_value: 9901
+static_resources:
+  listeners:
+  - name: listener_0
+    address:
+      socket_address:
+        protocol: TCP
+        address: 0.0.0.0
+        port_value: 10000
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: ingress_http
+          upgrade_configs:
+          - upgrade_type: websocket
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: local_service
+              domains: ["*"]
+              routes:
+              - match:
+                  prefix: "/oauth2/userinfo"
+                direct_response:
+                  status: 200
+                  body:
+                    inline_string: "{\"user\":\"test\",\"email\":\"test@example.com\"}"
+              - match:
+                  prefix: "/api"
+                route:
+                  cluster: mock
+              - match:
+                  prefix: "/oauth2"
+                route:
+                  cluster: mock
+              - match:
+                  prefix: "/"
+                route:
+                  cluster: frontend
+          http_filters:
+          - name: envoy.filters.http.router
+  clusters:
+  - name: staging
+    connect_timeout: '30s'
+    type: STRICT_DNS
+    transport_socket:
+      name: envoy.transport_sockets.tls
+      typed_config:
+        "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+    load_assignment:
+      cluster_name: staging
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: control-plane-staging.polaris.gambit-sandbox.domino.tech
+                port_value: 443
+
+  - name: api
+    connect_timeout: '30s'
+    type: STRICT_DNS
+    load_assignment:
+      cluster_name: api
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: host.docker.internal
+                port_value: 8080
+  - name: mock
+    connect_timeout: '30s'
+    type: STRICT_DNS
+    load_assignment:
+      cluster_name: mock
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: host.docker.internal
+                port_value: 4010
+  - name: frontend
+    connect_timeout: '30s'
+    type: STRICT_DNS
+    load_assignment:
+      cluster_name: frontend
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: host.docker.internal
+                port_value: 3000
