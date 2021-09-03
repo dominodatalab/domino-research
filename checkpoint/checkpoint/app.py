@@ -1,13 +1,19 @@
 from flask import Flask
-from flask import request, Response, redirect, send_from_directory, send_file
+from flask import request, Response, send_file
 import requests
 import json
 import os
 from bs4 import BeautifulSoup
 
-app = Flask(__name__, static_url_path='/checkpoint/static', static_folder='../frontend/build/static')
+app = Flask(
+    __name__,
+    static_url_path="/checkpoint/static",
+    static_folder="../frontend/build/static",
+)
 
-REGISTRY_URL = os.environ.get("CHECKPOINT_REGISTRY_URL", "http://mlflow.gambit-sandbox.domino.tech")
+REGISTRY_URL = os.environ.get(
+    "CHECKPOINT_REGISTRY_URL", "http://mlflow.gambit-sandbox.domino.tech"
+)
 
 INJECT_SCRIPT = """
 <script>
@@ -52,41 +58,62 @@ window.onload = function () {
     setInterval(checkRedirect, 1000);
 }
 </script>
-"""
+"""  # noqa: E501
 
-@app.route('/ajax-api/2.0/preview/mlflow/model-versions/transition-stage', methods=["POST"])
+
+@app.route(
+    "/ajax-api/2.0/preview/mlflow/model-versions/transition-stage",
+    methods=["POST"],
+)
 def intercept_tag():
     return "Redirecting to Checkpoint"
 
-@app.route('/checkpoint/api/requests')
+
+@app.route("/checkpoint/api/requests")
 def list_requests():
     return json.dumps([{}])
 
-@app.route('/checkpoint/<path:path>')
-def spa_index(path):
-    return send_file('../frontend/build/index.html')
 
-@app.route('/', defaults={'path': ''}, methods=["GET", "POST", "PUT", "HEAD", "DELETE"])
-@app.route('/<path:path>', methods=["GET", "POST", "PUT", "HEAD", "DELETE"])
+@app.route("/checkpoint/<path:path>")
+def spa_index(path):
+    return send_file("../frontend/build/index.html")
+
+
+@app.route(
+    "/",
+    defaults={"path": ""},
+    methods=["GET", "POST", "PUT", "HEAD", "DELETE"],
+)
+@app.route("/<path:path>", methods=["GET", "POST", "PUT", "HEAD", "DELETE"])
 def proxy(path):
     resp = requests.request(
         method=request.method,
         url=f"{REGISTRY_URL}/{path}",
-        headers={key: value for (key, value) in request.headers if key != 'Host'},
+        headers={
+            key: value for (key, value) in request.headers if key != "Host"
+        },
         data=request.get_data(),
         cookies=request.cookies,
         allow_redirects=False,
-        params=dict(request.args)
+        params=dict(request.args),
     )
 
-    excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
-    headers = [(name, value) for (name, value) in resp.raw.headers.items()
-               if name.lower() not in excluded_headers]
+    excluded_headers = [
+        "content-encoding",
+        "content-length",
+        "transfer-encoding",
+        "connection",
+    ]
+    headers = [
+        (name, value)
+        for (name, value) in resp.raw.headers.items()
+        if name.lower() not in excluded_headers
+    ]
 
-    if resp.content.startswith(bytes("<!doctype html>", 'utf-8')):
-        soup = BeautifulSoup(resp.content.decode('utf-8'), 'html.parser')
+    if resp.content.startswith(bytes("<!doctype html>", "utf-8")):
+        soup = BeautifulSoup(resp.content.decode("utf-8"), "html.parser")
         print(soup.body.append(BeautifulSoup(INJECT_SCRIPT)))
-        content = str(soup).encode('utf-8')
+        content = str(soup).encode("utf-8")
     else:
         content = resp.content
 
