@@ -1,11 +1,16 @@
-from flask import Flask
-from flask import request, Response, send_file
-from flask_sqlalchemy import SQLAlchemy  # type: ignore
+from flask import Flask  # type: ignore
+from flask import request, Response, send_file  # type: ignore
 import requests  # type: ignore
 from bs4 import BeautifulSoup  # type: ignore
+from checkpoint.models import (
+    PromoteRequest,
+    ModelVersionStage,
+    PromoteRequestStatus,
+    model_as_dict,
+)
+from checkpoint.database import db_session
 import json
 import os
-
 
 app = Flask(
     __name__,
@@ -13,10 +18,13 @@ app = Flask(
     static_folder="../frontend/build/static",
 )
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////tmp/test.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-db = SQLAlchemy(app)
+
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    db_session.remove()
+
 
 REGISTRY_URL = os.environ.get(
     "CHECKPOINT_REGISTRY_URL", "http://mlflow.gambit-sandbox.domino.tech"
@@ -78,7 +86,34 @@ def intercept_tag():
 
 @app.route("/checkpoint/api/requests")
 def list_requests():
-    return json.dumps([{}])
+    p1 = PromoteRequest(
+        title="a request title",
+        description="test desc lorem ipsum",
+        model_name="some_model",
+        model_version="3",
+        current_stage=ModelVersionStage.STAGING,
+        target_stage=ModelVersionStage.PRODUCTION,
+        author_username="josh",
+        status=PromoteRequestStatus.OPEN,
+    )
+
+    p2 = PromoteRequest(
+        title="another request title",
+        description="test desc test desc lorem ipsum",
+        model_name="some_other_model",
+        model_version="2",
+        current_stage=ModelVersionStage.STAGING,
+        target_stage=ModelVersionStage.PRODUCTION,
+        author_username="josh",
+        status=PromoteRequestStatus.APPROVED,
+    )
+
+    return json.dumps(
+        [
+            model_as_dict(p1),
+            model_as_dict(p2),
+        ]
+    )
 
 
 @app.route("/checkpoint/<path:path>")
@@ -126,3 +161,27 @@ def proxy(path):
 
     response = Response(content, resp.status_code, headers)
     return response
+
+
+if __name__ == "__main__":
+    from checkpoint.database import init_db, teardown_db
+
+    init_db()
+
+    p = PromoteRequest(
+        title="test",
+        description="test desc",
+        model_name="some_model",
+        model_version="3",
+        current_stage=ModelVersionStage.STAGING.value,
+        target_stage=ModelVersionStage.PRODUCTION.value,
+        author_username="josh",
+    )
+
+    db_session.add(p)
+    db_session.commit()
+
+    print(PromoteRequest.query.first().current_stage)
+    print(json.dumps(p.as_dict()))
+
+    teardown_db()
