@@ -1,10 +1,10 @@
 from flask import Flask
-from flask import request, Response, redirect, send_from_directory, send_file
+from flask import request, Response, send_file
 from flask_sqlalchemy import SQLAlchemy
-import requests
+import requests  # type: ignore
 import json
 import os
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup  # type: ignore
 
 
 app = Flask(
@@ -66,7 +66,7 @@ window.onload = function () {
     setInterval(checkRedirect, 1000);
 }
 </script>
-"""
+"""  # noqa: E501
 
 
 @app.route(
