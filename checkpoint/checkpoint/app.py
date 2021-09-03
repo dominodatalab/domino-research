@@ -1,16 +1,17 @@
-from flask import Flask  # type: ignore
-from flask import request, Response, send_file  # type: ignore
-import requests  # type: ignore
-from bs4 import BeautifulSoup  # type: ignore
-from checkpoint.models import (
-    PromoteRequest,
-    ModelVersionStage,
-    PromoteRequestStatus,
-    model_as_dict,
-)
+from checkpoint.models import PromoteRequest
 from checkpoint.database import db_session
-import json
+from flask import Flask  # type: ignore
+from flask import request, Response, send_file, jsonify  # type: ignore
+from sqlalchemy.exc import IntegrityError, StatementError  # type: ignore
+
+from bs4 import BeautifulSoup  # type: ignore
+import requests  # type: ignore
+from typing import Dict
+import logging
 import os
+
+
+logger = logging.getLogger(__name__)
 
 app = Flask(
     __name__,
@@ -20,10 +21,24 @@ app = Flask(
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+if app.debug:
+    logger.setLevel(logging.DEBUG)
+else:
+    logger.setLevel(logging.WARNING)
+
+
+@app.before_first_request
+def initialize_db():
+    from checkpoint.database import init_db
+
+    init_db()
+    app.logger.info("Initialized DB")
+
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     db_session.remove()
+    app.logger.debug("Shutdown DB Session")
 
 
 REGISTRY_URL = os.environ.get(
@@ -84,36 +99,86 @@ def intercept_tag():
     return "Redirecting to Checkpoint"
 
 
-@app.route("/checkpoint/api/requests")
+@app.route(
+    "/checkpoint/api/requests",
+    methods=["POST"],
+)
+def create_request():
+
+    promote_request_data = request.json
+
+    app.logger.info(
+        "Received request to create PromoteRequest with data: "
+        + f"{promote_request_data}"
+    )
+
+    if promote_request_data is None:
+        app.logger.error("No POST body in create request")
+
+    try:
+        p = PromoteRequest(**promote_request_data)
+        db_session.add(p)
+        db_session.commit()
+        return Response("Created", 201)
+
+    # TypeError is insufficient/extra parameters throws at instantiation
+    # IntegrityError is missing/null value error from the DB
+    # StatementError is an invalid enum value from the DB
+    except (TypeError, StatementError, IntegrityError) as e:
+        app.logger.error(e)
+        db_session.rollback()
+        return Response(f"Invalid body: {promote_request_data}", 400)
+
+
+@app.route(
+    "/checkpoint/api/requests",
+    methods=["GET"],
+)
 def list_requests():
-    p1 = PromoteRequest(
-        title="a request title",
-        description="test desc lorem ipsum",
-        model_name="some_model",
-        model_version="3",
-        current_stage=ModelVersionStage.STAGING,
-        target_stage=ModelVersionStage.PRODUCTION,
-        author_username="josh",
-        status=PromoteRequestStatus.OPEN,
+    return jsonify([p.as_dict() for p in PromoteRequest.query.all()])
+
+
+@app.route(
+    "/checkpoint/api/requests/<id>",
+    methods=["PUT"],
+)
+def update_request(id: int):
+    p = PromoteRequest.query.get(id)
+
+    update_data: Dict[str, str] = request.json  # type: ignore
+    fields_updated = set(update_data.keys())
+    updatable_fields = {"reviewer_username", "review_comment", "status"}
+
+    updates_status = "status" in fields_updated
+    updates_only_review_fields = fields_updated.issubset(
+        PromoteRequest.UPDATEABLE_FIELDS
     )
 
-    p2 = PromoteRequest(
-        title="another request title",
-        description="test desc test desc lorem ipsum",
-        model_name="some_other_model",
-        model_version="2",
-        current_stage=ModelVersionStage.STAGING,
-        target_stage=ModelVersionStage.PRODUCTION,
-        author_username="josh",
-        status=PromoteRequestStatus.APPROVED,
-    )
+    if not updates_status:
+        return Response("Must update the 'status' field", 400)
 
-    return json.dumps(
-        [
-            model_as_dict(p1),
-            model_as_dict(p2),
-        ]
-    )
+    if (
+        status_val := update_data["status"]
+    ) not in PromoteRequest.VALID_STATUS_UPDATE_VALUES:
+        return Response(
+            f"Status value '{status_val}' must be "
+            + f"in {PromoteRequest.VALID_STATUS_UPDATE_VALUES}",
+            400,
+        )
+
+    if not updates_only_review_fields:
+        return Response(f"Can only update {updatable_fields}", 400)
+
+    for field, val in update_data.items():
+        setattr(p, field, val)
+
+    try:
+        db_session.commit()
+        return p.as_dict()
+    except (StatementError, IntegrityError) as e:
+        app.logger.error(e)
+        db_session.rollback()
+        return Response(f"Invalid body: {update_data}", 400)
 
 
 @app.route("/checkpoint/<path:path>")
@@ -163,25 +228,25 @@ def proxy(path):
     return response
 
 
-if __name__ == "__main__":
-    from checkpoint.database import init_db, teardown_db
+# if __name__ == "__main__":
+#     from checkpoint.database import init_db, teardown_db
 
-    init_db()
+#     init_db()
 
-    p = PromoteRequest(
-        title="test",
-        description="test desc",
-        model_name="some_model",
-        model_version="3",
-        current_stage=ModelVersionStage.STAGING.value,
-        target_stage=ModelVersionStage.PRODUCTION.value,
-        author_username="josh",
-    )
+#     p = PromoteRequest(
+#         title="test",
+#         description="test desc",
+#         model_name="some_model",
+#         model_version="3",
+#         current_stage=ModelVersionStage.STAGING.value,
+#         target_stage=ModelVersionStage.PRODUCTION.value,
+#         author_username="josh",
+#     )
 
-    db_session.add(p)
-    db_session.commit()
+#     db_session.add(p)
+#     db_session.commit()
 
-    print(PromoteRequest.query.first().current_stage)
-    print(json.dumps(p.as_dict()))
+#     print(PromoteRequest.query.first().current_stage)
+#     print(json.dumps(p.as_dict()))
 
-    teardown_db()
+#     teardown_db()

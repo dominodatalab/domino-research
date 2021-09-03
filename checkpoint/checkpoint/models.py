@@ -1,14 +1,6 @@
 from sqlalchemy import Column, Integer, String, Enum  # type: ignore
-import enum
-from sqlalchemy.inspection import inspect  # type: ignore
 from checkpoint.database import CheckpointBase
-
-
-def model_as_dict(model):
-    return {
-        c.key: getattr(model, c.key)
-        for c in inspect(model).mapper.column_attrs
-    }
+import enum
 
 
 class ModelVersionStage(enum.Enum):
@@ -24,6 +16,14 @@ class PromoteRequestStatus(enum.Enum):
 
 
 class PromoteRequest(CheckpointBase):
+
+    UPDATEABLE_FIELDS = {"reviewer_username", "review_comment", "status"}
+
+    VALID_STATUS_UPDATE_VALUES = {
+        PromoteRequestStatus.APPROVED.value,
+        PromoteRequestStatus.CLOSED.value,
+    }
+
     __tablename__ = "promote_requests"
 
     id = Column(Integer, primary_key=True)
