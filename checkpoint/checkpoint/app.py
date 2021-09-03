@@ -3,7 +3,7 @@ from flask import request, Response, send_file
 import requests
 import json
 import os
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup  # type: ignore
 
 app = Flask(
     __name__,
