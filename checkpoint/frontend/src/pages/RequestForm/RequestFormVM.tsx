@@ -1,18 +1,23 @@
 import * as React from 'react';
 import { AppState } from '../../redux/state';
+import { fetchModels, fetchVersions } from '../../redux/actions/appActions';
 import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
 import { connect, ConnectedProps } from 'react-redux';
-import Home from './Home';
+import RequestForm from './RequestForm';
 
 const mapState = (state: AppState) => {
   return {
-    name: state.app.user_info?.user,
+    models: state.app.models,
+    versions: state.app.versions,
   };
 };
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, void, AnyAction>) => {
-  return {};
+  return {
+    fetchModels: () => dispatch(fetchModels()),
+    fetchVersions: (model: string) => dispatch(fetchVersions(model)),
+  };
 };
 
 const connector = connect(mapState, mapDispatchToProps);
@@ -21,19 +26,17 @@ type PropsFromRedux = ConnectedProps<typeof connector>;
 
 type Props = PropsFromRedux;
 
-const HomeVM: React.FC<Props> = ({ name }) => {
+const RequestFormVM: React.FC<Props> = ({ models, versions, fetchVersions, fetchModels }) => {
   React.useEffect(() => {
     console.log('Home set');
-    // fetchProjects();
-    // const projects_timer = setInterval(() => fetchProjects(), projects_refresh_interval_ms);
+    fetchModels();
     return () => {
       console.log('Home clear');
-      // clearInterval(projects_timer);
     };
   }, []);
-  return <Home name={name || 'unknown'} />;
+  return <RequestForm models={models} versions={versions} fetchVersions={fetchVersions} />;
 };
 
-const ConnectedViewModel = connector(HomeVM);
+const ConnectedViewModel = connector(RequestFormVM);
 
 export default ConnectedViewModel;

@@ -1,21 +1,21 @@
 import * as React from 'react';
 import { AppState } from '../../redux/state';
+import { fetchRequests } from '../../redux/actions/appActions';
 import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
 import { connect, ConnectedProps } from 'react-redux';
-import { GenericTableProps } from '@domino-research/ui/dist/components/GenericTable/GenericTable';
-import ProjectList from './ProjectList';
+import RequestList from './RequestList';
 
 const mapState = (state: AppState) => {
-  const data: GenericTableProps[] = [];
   return {
-    name: state.app.user_info?.user,
-    data,
+    requests: state.app.requests,
   };
 };
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, void, AnyAction>) => {
-  return {};
+  return {
+    fetchRequests: () => dispatch(fetchRequests()),
+  };
 };
 
 const connector = connect(mapState, mapDispatchToProps);
@@ -24,19 +24,17 @@ type PropsFromRedux = ConnectedProps<typeof connector>;
 
 type Props = PropsFromRedux;
 
-const ProjectListVM: React.FC<Props> = ({ data }) => {
+const RequestListVM: React.FC<Props> = ({ requests, fetchRequests }) => {
   React.useEffect(() => {
     console.log('Home set');
-    // fetchProjects();
-    // const projects_timer = setInterval(() => fetchProjects(), projects_refresh_interval_ms);
+    fetchRequests();
     return () => {
       console.log('Home clear');
-      // clearInterval(projects_timer);
     };
   }, []);
-  return <ProjectList data={data || undefined} />;
+  return <RequestList data={requests} />;
 };
 
-const ConnectedViewModel = connector(ProjectListVM);
+const ConnectedViewModel = connector(RequestListVM);
 
 export default ConnectedViewModel;
