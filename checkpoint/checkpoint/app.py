@@ -1,15 +1,20 @@
+from checkpoint.types import ModelVersionStage, Model, ModelVersion
 from checkpoint.models import PromoteRequest, PromoteRequestStatus
 from checkpoint.database import db_session
 from checkpoint.registries import MlflowRegistry, RegistryException
-from checkpoint.types import Model, ModelVersion, ModelVersionStage
 from checkpoint.constants import INJECT_SCRIPT, ANONYMOUS_USERNAME
+from checkpoint.views import (
+    PromoteRequestDetailsView,
+    PromoteRequestView,
+    VersionDetailsView,
+)
 from flask import Flask  # type: ignore
 from flask import request, Response, send_file, jsonify  # type: ignore
 from sqlalchemy.exc import IntegrityError, StatementError  # type: ignore
 
 from bs4 import BeautifulSoup  # type: ignore
 import requests  # type: ignore
-from typing import Dict
+from typing import Dict, Any, Optional
 import logging
 import os
 from dataclasses import asdict
@@ -73,13 +78,15 @@ def create_request():
         app.logger.error(e)
         raise e
 
-    # Convert target stage to internal stage name
-    promote_request_data["target_stage"] = registry.stage_for_stage_name(
+    internal_stage = registry.checkpoint_stage_for_registry_stage(
         promote_request_data["target_stage"]
-    ).value
+    )
+    promote_request_data["target_stage"] = internal_stage
 
     # TODO: capture from oauth header if present
     promote_request_data["author_username"] = ANONYMOUS_USERNAME
+
+    promote_request_data["status"] = PromoteRequestStatus.OPEN
 
     app.logger.info(
         "Create PromoteRequest with data: " + f"{promote_request_data}"
@@ -89,7 +96,8 @@ def create_request():
         p = PromoteRequest(**promote_request_data)
         db_session.add(p)
         db_session.commit()
-        return p.as_dict()
+
+        return asdict(_to_promote_request_view(p))
 
     # TypeError is insufficient/extra parameters throws at instantiation
     # IntegrityError is missing/null value error from the DB
@@ -105,7 +113,12 @@ def create_request():
     methods=["GET"],
 )
 def list_requests():
-    return jsonify([p.as_dict() for p in PromoteRequest.query.all()])
+    return jsonify(
+        [
+            asdict(_to_promote_request_view(p))
+            for p in PromoteRequest.query.all()
+        ]
+    )
 
 
 @app.route(
@@ -115,7 +128,7 @@ def list_requests():
 def update_request(id: int):
     promote_request = PromoteRequest.query.get(id)
 
-    update_fields_and_values: Dict[str, str] = request.json  # type: ignore
+    update_fields_and_values: Dict[str, Any] = request.json  # type: ignore
     update_field_names = set(update_fields_and_values.keys())
     target_status = update_fields_and_values["status"]
 
@@ -124,7 +137,7 @@ def update_request(id: int):
         target_status in PromoteRequest.VALID_STATUS_UPDATE_VALUES
     )
     updates_from_valid_status = (
-        promote_request.status == PromoteRequestStatus.OPEN.value
+        promote_request.status == PromoteRequestStatus.OPEN
     )
     updates_only_review_fields = update_field_names.issubset(
         PromoteRequest.UPDATEABLE_FIELDS
@@ -151,6 +164,13 @@ def update_request(id: int):
             f"Can only update {PromoteRequest.UPDATEABLE_FIELDS}", 400
         )
 
+    # TODO: capture from oauth header
+    update_fields_and_values["reviewer_username"] = ANONYMOUS_USERNAME
+
+    update_fields_and_values["status"] = PromoteRequestStatus(
+        update_fields_and_values["status"]
+    )
+
     for field, val in update_fields_and_values.items():
         setattr(promote_request, field, val)
 
@@ -161,23 +181,23 @@ def update_request(id: int):
         # update mlflow
         app.logger.info(
             f"Updating model {promote_request.model_name} "
-            + f"version {promote_request.model_version} "
+            + f"version {promote_request.version_id} "
             + f"to stage: {promote_request.target_stage}"
         )
 
-        if promote_request.status == PromoteRequestStatus.APPROVED.value:
+        if promote_request.status == PromoteRequestStatus.APPROVED:
             registry.transition_model_version_stage(
                 ModelVersion(
                     model_name=promote_request.model_name,
-                    id=promote_request.model_version,
+                    id=promote_request.version_id,
                 ),
-                ModelVersionStage(promote_request.target_stage),
+                promote_request.target_stage,
             )
 
         # Now that MLFlow is updated, commit.
         db_session.commit()
 
-        return promote_request.as_dict()
+        return asdict(_to_promote_request_view(promote_request))
 
     # ValueError from invalid enum value
     # StatementError from invalid enum at DB
@@ -193,32 +213,34 @@ def update_request(id: int):
 
 
 @app.route(
-    "/checkpoint/api/requests/<id>",
+    "/checkpoint/api/requests/<id>/details",
     methods=["GET"],
 )
-def view_request(id):
+def view_request_details(id):
     promote_request = PromoteRequest.query.get(id)
 
-    current_stage = registry.get_model_version_stage(
-        ModelVersion(
-            model_name=promote_request.model_name,
-            id=promote_request.model_version,
-        )
-    )
-
-    base_version = registry.get_model_version_for_stage(
+    champion_version = registry.get_model_version_for_stage(
         Model(promote_request.model_name),
-        ModelVersionStage(promote_request.target_stage),
+        promote_request.target_stage,
     )
 
-    comparison = {
-        "target_stage": promote_request.target_stage,
-        "current_stage": current_stage.value,
-        "base_version": base_version.id,
-        "candidate_version": promote_request.model_version,
-    }
+    challenger_version = ModelVersion(
+        promote_request.version_id, promote_request.model_name
+    )
 
-    return comparison
+    details_view = PromoteRequestDetailsView(
+        promote_request.id,
+        champion_version_details=_to_version_details_view(
+            champion_version, stage=promote_request.target_stage
+        )
+        if champion_version
+        else None,
+        challenger_version_details=_to_version_details_view(
+            challenger_version
+        ),
+    )
+
+    return asdict(details_view)
 
 
 @app.route("/checkpoint/api/stages")
@@ -284,3 +306,43 @@ def proxy(path):
 
     response = Response(content, resp.status_code, headers)
     return response
+
+
+def _to_promote_request_view(
+    promote_request: PromoteRequest,
+) -> PromoteRequestView:
+
+    external_target_stage = registry.registry_stage_for_checkpoint_stage(
+        promote_request.target_stage
+    )
+    return PromoteRequestView(
+        id=promote_request.id,
+        status=promote_request.status.value,
+        title=promote_request.title,
+        description=promote_request.description,
+        model_name=promote_request.model_name,
+        version_id=promote_request.version_id,
+        target_stage=external_target_stage,
+        author_username=promote_request.author_username,
+        reviewer_username=promote_request.reviewer_username,
+        review_comment=promote_request.review_comment,
+    )
+
+
+def _to_version_details_view(
+    version: ModelVersion, stage: Optional[ModelVersionStage] = None
+) -> VersionDetailsView:
+    if stage is None:
+        stage = registry.get_stage_for_model_version(version)
+
+    external_stage = registry.registry_stage_for_checkpoint_stage(stage)
+
+    version_data = registry.get_model_version_details(version)
+
+    return VersionDetailsView(
+        id=version.id,
+        stage=external_stage,
+        metrics=version_data.metrics if version_data else {},
+        parameters=version_data.parameters if version_data else {},
+        tags=version_data.tags if version_data else {},
+    )

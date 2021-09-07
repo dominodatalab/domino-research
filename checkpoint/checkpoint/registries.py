@@ -1,10 +1,17 @@
-from checkpoint.types import ModelVersionStage, ModelVersion, Model
 from mlflow.tracking import MlflowClient  # type: ignore
 from mlflow.exceptions import RestException  # type: ignore
+
+from checkpoint.types import (
+    Model,
+    ModelVersion,
+    ModelVersionStage,
+    ModelVersionDetails,
+)
 
 from typing import List, Optional
 import logging
 from abc import ABC, abstractmethod
+from functools import cache
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +37,7 @@ class Registry(ABC):
         pass
 
     @abstractmethod
-    def get_model_version_stage(
+    def get_stage_for_model_version(
         self, version: ModelVersion
     ) -> ModelVersionStage:
         pass
@@ -42,11 +49,25 @@ class Registry(ABC):
         pass
 
     @abstractmethod
+    def get_model_version_details(
+        self, version: ModelVersion
+    ) -> Optional[ModelVersionDetails]:
+        pass
+
+    @abstractmethod
     def list_stages_names(self) -> List[str]:
         pass
 
     @abstractmethod
-    def stage_for_stage_name(self, stage_name: str) -> ModelVersionStage:
+    def checkpoint_stage_for_registry_stage(
+        self, stage_name: str
+    ) -> ModelVersionStage:
+        pass
+
+    @abstractmethod
+    def registry_stage_for_checkpoint_stage(
+        self, stage: ModelVersionStage
+    ) -> str:
         pass
 
 
@@ -111,12 +132,10 @@ class MlflowRegistry(Registry):
                 model_name=model.name, id=str(versions[0].version)
             )
 
-    def get_model_version_stage(
+    def get_stage_for_model_version(
         self, version: ModelVersion
     ) -> ModelVersionStage:
-        mlflow_version = self.client.get_model_version(
-            version.model_name, int(version.id)
-        )
+        mlflow_version = self._get_mlflow_version(version)
         return self.MLFLOW_TO_CHECKPOINT_STAGES[mlflow_version.current_stage]
 
     def transition_model_version_stage(
@@ -133,13 +152,43 @@ class MlflowRegistry(Registry):
             logger.error(e)
             raise RegistryException(e)
 
+    def get_model_version_details(
+        self, version: ModelVersion
+    ) -> Optional[ModelVersionDetails]:
+        mlflow_version = self._get_mlflow_version(version)
+
+        if (run_id := mlflow_version.run_id) is None:
+            logger.warn(f"Model Version {version} has no run_id")
+            return None
+        else:
+            run = self.client.get_run(run_id)
+            return ModelVersionDetails(
+                version=version,
+                parameters=run.data.params,
+                metrics=run.data.metrics,
+                tags=run.data.tags,
+            )
+
     def list_stages_names(self) -> List[str]:
         return list(self.MLFLOW_TO_CHECKPOINT_STAGES.keys())
 
-    def stage_for_stage_name(self, stage_name: str) -> ModelVersionStage:
+    def checkpoint_stage_for_registry_stage(
+        self, stage_name: str
+    ) -> ModelVersionStage:
         if stage_name in self.MLFLOW_TO_CHECKPOINT_STAGES:
             return self.MLFLOW_TO_CHECKPOINT_STAGES[stage_name]
         else:
             e = ValueError(f"Recieved unexpected stage name: {stage_name}")
             logger.error(e)
             raise e
+
+    def registry_stage_for_checkpoint_stage(
+        self, stage: ModelVersionStage
+    ) -> str:
+        return self.CHECKPOINT_TO_MLFLOW_STAGES[stage]
+
+    @cache
+    def _get_mlflow_version(self, version: ModelVersion):
+        return self.client.get_model_version(
+            version.model_name, int(version.id)
+        )

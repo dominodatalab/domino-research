@@ -1,13 +1,6 @@
 from sqlalchemy import Column, Integer, String, Enum  # type: ignore
 from checkpoint.database import CheckpointBase
-from checkpoint.types import ModelVersionStage
-import enum
-
-
-class PromoteRequestStatus(enum.Enum):
-    OPEN = "open"
-    CLOSED = "closed"
-    APPROVED = "approved"
+from checkpoint.types import ModelVersionStage, PromoteRequestStatus
 
 
 class PromoteRequest(CheckpointBase):
@@ -27,11 +20,11 @@ class PromoteRequest(CheckpointBase):
     description = Column(String(1000), unique=False, nullable=True)
 
     model_name = Column(String(500), unique=False, nullable=False)
-    model_version = Column(String(100), unique=False, nullable=False)
+    version_id = Column(String(100), unique=False, nullable=False)
 
     target_stage = Column(
         Enum(
-            *[e.value for e in ModelVersionStage],
+            ModelVersionStage,
             name="model_version_stage",
             validate_strings=True,
             nullable=False,
@@ -43,7 +36,7 @@ class PromoteRequest(CheckpointBase):
 
     status = Column(
         Enum(
-            *[e.value for e in PromoteRequestStatus],
+            PromoteRequestStatus,
             name="promote_request_status",
             validate_strings=True,
         )
