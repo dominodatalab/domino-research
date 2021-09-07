@@ -35,10 +35,18 @@ app = Flask(
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+
+# If running in debug, log at debug
 if app.debug:
     logger.setLevel(logging.DEBUG)
+    app.logger.setLevel(logging.DEBUG)
+
+# If running through gunicorn, inherit log level.
 else:
-    logger.setLevel(logging.WARNING)
+    gunicorn_logger = logging.getLogger("gunicorn.error")
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
+    logger.setLevel(gunicorn_logger.level)
 
 
 @app.before_first_request
