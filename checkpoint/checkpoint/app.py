@@ -187,7 +187,7 @@ def update_request(id: int):
         # update mlflow
         app.logger.info(
             f"Updating model {promote_request.model_name} "
-            + f"version {promote_request.model_version} "
+            + f"version {promote_request.version_id} "
             + f"to stage: {promote_request.target_stage}"
         )
 
@@ -195,7 +195,7 @@ def update_request(id: int):
             registry.transition_model_version_stage(
                 ModelVersion(
                     model_name=promote_request.model_name,
-                    id=promote_request.model_version,
+                    id=promote_request.version_id,
                 ),
                 promote_request.target_stage,
             )
@@ -231,7 +231,7 @@ def view_request_details(id):
     )
 
     challenger_version = ModelVersion(
-        promote_request.model_version, promote_request.model_name
+        promote_request.version_id, promote_request.model_name
     )
 
     details_view = PromoteRequestDetailsView(
@@ -325,7 +325,7 @@ def _to_promote_request_view(
         title=promote_request.title,
         description=promote_request.description,
         model_name=promote_request.model_name,
-        model_version=promote_request.model_version,
+        version_id=promote_request.version_id,
         target_stage=external_target_stage,
         author_username=promote_request.author_username,
         reviewer_username=promote_request.reviewer_username,

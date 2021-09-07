@@ -9,7 +9,7 @@ class PromoteRequestView:
     title: str
     description: str
     model_name: str
-    model_version: str
+    version_id: str
     target_stage: str
     author_username: str
     reviewer_username: str

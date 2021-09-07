@@ -20,7 +20,7 @@ class PromoteRequest(CheckpointBase):
     description = Column(String(1000), unique=False, nullable=True)
 
     model_name = Column(String(500), unique=False, nullable=False)
-    model_version = Column(String(100), unique=False, nullable=False)
+    version_id = Column(String(100), unique=False, nullable=False)
 
     target_stage = Column(
         Enum(
