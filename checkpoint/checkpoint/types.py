@@ -31,7 +31,7 @@ class ModelVersion:
 
 
 @dataclass
-class ModelVersionData:
+class ModelVersionDetails:
     version: ModelVersion
     parameters: Dict[str, Any]
     metrics: Dict[str, Any]

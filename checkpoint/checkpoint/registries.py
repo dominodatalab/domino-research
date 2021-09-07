@@ -5,7 +5,7 @@ from checkpoint.types import (
     Model,
     ModelVersion,
     ModelVersionStage,
-    ModelVersionData,
+    ModelVersionDetails,
 )
 
 from typing import List, Optional
@@ -49,9 +49,9 @@ class Registry(ABC):
         pass
 
     @abstractmethod
-    def get_model_version_data(
+    def get_model_version_details(
         self, version: ModelVersion
-    ) -> Optional[ModelVersionData]:
+    ) -> Optional[ModelVersionDetails]:
         pass
 
     @abstractmethod
@@ -152,9 +152,9 @@ class MlflowRegistry(Registry):
             logger.error(e)
             raise RegistryException(e)
 
-    def get_model_version_data(
+    def get_model_version_details(
         self, version: ModelVersion
-    ) -> Optional[ModelVersionData]:
+    ) -> Optional[ModelVersionDetails]:
         mlflow_version = self._get_mlflow_version(version)
 
         if (run_id := mlflow_version.run_id) is None:
@@ -162,7 +162,7 @@ class MlflowRegistry(Registry):
             return None
         else:
             run = self.client.get_run(run_id)
-            return ModelVersionData(
+            return ModelVersionDetails(
                 version=version,
                 parameters=run.data.params,
                 metrics=run.data.metrics,

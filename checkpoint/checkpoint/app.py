@@ -1,12 +1,7 @@
-from checkpoint.types import ModelVersionStage
+from checkpoint.types import ModelVersionStage, Model, ModelVersion
 from checkpoint.models import PromoteRequest, PromoteRequestStatus
 from checkpoint.database import db_session
-from checkpoint.registries import (
-    MlflowRegistry,
-    RegistryException,
-    Model,
-    ModelVersion,
-)
+from checkpoint.registries import MlflowRegistry, RegistryException
 from checkpoint.constants import INJECT_SCRIPT, ANONYMOUS_USERNAME
 from checkpoint.views import (
     PromoteRequestDetailsView,
@@ -83,11 +78,10 @@ def create_request():
         app.logger.error(e)
         raise e
 
-    internal_target_stage = registry.checkpoint_stage_for_registry_stage(
+    internal_stage = registry.checkpoint_stage_for_registry_stage(
         promote_request_data["target_stage"]
     )
-
-    promote_request_data["target_stage"] = internal_target_stage
+    promote_request_data["target_stage"] = internal_stage
 
     # TODO: capture from oauth header if present
     promote_request_data["author_username"] = ANONYMOUS_USERNAME
@@ -341,7 +335,7 @@ def _to_version_details_view(
 
     external_stage = registry.registry_stage_for_checkpoint_stage(stage)
 
-    version_data = registry.get_model_version_data(version)
+    version_data = registry.get_model_version_details(version)
 
     return VersionDetailsView(
         id=version.id,
