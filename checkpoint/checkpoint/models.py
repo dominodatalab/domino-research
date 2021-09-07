@@ -1,12 +1,7 @@
 from sqlalchemy import Column, Integer, String, Enum  # type: ignore
 from checkpoint.database import CheckpointBase
+from checkpoint.types import ModelVersionStage
 import enum
-
-
-class ModelVersionStage(enum.Enum):
-    NONE = "none"
-    STAGING = "staging"
-    PRODUCTION = "production"
 
 
 class PromoteRequestStatus(enum.Enum):

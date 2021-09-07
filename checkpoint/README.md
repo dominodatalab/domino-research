@@ -18,6 +18,15 @@ Model approval layer for your model registry.
 pip install -e .
 ```
 
+To run the server:
+
+```bash
+FLASK_APP=checkpoint.app \
+FLASK_ENV=development \
+CHECKPOINT_REGISTRY_URL=http://YOUR_MFLOW_HOST \
+flask run
+```
+
 ## Linting / Testing
 
 To run our linting/testing:

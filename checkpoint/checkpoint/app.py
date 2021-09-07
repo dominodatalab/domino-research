@@ -1,5 +1,7 @@
-from checkpoint.models import PromoteRequest
+from checkpoint.models import PromoteRequest, PromoteRequestStatus
 from checkpoint.database import db_session
+from checkpoint.registries import MlflowRegistry, RegistryException
+from checkpoint.types import ModelVersion, ModelVersionStage
 from flask import Flask  # type: ignore
 from flask import request, Response, send_file, jsonify  # type: ignore
 from sqlalchemy.exc import IntegrityError, StatementError  # type: ignore
@@ -9,6 +11,7 @@ import requests  # type: ignore
 from typing import Dict
 import logging
 import os
+from dataclasses import asdict
 
 
 logger = logging.getLogger(__name__)
@@ -44,6 +47,8 @@ def shutdown_session(exception=None):
 REGISTRY_URL = os.environ.get(
     "CHECKPOINT_REGISTRY_URL", "http://mlflow.gambit-sandbox.domino.tech"
 )
+
+mlflow_registry = MlflowRegistry(REGISTRY_URL, REGISTRY_URL)
 
 INJECT_SCRIPT = """
 <script>
@@ -143,42 +148,97 @@ def list_requests():
     methods=["PUT"],
 )
 def update_request(id: int):
-    p = PromoteRequest.query.get(id)
+    promote_request = PromoteRequest.query.get(id)
 
-    update_data: Dict[str, str] = request.json  # type: ignore
-    fields_updated = set(update_data.keys())
-    updatable_fields = {"reviewer_username", "review_comment", "status"}
+    update_fields_and_values: Dict[str, str] = request.json  # type: ignore
+    update_field_names = set(update_fields_and_values.keys())
+    target_status = update_fields_and_values["status"]
 
-    updates_status = "status" in fields_updated
-    updates_only_review_fields = fields_updated.issubset(
+    updates_status_field = "status" in update_field_names
+    updates_to_valid_status = (
+        target_status in PromoteRequest.VALID_STATUS_UPDATE_VALUES
+    )
+    updates_from_valid_status = (
+        promote_request.status == PromoteRequestStatus.OPEN.value
+    )
+    updates_only_review_fields = update_field_names.issubset(
         PromoteRequest.UPDATEABLE_FIELDS
     )
 
-    if not updates_status:
+    if not updates_status_field:
         return Response("Must update the 'status' field", 400)
 
-    if (
-        status_val := update_data["status"]
-    ) not in PromoteRequest.VALID_STATUS_UPDATE_VALUES:
+    elif not updates_from_valid_status:
         return Response(
-            f"Status value '{status_val}' must be "
+            "Cannot review request that is not open",
+            400,
+        )
+
+    elif not updates_to_valid_status:
+        return Response(
+            f"Status value '{target_status}' must be "
             + f"in {PromoteRequest.VALID_STATUS_UPDATE_VALUES}",
             400,
         )
 
-    if not updates_only_review_fields:
-        return Response(f"Can only update {updatable_fields}", 400)
+    elif not updates_only_review_fields:
+        return Response(
+            f"Can only update {PromoteRequest.UPDATEABLE_FIELDS}", 400
+        )
 
-    for field, val in update_data.items():
-        setattr(p, field, val)
+    for field, val in update_fields_and_values.items():
+        setattr(promote_request, field, val)
 
     try:
+        # detect any schema violations etc
+        db_session.flush()
+
+        # update mlflow
+        app.logger.info(
+            f"Updating model {promote_request.model_name} "
+            + f"version {promote_request.model_version} "
+            + f"to stage: {promote_request.target_stage}"
+        )
+
+        if promote_request.status == PromoteRequestStatus.APPROVED.value:
+            mlflow_registry.transition_model_version(
+                ModelVersion(
+                    model_name=promote_request.model_name,
+                    id=promote_request.model_version,
+                ),
+                ModelVersionStage(promote_request.target_stage),
+            )
+
+        # Now that MLFlow is updated, commit.
         db_session.commit()
-        return p.as_dict()
-    except (StatementError, IntegrityError) as e:
+
+        return promote_request.as_dict()
+
+    # ValueError from invalid enum value
+    # StatementError from invalid enum at DB
+    # IntegrityError from invalid missing value at DB
+    except (ValueError, StatementError, IntegrityError) as e:
         app.logger.error(e)
         db_session.rollback()
-        return Response(f"Invalid body: {update_data}", 400)
+        return Response(f"Invalid body: {update_fields_and_values}", 400)
+    except RegistryException as e:
+        app.logger.error("Cause: ", e.cause)
+        db_session.rollback()
+        return Response(f"Registry update failed: {e.cause}", 500)
+
+
+@app.route("/checkpoint/api/models/<model_name>/versions")
+def list_model_versions(model_name):
+    models_versions = mlflow_registry.list_model_versions(
+        model_name=model_name
+    )
+    return jsonify([asdict(v) for v in models_versions])
+
+
+@app.route("/checkpoint/api/models")
+def list_models():
+    models = mlflow_registry.list_models()
+    return jsonify([asdict(m) for m in models])
 
 
 @app.route("/checkpoint/<path:path>")
@@ -226,27 +286,3 @@ def proxy(path):
 
     response = Response(content, resp.status_code, headers)
     return response
-
-
-# if __name__ == "__main__":
-#     from checkpoint.database import init_db, teardown_db
-
-#     init_db()
-
-#     p = PromoteRequest(
-#         title="test",
-#         description="test desc",
-#         model_name="some_model",
-#         model_version="3",
-#         current_stage=ModelVersionStage.STAGING.value,
-#         target_stage=ModelVersionStage.PRODUCTION.value,
-#         author_username="josh",
-#     )
-
-#     db_session.add(p)
-#     db_session.commit()
-
-#     print(PromoteRequest.query.first().current_stage)
-#     print(json.dumps(p.as_dict()))
-
-#     teardown_db()
