@@ -2,8 +2,8 @@
 import { ThunkDispatch } from 'redux-thunk';
 import { AppState } from '../state';
 import { PromoteRequest, CreatePromoteRequest } from '@domino-research/ui/dist/utils/types';
-
 import { AnyAction } from 'redux';
+import { History } from 'history';
 
 export const API_ERROR = 'API_ERROR';
 
@@ -73,31 +73,67 @@ export const fetchRequests = () => {
   };
 };
 
-export const SUBMIT_REQUEST = 'SUBMIT_REQUEST';
+export const FETCH_STAGES = 'FETCH_STAGES';
 
-// export const SUBMIT_REQUEST_ERROR = 'SUBMIT_REQUEST_ERROR';
+export const GOT_STAGES = 'GOT_STAGES';
 
-// export const gotRequests = (requests: PromoteRequest[]): AnyAction => ({
-//   type: GOT_REQUESTS,
-//   requests: requests,
-// });
+export const gotStages = (stages: string[]): AnyAction => ({
+  type: GOT_STAGES,
+  stages: stages,
+});
 
-export const submitRequest = (request: CreatePromoteRequest) => {
+export const fetchStages = () => {
   return async (dispatch: ThunkDispatch<AppState, void, AnyAction>): Promise<void> => {
-    const response = await fetch(`http://localhost:5000/checkpoint/api/requests`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-    });
+    const response = await fetch(`http://localhost:5000/checkpoint/api/stages`);
     if (response.status === 200) {
       try {
-        console.log('SUCCESS');
-        // dispatch(gotRequests(await response.json()));
+        dispatch(gotStages(await response.json()));
       } catch {}
     } else {
       console.error(response);
+    }
+  };
+};
+
+export const SUBMIT_REQUEST = 'SUBMIT_REQUEST';
+
+export const SUBMIT_REQUEST_ERROR = 'SUBMIT_REQUEST_ERROR';
+
+export const gotSubmitRequestError = (error: string): AnyAction => ({
+  type: SUBMIT_REQUEST_ERROR,
+  error: error,
+});
+
+export const CLEAR_SUBMIT_REQUEST_ERROR = 'CLEAR_SUBMIT_REQUEST_ERROR';
+
+export const clearSubmitRequestError = (): AnyAction => ({
+  type: CLEAR_SUBMIT_REQUEST_ERROR,
+});
+
+export const submitRequest = (history: History, request: CreatePromoteRequest) => {
+  return async (dispatch: ThunkDispatch<AppState, void, AnyAction>): Promise<void> => {
+    try {
+      const response = await fetch(`http://localhost:5000/checkpoint/api/requests`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+      if (response.status === 201) {
+        const data = await response.json();
+        console.log(data);
+        history.push(`/checkpoint/requests/${data.id}`);
+        console.log('SUCCESS');
+      } else {
+        dispatch(
+          gotSubmitRequestError(
+            `Error submitting request (${response.status}: ${response.statusText}): ${await response.text()}`,
+          ),
+        );
+      }
+    } catch (error) {
+      console.error(error);
     }
   };
 };

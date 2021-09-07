@@ -23,10 +23,28 @@ export const appReducer = createReducer(initialState, {
       versions: action.versions,
     };
   },
+  GOT_STAGES: (state, action) => {
+    return {
+      ...state,
+      stages: action.stages,
+    };
+  },
   GOT_REQUESTS: (state, action) => {
     return {
       ...state,
       requests: action.requests,
+    };
+  },
+  SUBMIT_REQUEST_ERROR: (state, action) => {
+    return {
+      ...state,
+      error: action.error,
+    };
+  },
+  CLEAR_SUBMIT_REQUEST_ERROR: (state) => {
+    return {
+      ...state,
+      error: undefined,
     };
   },
 });

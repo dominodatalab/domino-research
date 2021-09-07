@@ -1,21 +1,24 @@
 import * as React from 'react';
 import OuterLayout from '../../components/OuterLayout';
-import { Row, Col, Button } from 'antd';
+import { Row, Col, Button, Alert } from 'antd';
 import { PageHeader } from 'antd';
 import { useHistory } from 'react-router-dom';
+import { History } from 'history';
 import { Divider, Form, Input, Select } from 'antd';
 import { useLocation } from 'react-router-dom';
-import { useState } from 'react';
-import { CreatePromoteRequest } from '../../../packages/ui/dist/utils/types';
-import { submitRequest } from 'redux/actions/appActions';
+import { useState, useEffect } from 'react';
+import { CreatePromoteRequest, Model, ModelVersion } from '../../../packages/ui/dist/utils/types';
 
 export interface Props {
-  models?: string[];
-  versions?: string[];
+  models?: Model[];
+  versions?: ModelVersion[];
+  stages?: string[];
   fetchVersions: (model: string) => void;
+  onSubmit: (history: History, request: CreatePromoteRequest) => void;
+  error?: string;
 }
 
-const RequestForm: React.FC<Props> = ({ models, versions, fetchVersions }) => {
+const RequestForm: React.FC<Props> = ({ error, models, versions, stages, fetchVersions, onSubmit }) => {
   const history = useHistory();
   const search = useLocation().search;
   const params = new URLSearchParams(search);
@@ -25,21 +28,20 @@ const RequestForm: React.FC<Props> = ({ models, versions, fetchVersions }) => {
 
   const [name, setName] = useState<string | undefined>(undefined);
   const [description, setDescription] = useState<string | undefined>(undefined);
-  const [model, setModel] = useState<string | undefined>(undefined);
-  const [version, setVersion] = useState<string | undefined>(undefined);
-  const [target, setTarget] = useState<string | undefined>(undefined);
 
-  if (defaultModel) {
-    fetchVersions(defaultModel);
-  }
+  useEffect(() => {
+    if (defaultModel) {
+      fetchVersions(defaultModel);
+    }
+  }, [defaultModel]);
 
   const onModelChange = (model: string) => {
     fetchVersions(model);
-    setModel(model);
   };
 
   const handleSubmit = (values: CreatePromoteRequest) => {
-    submitRequest(values);
+    console.log(values);
+    onSubmit(history, values);
   };
 
   return (
@@ -47,7 +49,7 @@ const RequestForm: React.FC<Props> = ({ models, versions, fetchVersions }) => {
       <OuterLayout>
         <Row gutter={[16, 24]} justify="space-between" align="middle" style={{ padding: '30px' }}>
           <Col span={12} offset={6}>
-            <PageHeader className="site-page-header" onBack={() => history.goBack()} title="New Promote Request" />
+            <PageHeader className="site-page-header" title="New Promote Request" />
             <Divider />
             <Form name="promote_request" labelCol={{ span: 6 }} wrapperCol={{ span: 14 }} onFinish={handleSubmit}>
               <Form.Item label="Title" name="title" rules={[{ required: true }]}>
@@ -60,35 +62,41 @@ const RequestForm: React.FC<Props> = ({ models, versions, fetchVersions }) => {
                   onChange={(e) => setDescription(e.target.value)}
                 />
               </Form.Item>
-              <Form.Item label="Model" name="model_name" rules={[{ required: true }]}>
-                <Select
-                  disabled={models === undefined}
-                  value={model}
-                  defaultValue={defaultModel}
-                  onChange={onModelChange}
-                >
+              <Form.Item label="Model" name="model_name" rules={[{ required: true }]} initialValue={defaultModel}>
+                <Select disabled={models === undefined} onChange={onModelChange}>
                   {models?.map((model, i) => (
-                    <Select.Option value={model} key={i}>
-                      {model}
+                    <Select.Option value={model.name} key={i}>
+                      {model.name}
                     </Select.Option>
                   ))}
                 </Select>
               </Form.Item>
-              <Form.Item label="Version" name="model_version" rules={[{ required: true }]}>
-                <Select disabled={versions === undefined} value={version} onChange={setVersion}>
+              <Form.Item
+                label="Version"
+                name="model_version"
+                initialValue={defaultVersion}
+                rules={[{ required: true }]}
+              >
+                <Select disabled={versions === undefined}>
                   {versions?.map((version, i) => (
-                    <Select.Option value={version} key={i}>
-                      {version}
+                    <Select.Option value={version.id} key={i}>
+                      {version.id}
                     </Select.Option>
                   ))}
                 </Select>
               </Form.Item>
-              <Form.Item label="Target Stage" name="target_stage" rules={[{ required: true }]}>
-                <Select value={target} onChange={setTarget}>
-                  <Select.Option value="production">Production</Select.Option>
-                  <Select.Option value="staging">Staging</Select.Option>
-                  <Select.Option value="archived">Archived</Select.Option>
-                  <Select.Option value="none">None</Select.Option>
+              <Form.Item
+                label="Target Stage"
+                name="target_stage"
+                rules={[{ required: true }]}
+                initialValue={defaultTarget}
+              >
+                <Select disabled={stages === undefined}>
+                  {stages?.map((stage, i) => (
+                    <Select.Option key={i} value={stage}>
+                      {stage}
+                    </Select.Option>
+                  ))}
                 </Select>
               </Form.Item>
               <Form.Item wrapperCol={{ offset: 6, span: 14 }}>
@@ -97,6 +105,7 @@ const RequestForm: React.FC<Props> = ({ models, versions, fetchVersions }) => {
                 </Button>
               </Form.Item>
             </Form>
+            {error && <Alert message={error} type="error" />}
           </Col>
         </Row>
       </OuterLayout>

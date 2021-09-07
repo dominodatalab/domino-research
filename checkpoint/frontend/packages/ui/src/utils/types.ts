@@ -24,3 +24,12 @@ export interface CreatePromoteRequest {
   model_version: string;
   target_stage: string;
 }
+
+export interface Model {
+  name: string;
+}
+
+export interface ModelVersion {
+  model_name: string;
+  id: string;
+}
