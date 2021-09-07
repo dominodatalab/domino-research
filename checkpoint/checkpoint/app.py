@@ -2,7 +2,12 @@ from checkpoint.types import ModelVersionStage, Model, ModelVersion
 from checkpoint.models import PromoteRequest, PromoteRequestStatus
 from checkpoint.database import db_session
 from checkpoint.registries import MlflowRegistry, RegistryException
-from checkpoint.constants import INJECT_SCRIPT, ANONYMOUS_USERNAME
+from checkpoint.constants import (
+    INJECT_SCRIPT,
+    ANONYMOUS_USERNAME,
+    CHECKPOINT_REDIRECT_PREFIX,
+    CHECKPOINT_REDIRECT_SEPARATOR,
+)
 from checkpoint.views import (
     PromoteRequestDetailsView,
     PromoteRequestView,
@@ -18,7 +23,7 @@ from typing import Dict, Any, Optional
 import logging
 import os
 from dataclasses import asdict
-
+import urllib.parse
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +67,20 @@ registry = MlflowRegistry(REGISTRY_URL, REGISTRY_URL)
     methods=["POST"],
 )
 def intercept_tag():
-    return "Redirecting to Checkpoint"
+    create_params = {
+        "model": request.json["name"],
+        "version": request.json["version"],
+        "target": request.json["stage"],
+    }
+
+    encoded_params = urllib.parse.urlencode(create_params)
+    new_pr_path = f"/checkpoint/requests/new?{encoded_params}"
+
+    return (
+        CHECKPOINT_REDIRECT_PREFIX
+        + CHECKPOINT_REDIRECT_SEPARATOR
+        + new_pr_path
+    )
 
 
 @app.route(
