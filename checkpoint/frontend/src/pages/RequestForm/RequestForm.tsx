@@ -71,12 +71,7 @@ const RequestForm: React.FC<Props> = ({ error, models, versions, stages, fetchVe
                   ))}
                 </Select>
               </Form.Item>
-              <Form.Item
-                label="Version"
-                name="model_version"
-                initialValue={defaultVersion}
-                rules={[{ required: true }]}
-              >
+              <Form.Item label="Version" name="version_id" initialValue={defaultVersion} rules={[{ required: true }]}>
                 <Select disabled={versions === undefined}>
                   {versions?.map((version, i) => (
                     <Select.Option value={version.id} key={i}>

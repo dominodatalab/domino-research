@@ -1,7 +1,7 @@
 // You can use CONSTANTS.js file for below definitions of constants and import here.
 import { ThunkDispatch } from 'redux-thunk';
 import { AppState } from '../state';
-import { PromoteRequest, CreatePromoteRequest } from '@domino-research/ui/dist/utils/types';
+import { PromoteRequest, CreatePromoteRequest, RequestDetails } from '@domino-research/ui/dist/utils/types';
 import { AnyAction } from 'redux';
 import { History } from 'history';
 
@@ -120,7 +120,7 @@ export const submitRequest = (history: History, request: CreatePromoteRequest) =
         },
         body: JSON.stringify(request),
       });
-      if (response.status === 201) {
+      if (response.status === 200) {
         const data = await response.json();
         console.log(data);
         history.push(`/checkpoint/requests/${data.id}`);
@@ -134,6 +134,34 @@ export const submitRequest = (history: History, request: CreatePromoteRequest) =
       }
     } catch (error) {
       console.error(error);
+    }
+  };
+};
+
+export const FETCH_REQUEST_DETAILS = 'FETCH_REQUEST_DETAILS';
+
+export const CLEAR_REQUEST_DETAILS = 'FETCH_REQUEST_DETAILS';
+
+export const clearRequestDetails = (): AnyAction => ({
+  type: GOT_REQUEST_DETAILS,
+});
+
+export const GOT_REQUEST_DETAILS = 'GOT_REQUEST_DETAILS';
+
+export const gotRequestDetails = (details: RequestDetails): AnyAction => ({
+  type: GOT_REQUEST_DETAILS,
+  details: details,
+});
+
+export const fetchRequestDetails = (request_id: number) => {
+  return async (dispatch: ThunkDispatch<AppState, void, AnyAction>): Promise<void> => {
+    const response = await fetch(`http://localhost:5000/checkpoint/api/requests/${request_id}/details`);
+    if (response.status === 200) {
+      try {
+        dispatch(gotRequestDetails(await response.json()));
+      } catch {}
+    } else {
+      console.error(response);
     }
   };
 };

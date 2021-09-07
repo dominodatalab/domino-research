@@ -13,7 +13,7 @@ export interface Props {
 
 const Component: React.FC<Props> = ({ data }) => {
   const [modelFilter, setModelFilter] = useState<(string | number)[]>([]);
-  const [statusFilter, setStatusFilter] = useState<(string | number)[]>([]);
+  const [statusFilter, setStatusFilter] = useState<(string | number)[]>(['Open']);
   const [requests, setRequests] = useState<PromoteRequest[] | undefined>(undefined);
   React.useEffect(() => {
     if (data) {
@@ -34,14 +34,6 @@ const Component: React.FC<Props> = ({ data }) => {
           return false;
         });
       }
-      // if (environmentFilter !== 'All environments') {
-      //   tempEnvironments = tempEnvironments.map((env) => {
-      //     env.deploymentCards = env?.deploymentCards?.filter(
-      //       (deploymentCards) => deploymentCards?.deploymentName === environmentFilter,
-      //     );
-      //     return env;
-      //   });
-      // }
       setRequests(filteredRequests);
     } else {
       setRequests(undefined);
@@ -67,6 +59,7 @@ const Component: React.FC<Props> = ({ data }) => {
                   { displayName: 'Closed', value: 'Closed' },
                 ]}
                 onChangeValue={setStatusFilter}
+                initialValue={['Open']}
               />
             </span>
           </Col>

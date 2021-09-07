@@ -21,7 +21,7 @@ export interface CreatePromoteRequest {
   title: string;
   description?: string;
   model_name: string;
-  model_version: string;
+  version_id: string;
   target_stage: string;
 }
 
@@ -32,4 +32,18 @@ export interface Model {
 export interface ModelVersion {
   model_name: string;
   id: string;
+}
+
+export interface RequestDetails {
+  promote_request_id: number;
+  challenger_version_details: VersionDetails;
+  champion_version_details?: VersionDetails;
+}
+
+export interface VersionDetails {
+  id: string;
+  stage: string;
+  tags: Record<string, string>,
+  parameters: Record<string, any>,
+  metrics: Record<string, number>,
 }

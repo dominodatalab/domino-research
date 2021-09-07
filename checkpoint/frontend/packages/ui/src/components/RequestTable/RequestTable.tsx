@@ -22,7 +22,7 @@ const columns: ColumnsType<PromoteRequest> = [
   {
     key: 'version',
     title: 'Version',
-    dataIndex: 'model_version',
+    dataIndex: 'version_id',
   },
   {
     key: 'author',

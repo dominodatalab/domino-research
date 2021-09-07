@@ -47,4 +47,16 @@ export const appReducer = createReducer(initialState, {
       error: undefined,
     };
   },
+  GOT_REQUEST_DETAILS: (state, action) => {
+    return {
+      ...state,
+      details: action.details,
+    };
+  },
+  CLEAR_REQUEST_DETAILS: (state, action) => {
+    return {
+      ...state,
+      details: undefined,
+    };
+  },
 });
