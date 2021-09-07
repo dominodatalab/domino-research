@@ -34,5 +34,5 @@ class ModelVersion:
 class ModelVersionDetails:
     version: ModelVersion
     parameters: Dict[str, Any]
-    metrics: Dict[str, Any]
+    metrics: Dict[str, float]
     tags: Dict[str, str]

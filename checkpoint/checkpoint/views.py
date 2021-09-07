@@ -20,7 +20,7 @@ class PromoteRequestView:
 class VersionDetailsView:
     id: str
     stage: str
-    metrics: Dict[str, Any]
+    metrics: Dict[str, float]
     parameters: Dict[str, Any]
     tags: Dict[str, str]
 

@@ -5,7 +5,7 @@ from checkpoint.types import ModelVersionStage, PromoteRequestStatus
 
 class PromoteRequest(CheckpointBase):
 
-    UPDATEABLE_FIELDS = {"reviewer_username", "review_comment", "status"}
+    UPDATEABLE_FIELDS = {"review_comment", "status"}
 
     VALID_STATUS_UPDATE_VALUES = {
         PromoteRequestStatus.APPROVED.value,
