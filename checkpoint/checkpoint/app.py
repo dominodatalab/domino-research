@@ -1,7 +1,8 @@
 from checkpoint.models import PromoteRequest, PromoteRequestStatus
 from checkpoint.database import db_session
 from checkpoint.registries import MlflowRegistry, RegistryException
-from checkpoint.types import ModelVersion, ModelVersionStage
+from checkpoint.types import Model, ModelVersion, ModelVersionStage
+from checkpoint.constants import INJECT_SCRIPT, ANONYMOUS_USERNAME
 from flask import Flask  # type: ignore
 from flask import request, Response, send_file, jsonify  # type: ignore
 from sqlalchemy.exc import IntegrityError, StatementError  # type: ignore
@@ -48,52 +49,7 @@ REGISTRY_URL = os.environ.get(
     "CHECKPOINT_REGISTRY_URL", "http://mlflow.gambit-sandbox.domino.tech"
 )
 
-mlflow_registry = MlflowRegistry(REGISTRY_URL, REGISTRY_URL)
-
-INJECT_SCRIPT = """
-<script>
-function checkRequests () {
-    var req = new XMLHttpRequest();
-    req.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
-            var requests = JSON.parse(this.responseText);
-            setRequests(requests);
-        }
-    };
-    req.open("GET", "/checkpoint/api/requests", true);
-    req.send();
-}
-
-function setRequests(requests) {
-    element = document.getElementById('requests-count');
-    element.innerHTML = requests.length;
-    if (requests.length === 0) {
-        element.classList.remove('ant-tag-red');
-    } else {
-        element.classList.add('ant-tag-red');
-    }
-}
-
-function checkRedirect() {
-    elements = document.getElementsByClassName("ant-message-error");
-    if (elements.length > 0) {
-        for (i = 0; i< elements.length; i++) {
-            if (elements[i].children[1].innerHTML == "Redirecting to Checkpoint") {
-                window.location = window.location.protocol + '//' + window.location.host + '/checkpoint/requests/new';
-            }
-        }
-    }
-}
-
-window.onload = function () {
-    element = document.getElementsByClassName("header-route-links")[0];
-    element.innerHTML += '<a class="header-nav-link header-nav-link-models" href="/checkpoint/requests"><div class="models"><span id="requests-count" class="ant-tag">-</span><span>Promote Requests</span></div></a>';
-    checkRequests();
-    setInterval(checkRequests, 5000);
-    setInterval(checkRedirect, 1000);
-}
-</script>
-"""  # noqa: E501
+registry = MlflowRegistry(REGISTRY_URL, REGISTRY_URL)
 
 
 @app.route(
@@ -112,19 +68,28 @@ def create_request():
 
     promote_request_data = request.json
 
-    app.logger.info(
-        "Received request to create PromoteRequest with data: "
-        + f"{promote_request_data}"
-    )
-
     if promote_request_data is None:
-        app.logger.error("No POST body in create request")
+        e = ValueError("No JSON POST body in create request")
+        app.logger.error(e)
+        raise e
+
+    # Convert target stage to internal stage name
+    promote_request_data["target_stage"] = registry.stage_for_stage_name(
+        promote_request_data["target_stage"]
+    ).value
+
+    # TODO: capture from oauth header if present
+    promote_request_data["author_username"] = ANONYMOUS_USERNAME
+
+    app.logger.info(
+        "Create PromoteRequest with data: " + f"{promote_request_data}"
+    )
 
     try:
         p = PromoteRequest(**promote_request_data)
         db_session.add(p)
         db_session.commit()
-        return Response("Created", 201)
+        return p.as_dict()
 
     # TypeError is insufficient/extra parameters throws at instantiation
     # IntegrityError is missing/null value error from the DB
@@ -201,7 +166,7 @@ def update_request(id: int):
         )
 
         if promote_request.status == PromoteRequestStatus.APPROVED.value:
-            mlflow_registry.transition_model_version(
+            registry.transition_model_version_stage(
                 ModelVersion(
                     model_name=promote_request.model_name,
                     id=promote_request.model_version,
@@ -227,17 +192,50 @@ def update_request(id: int):
         return Response(f"Registry update failed: {e.cause}", 500)
 
 
+@app.route(
+    "/checkpoint/api/requests/<id>",
+    methods=["GET"],
+)
+def view_request(id):
+    promote_request = PromoteRequest.query.get(id)
+
+    current_stage = registry.get_model_version_stage(
+        ModelVersion(
+            model_name=promote_request.model_name,
+            id=promote_request.model_version,
+        )
+    )
+
+    base_version = registry.get_model_version_for_stage(
+        Model(promote_request.model_name),
+        ModelVersionStage(promote_request.target_stage),
+    )
+
+    comparison = {
+        "target_stage": promote_request.target_stage,
+        "current_stage": current_stage.value,
+        "base_version": base_version.id,
+        "candidate_version": promote_request.model_version,
+    }
+
+    return comparison
+
+
+@app.route("/checkpoint/api/stages")
+def list_stages():
+    stage_names = registry.list_stages_names()
+    return jsonify(stage_names)
+
+
 @app.route("/checkpoint/api/models/<model_name>/versions")
 def list_model_versions(model_name):
-    models_versions = mlflow_registry.list_model_versions(
-        model_name=model_name
-    )
+    models_versions = registry.list_model_versions(model_name=model_name)
     return jsonify([asdict(v) for v in models_versions])
 
 
 @app.route("/checkpoint/api/models")
 def list_models():
-    models = mlflow_registry.list_models()
+    models = registry.list_models()
     return jsonify([asdict(m) for m in models])
 
 
