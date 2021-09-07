@@ -232,7 +232,9 @@ def view_request_details(id):
         promote_request.id,
         champion_version_details=_to_version_details_view(
             champion_version, stage=promote_request.target_stage
-        ),
+        )
+        if champion_version
+        else None,
         challenger_version_details=_to_version_details_view(
             challenger_version
         ),

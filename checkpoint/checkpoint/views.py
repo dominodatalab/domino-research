@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 
 @dataclass
@@ -29,4 +29,4 @@ class VersionDetailsView:
 class PromoteRequestDetailsView:
     promote_request_id: int
     challenger_version_details: VersionDetailsView
-    champion_version_details: VersionDetailsView
+    champion_version_details: Optional[VersionDetailsView]
