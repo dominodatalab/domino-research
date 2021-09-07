@@ -29,13 +29,6 @@ class PromoteRequest(CheckpointBase):
     model_name = Column(String(500), unique=False, nullable=False)
     model_version = Column(String(100), unique=False, nullable=False)
 
-    current_stage = Column(
-        Enum(
-            *[e.value for e in ModelVersionStage],
-            name="model_version_stage",
-            validate_strings=True,
-        )
-    )
     target_stage = Column(
         Enum(
             *[e.value for e in ModelVersionStage],

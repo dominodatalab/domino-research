@@ -16,5 +16,5 @@ class Model:
 
 @dataclass
 class ModelVersion:
-    model_name: str
     id: str
+    model_name: str
