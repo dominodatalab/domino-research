@@ -5,10 +5,7 @@ from sqlalchemy.ext.declarative import (  # type: ignore
     as_declarative,
 )
 
-from sqlalchemy.inspection import inspect  # type: ignore
-
-
-engine = create_engine("sqlite:////tmp/test.db")
+engine = create_engine("sqlite:////tmp/checkpoint.db")
 db_session = scoped_session(
     sessionmaker(autocommit=False, autoflush=False, bind=engine)
 )
@@ -21,12 +18,6 @@ class CheckpointBase:
         return cls.__name__.lower()
 
     query = db_session.query_property()
-
-    def as_dict(self):
-        return {
-            c.key: getattr(self, c.key)
-            for c in inspect(self).mapper.column_attrs
-        }
 
     def __init__(self, **kwargs):
         pass
