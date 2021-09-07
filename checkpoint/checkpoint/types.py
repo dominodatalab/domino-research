@@ -1,5 +1,12 @@
-from dataclasses import dataclass
 import enum
+from typing import Dict, Any
+from dataclasses import dataclass
+
+
+class PromoteRequestStatus(enum.Enum):
+    OPEN = "open"
+    CLOSED = "closed"
+    APPROVED = "approved"
 
 
 class ModelVersionStage(enum.Enum):
@@ -18,3 +25,14 @@ class Model:
 class ModelVersion:
     id: str
     model_name: str
+
+    def __hash__(self):
+        return hash((self.id, self.model_name))
+
+
+@dataclass
+class ModelVersionData:
+    version: ModelVersion
+    parameters: Dict[str, Any]
+    metrics: Dict[str, Any]
+    tags: Dict[str, str]
