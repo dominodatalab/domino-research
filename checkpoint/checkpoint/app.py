@@ -63,9 +63,10 @@ def shutdown_session(exception=None):
     app.logger.debug("Shutdown DB Session")
 
 
-REGISTRY_URL = os.environ.get(
-    "CHECKPOINT_REGISTRY_URL", "http://mlflow.gambit-sandbox.domino.tech"
-)
+REGISTRY_URL = os.environ.get("CHECKPOINT_REGISTRY_URL", None)
+if REGISTRY_URL is None:
+    app.logger.error("CHECKPOINT_REGISTRY_URL must be set in env")
+    raise RuntimeError("CHECKPOINT_REGISTRY_URL missing from env")
 
 registry = MlflowRegistry(REGISTRY_URL, REGISTRY_URL)
 
