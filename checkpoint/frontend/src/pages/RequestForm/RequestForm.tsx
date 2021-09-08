@@ -6,7 +6,7 @@ import { useHistory } from 'react-router-dom';
 import { History } from 'history';
 import { Divider, Form, Input, Select } from 'antd';
 import { useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { CreatePromoteRequest, Model, ModelVersion } from '../../../packages/ui/dist/utils/types';
 
 export interface Props {
@@ -25,9 +25,6 @@ const RequestForm: React.FC<Props> = ({ error, models, versions, stages, fetchVe
   const defaultModel = params.get('model') || undefined;
   const defaultVersion = params.get('version') || undefined;
   const defaultTarget = params.get('target') || undefined;
-
-  const [name, setName] = useState<string | undefined>(undefined);
-  const [description, setDescription] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (defaultModel) {
@@ -53,14 +50,10 @@ const RequestForm: React.FC<Props> = ({ error, models, versions, stages, fetchVe
             <Divider />
             <Form name="promote_request" labelCol={{ span: 6 }} wrapperCol={{ span: 14 }} onFinish={handleSubmit}>
               <Form.Item label="Title" name="title" rules={[{ required: true }]}>
-                <Input value={name} onChange={(e) => setName(e.target.value)} />
+                <Input />
               </Form.Item>
               <Form.Item label="Description" name="description">
-                <Input.TextArea
-                  autoSize={{ minRows: 10 }}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
+                <Input.TextArea autoSize={{ minRows: 10 }} />
               </Form.Item>
               <Form.Item label="Model" name="model_name" rules={[{ required: true }]} initialValue={defaultModel}>
                 <Select disabled={models === undefined} onChange={onModelChange}>

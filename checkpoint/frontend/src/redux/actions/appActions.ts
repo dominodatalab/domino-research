@@ -1,7 +1,12 @@
 // You can use CONSTANTS.js file for below definitions of constants and import here.
 import { ThunkDispatch } from 'redux-thunk';
 import { AppState } from '../state';
-import { PromoteRequest, CreatePromoteRequest, RequestDetails } from '@domino-research/ui/dist/utils/types';
+import {
+  PromoteRequest,
+  CreatePromoteRequest,
+  RequestDetails,
+  CreateReview,
+} from '@domino-research/ui/dist/utils/types';
 import { AnyAction } from 'redux';
 import { History } from 'history';
 
@@ -162,6 +167,33 @@ export const fetchRequestDetails = (request_id: number) => {
       } catch {}
     } else {
       console.error(response);
+    }
+  };
+};
+
+export const SUBMIT_REVIEW = 'SUBMIT_REVIEW';
+
+export const submitReview = (history: History, request_id: string, request: CreateReview) => {
+  return async (dispatch: ThunkDispatch<AppState, void, AnyAction>): Promise<void> => {
+    try {
+      const response = await fetch(`http://localhost:5000/checkpoint/api/requests/${request_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+      if (response.status === 200) {
+        history.push(`/checkpoint/requests`);
+      } else {
+        dispatch(
+          gotSubmitRequestError(
+            `Error submitting request (${response.status}: ${response.statusText}): ${await response.text()}`,
+          ),
+        );
+      }
+    } catch (error) {
+      console.error(error);
     }
   };
 };

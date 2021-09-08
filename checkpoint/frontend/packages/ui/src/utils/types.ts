@@ -14,7 +14,7 @@ export interface PromoteRequest {
   author_username: string;
   reviewer_username?: string;
   review_comment?: string,
-  status: string
+  status: 'open' | 'closed' | 'approved';
 }
 
 export interface CreatePromoteRequest {
@@ -46,4 +46,9 @@ export interface VersionDetails {
   tags: Record<string, string>,
   parameters: Record<string, any>,
   metrics: Record<string, number>,
+}
+
+export interface CreateReview {
+  status: 'closed' | 'approved';
+  review_comment: string;
 }

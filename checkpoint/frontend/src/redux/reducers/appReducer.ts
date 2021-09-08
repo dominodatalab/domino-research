@@ -53,7 +53,7 @@ export const appReducer = createReducer(initialState, {
       details: action.details,
     };
   },
-  CLEAR_REQUEST_DETAILS: (state, action) => {
+  CLEAR_REQUEST_DETAILS: (state) => {
     return {
       ...state,
       details: undefined,

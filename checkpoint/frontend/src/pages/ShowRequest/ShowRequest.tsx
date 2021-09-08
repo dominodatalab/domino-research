@@ -1,14 +1,19 @@
 import * as React from 'react';
 import OuterLayout from '../../components/OuterLayout';
-import { Row, Col, PageHeader, Card, Tag, Table, Input, Button, Form, Select } from 'antd';
+import { Row, Col, PageHeader, Card, Tag, Table, Input, Button, Form, Select, Typography } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
-import { PromoteRequest, RequestDetails } from '@domino-research/ui/dist/utils/types';
+import { PromoteRequest, RequestDetails, CreateReview } from '@domino-research/ui/dist/utils/types';
 import s from './ShowRequest.module.scss';
+import { useHistory } from 'react-router-dom';
+import { History } from 'history';
+
+const { Text, Paragraph } = Typography;
 
 export interface Props {
   request_id?: string;
   request?: PromoteRequest;
   details?: RequestDetails;
+  onSubmit: (history: History, request_id: string, request: CreateReview) => void;
 }
 
 const getColor = (stage: string | undefined): string => {
@@ -156,17 +161,49 @@ const diffParams = (challenger?: Record<string, any>, champion?: Record<string, 
   return result;
 };
 
-const ShowRequest: React.FC<Props> = ({ request_id, details, request }) => {
+const ShowRequest: React.FC<Props> = ({ request_id, details, request, onSubmit }) => {
+  const history = useHistory();
   const metricData = diffMetrics(
     details?.challenger_version_details.metrics,
     details?.champion_version_details?.metrics,
   );
-  const metricRowSelection = metricData.filter((diff) => diff.challenger != diff.champion).map((diff) => diff.name);
+  const metricRowSelection = details?.champion_version_details
+    ? metricData.filter((diff) => diff.challenger != diff.champion).map((diff) => diff.name)
+    : [];
   const paramData = diffParams(
     details?.challenger_version_details.parameters,
     details?.champion_version_details?.parameters,
   );
-  const paramRowSelection = paramData.filter((diff) => diff.challenger != diff.champion).map((diff) => diff.name);
+  const paramRowSelection = details?.champion_version_details
+    ? paramData.filter((diff) => diff.challenger != diff.champion).map((diff) => diff.name)
+    : [];
+
+  const handleSubmit = (values: CreateReview) => {
+    console.log(values);
+    if (request_id) {
+      onSubmit(history, request_id, values);
+    }
+  };
+
+  let state = undefined;
+  switch (request?.status) {
+    case 'open': {
+      state = <Tag color="default">Open</Tag>;
+      break;
+    }
+    case 'closed': {
+      state = <Tag color="error">Closed</Tag>;
+      break;
+    }
+    case 'approved': {
+      state = <Tag color="success">Approved</Tag>;
+      break;
+    }
+    case undefined: {
+      break;
+    }
+  }
+
   return (
     <div>
       <OuterLayout>
@@ -191,10 +228,23 @@ const ShowRequest: React.FC<Props> = ({ request_id, details, request }) => {
               </Col>
               <Col span={9}>
                 <Card size="small">
-                  <span>Version {details?.champion_version_details?.id}</span>
-                  <Tag style={{ float: 'right' }} color={getColor(details?.champion_version_details?.stage)}>
-                    {details?.champion_version_details?.stage}
-                  </Tag>
+                  {details?.champion_version_details ? (
+                    <>
+                      <span>Version {details?.champion_version_details?.id}</span>
+                      <Tag style={{ float: 'right' }} color={getColor(details?.champion_version_details?.stage)}>
+                        {details?.champion_version_details?.stage}
+                      </Tag>
+                    </>
+                  ) : (
+                    <>
+                      <Text type="secondary" italic>
+                        No model in this stage.
+                      </Text>
+                      <Tag style={{ float: 'right' }} color={getColor(request?.target_stage)}>
+                        {request?.target_stage}
+                      </Tag>
+                    </>
+                  )}
                 </Card>
               </Col>
             </Row>
@@ -203,7 +253,13 @@ const ShowRequest: React.FC<Props> = ({ request_id, details, request }) => {
                 <Card title="Description" style={{ height: '100%' }}>
                   {/* prettier-ignore */}
                   <pre style={{ maxHeight: '400px', overflow: 'scroll' }}>
-                    {request?.description}
+                    {request?.description == undefined || request?.description == '' ? (
+                      <Paragraph disabled italic>
+                        No description provided.
+                      </Paragraph>
+                    ) : (
+                      <Paragraph>{request?.description}</Paragraph>
+                    )}
                   </pre>
                 </Card>
               </Col>
@@ -248,21 +304,37 @@ const ShowRequest: React.FC<Props> = ({ request_id, details, request }) => {
             </Row>
             <Row gutter={[16, 16]} style={{ marginTop: '20px' }}>
               <Col span={16} offset={4}>
-                <Card title="Review" style={{ height: '100%' }}>
-                  <Form name="review" labelCol={{ span: 3 }} wrapperCol={{ span: 21 }}>
-                    <Form.Item label="Comment" name="comment">
-                      <Input.TextArea autoSize={{ minRows: 5 }} />
-                    </Form.Item>
-                    <Form.Item label="Action" name="action" rules={[{ required: true }]}>
-                      <Select>
-                        <Select.Option value="approve">Approve</Select.Option>
-                        <Select.Option value="close">Close</Select.Option>
-                      </Select>
-                    </Form.Item>
-                    <Form.Item wrapperCol={{ offset: 20, span: 4 }}>
-                      <Button type="primary">Submit</Button>
-                    </Form.Item>
-                  </Form>
+                <Card title="Review" style={{ height: '100%' }} extra={state}>
+                  {request?.status == 'open' && (
+                    <Form name="review" labelCol={{ span: 3 }} wrapperCol={{ span: 21 }} onFinish={handleSubmit}>
+                      <Form.Item label="Comment" name="review_comment">
+                        <Input.TextArea autoSize={{ minRows: 5 }} />
+                      </Form.Item>
+                      <Form.Item label="Action" name="status" rules={[{ required: true }]}>
+                        <Select>
+                          <Select.Option value="approved">Approve</Select.Option>
+                          <Select.Option value="closed">Close</Select.Option>
+                        </Select>
+                      </Form.Item>
+                      <Form.Item wrapperCol={{ offset: 20, span: 4 }}>
+                        <Button type="primary" htmlType="submit">
+                          Submit
+                        </Button>
+                      </Form.Item>
+                    </Form>
+                  )}
+                  {(request?.status == 'closed' || request?.status == 'approved') && (
+                    <div>
+                      <Paragraph type="secondary">By {request?.reviewer_username} on January 1st, 1970.</Paragraph>
+                      {request?.review_comment == undefined || request?.review_comment == '' ? (
+                        <Paragraph disabled italic>
+                          No description provided.
+                        </Paragraph>
+                      ) : (
+                        <Paragraph>{request?.review_comment}</Paragraph>
+                      )}
+                    </div>
+                  )}
                 </Card>
               </Col>
             </Row>

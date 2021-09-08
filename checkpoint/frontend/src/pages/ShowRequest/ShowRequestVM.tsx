@@ -5,7 +5,9 @@ import { AnyAction } from 'redux';
 import { connect, ConnectedProps } from 'react-redux';
 import ShowRequest from './ShowRequest';
 import { useParams } from 'react-router-dom';
-import { fetchRequestDetails, clearRequestDetails, fetchRequests } from 'redux/actions/appActions';
+import { fetchRequestDetails, clearRequestDetails, fetchRequests, submitReview } from 'redux/actions/appActions';
+import { CreateReview } from '@domino-research/ui/dist/utils/types';
+import { History } from 'history';
 
 const mapState = (state: AppState) => {
   return {
@@ -19,6 +21,8 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, void, AnyAction>) 
     fetchRequestDetails: (request_id: number) => dispatch(fetchRequestDetails(request_id)),
     clearRequestDetails: () => dispatch(clearRequestDetails()),
     fetchRequests: () => dispatch(fetchRequests()),
+    submitReview: (history: History, request_id: string, request: CreateReview) =>
+      dispatch(submitReview(history, request_id, request)),
   };
 };
 
@@ -38,6 +42,7 @@ const ShowRequestVM: React.FC<Props> = ({
   fetchRequests,
   fetchRequestDetails,
   clearRequestDetails,
+  submitReview,
 }) => {
   const { request_id } = useParams<Params>();
   let rid: number | undefined = undefined;
@@ -53,7 +58,7 @@ const ShowRequestVM: React.FC<Props> = ({
   }, []);
   const request = requests?.find((request) => request.id == rid);
 
-  return <ShowRequest request_id={request_id} request={request} details={details} />;
+  return <ShowRequest request_id={request_id} request={request} details={details} onSubmit={submitReview} />;
 };
 
 const ConnectedViewModel = connector(ShowRequestVM);
