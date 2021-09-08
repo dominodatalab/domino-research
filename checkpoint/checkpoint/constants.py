@@ -68,7 +68,7 @@ window.onload = function () {
     element.innerHTML += '<a class="header-nav-link header-nav-link-models" href="/checkpoint/requests"><div class="models"><span>Promote Requests</span> <span id="requests-count" class="ant-tag">-</span></div></a>';
     checkRequests();
     setInterval(checkRequests, 5000);
-    setInterval(checkRedirect, 500);
+    setInterval(checkRedirect, 1000);
 }
 </script>
 """  # noqa: E501
