@@ -106,10 +106,25 @@ def create_request():
         app.logger.error(e)
         raise e
 
-    internal_stage = registry.checkpoint_stage_for_registry_stage(
-        promote_request_data["target_stage"]
+    external_target_stage = promote_request_data["target_stage"]
+    internal_target_stage = registry.checkpoint_stage_for_registry_stage(
+        external_target_stage
     )
-    promote_request_data["target_stage"] = internal_stage
+
+    current_stage = registry.get_stage_for_model_version(
+        ModelVersion(
+            promote_request_data["version_id"],
+            promote_request_data["model_name"],
+        )
+    )
+
+    if current_stage == internal_target_stage:
+        return Response(
+            f"Invalid request: model already in {external_target_stage}",
+            400,
+        )
+
+    promote_request_data["target_stage"] = internal_target_stage
 
     # TODO: capture from oauth header if present
     promote_request_data["author_username"] = ANONYMOUS_USERNAME
