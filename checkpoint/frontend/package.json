@@ -27,7 +27,7 @@
     "dev": "npm run build:ui && npm-run-all --parallel watch:ui start",
     "start": "craco start",
     "build:spa": "craco build",
-    "build": "npm run build:polaris/ui && craco build",
+    "build": "npm run build:ui && craco build",
     "build:ui": "cd packages/ui && npm i && npm run build",
     "watch:ui": "cd packages/ui && npm run build:watch",
     "test": "craco test",

@@ -1,2 +1,3 @@
-export const ROOT = '/checkpoint/requests';
-export const PROJECT_LIST = '/projects';
+export const REQUEST_LIST = '/checkpoint/requests';
+export const REQUEST_FORM = '/checkpoint/requests/new';
+export const SHOW_REQUEST = '/checkpoint/requests/:request_id';
