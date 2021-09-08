@@ -7,6 +7,7 @@ from checkpoint.constants import (
     ANONYMOUS_USERNAME,
     CHECKPOINT_REDIRECT_PREFIX,
     CHECKPOINT_REDIRECT_SEPARATOR,
+    NO_VERSION_SENTINAL,
 )
 from checkpoint.views import (
     PromoteRequestDetailsView,
@@ -201,6 +202,25 @@ def update_request(id: int):
         update_fields_and_values["status"]
     )
 
+    current_champion_version = registry.get_model_version_for_stage(
+        Model(promote_request.model_name),
+        promote_request.target_stage,
+    )
+
+    app.logger.debug("Saving current champion version as static champion")
+    if current_champion_version:
+        app.logger.debug(
+            f"Static champion version is {current_champion_version.id}"
+        )
+        champion_version_id = current_champion_version.id
+    else:
+        app.logger.debug("No current champion version, persisting sentinal")
+        champion_version_id = NO_VERSION_SENTINAL
+
+    update_fields_and_values[
+        "static_champion_version_id"
+    ] = champion_version_id
+
     for field, val in update_fields_and_values.items():
         setattr(promote_request, field, val)
 
@@ -249,10 +269,22 @@ def update_request(id: int):
 def view_request_details(id):
     promote_request = PromoteRequest.query.get(id)
 
-    champion_version = registry.get_model_version_for_stage(
-        Model(promote_request.model_name),
-        promote_request.target_stage,
-    )
+    if (
+        champion_version_id := promote_request.static_champion_version_id
+    ) is None:
+        app.logger.debug("No static champion. Querying from target stage.")
+        champion_version = registry.get_model_version_for_stage(
+            Model(promote_request.model_name),
+            promote_request.target_stage,
+        )
+    elif champion_version_id != NO_VERSION_SENTINAL:
+        app.logger.debug(f"Static champion {champion_version_id} present.")
+        champion_version = ModelVersion(
+            champion_version_id, promote_request.model_name
+        )
+    else:
+        app.logger.debug("Sentinal champion detected, returning no champion")
+        champion_version = None
 
     challenger_version = ModelVersion(
         promote_request.version_id, promote_request.model_name
@@ -345,6 +377,7 @@ def _to_promote_request_view(
     external_target_stage = registry.registry_stage_for_checkpoint_stage(
         promote_request.target_stage
     )
+
     return PromoteRequestView(
         id=promote_request.id,
         status=promote_request.status.value,
@@ -356,6 +389,10 @@ def _to_promote_request_view(
         else None,
         model_name=promote_request.model_name,
         version_id=promote_request.version_id,
+        static_champion_version_id=version_id
+        if (version_id := promote_request.static_champion_version_id)
+        != NO_VERSION_SENTINAL
+        else None,
         target_stage=external_target_stage,
         author_username=promote_request.author_username,
         reviewer_username=promote_request.reviewer_username,

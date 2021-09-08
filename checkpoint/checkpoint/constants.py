@@ -3,6 +3,8 @@ ANONYMOUS_USERNAME = "Anonymous"
 CHECKPOINT_REDIRECT_PREFIX = "checkpoint_redirect"
 CHECKPOINT_REDIRECT_SEPARATOR = ":"
 
+NO_VERSION_SENTINAL = "no_version"
+
 INJECT_SCRIPT_TEMPLATE = """
 <script>
 function checkRequests () {

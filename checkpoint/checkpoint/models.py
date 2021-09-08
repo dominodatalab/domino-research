@@ -34,6 +34,10 @@ class PromoteRequest(CheckpointBase):
         )
     )
 
+    static_champion_version_id = Column(
+        String(100), unique=False, nullable=True
+    )
+
     author_username = Column(String(200), unique=False, nullable=False)
     reviewer_username = Column(String(200), unique=False, nullable=True)
 
