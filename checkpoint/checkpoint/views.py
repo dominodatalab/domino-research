@@ -8,6 +8,8 @@ class PromoteRequestView:
     status: str
     title: str
     description: str
+    created_at_epoch: float
+    closed_at_epoch: Optional[float]
     model_name: str
     version_id: str
     target_stage: str

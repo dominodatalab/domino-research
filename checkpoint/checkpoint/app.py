@@ -24,6 +24,7 @@ import logging
 import os
 from dataclasses import asdict
 import urllib.parse
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -113,6 +114,7 @@ def create_request():
     promote_request_data["author_username"] = ANONYMOUS_USERNAME
 
     promote_request_data["status"] = PromoteRequestStatus.OPEN
+    promote_request_data["created_at"] = datetime.utcnow()
 
     app.logger.info(
         "Create PromoteRequest with data: " + f"{promote_request_data}"
@@ -192,6 +194,8 @@ def update_request(id: int):
 
     # TODO: capture from oauth header
     update_fields_and_values["reviewer_username"] = ANONYMOUS_USERNAME
+
+    update_fields_and_values["closed_at"] = datetime.utcnow()
 
     update_fields_and_values["status"] = PromoteRequestStatus(
         update_fields_and_values["status"]
@@ -346,6 +350,10 @@ def _to_promote_request_view(
         status=promote_request.status.value,
         title=promote_request.title,
         description=promote_request.description,
+        created_at_epoch=promote_request.created_at.timestamp(),
+        closed_at_epoch=promote_request.closed_at.timestamp()
+        if promote_request.closed_at
+        else None,
         model_name=promote_request.model_name,
         version_id=promote_request.version_id,
         target_stage=external_target_stage,
