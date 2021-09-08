@@ -6,7 +6,6 @@ name: bridge-tests
 on:
   push:
     paths:
-    - ".github/workflows/bridge.yaml"
     - "bridge/**"
 
 jobs:

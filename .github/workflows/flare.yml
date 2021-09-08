@@ -6,7 +6,6 @@ name: flare-tests
 on:
   push:
     paths:
-    - ".github/workflows/flare.yaml"
     - "flare/**"
 
 jobs:

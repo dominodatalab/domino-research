@@ -6,7 +6,6 @@ name: checkpoint-tests
 on:
   push:
     paths:
-    - ".github/workflows/checkpoint.yaml"
     - "checkpoint/**"
 
 jobs:
