@@ -6,10 +6,11 @@ name: tests
 on:
   push:
     paths:
+    - ".github/workflows/checkpoint.yaml"
     - "checkpoint/**"
 
 jobs:
-  checkpoint:
+  checkpoint_lint_and_test:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -24,17 +25,17 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ${{ env.pythonLocation }}
-        key: ${{ env.pythonLocation }}-${{ hashFiles('checkpoint/requirements-dev.txt') }}-${{ hashFiles('checkpoint/setup.py') }}
+        key: checkpoint-${{ env.pythonLocation }}-${{ hashFiles('checkpoint/requirements-dev.txt') }}-${{ hashFiles('checkpoint/setup.py') }}
         restore-keys: |
-          ${{ env.pythonLocation }}-${{ hashFiles('checkpoint/requirements-dev.txt') }}
-          ${{ env.pythonLocation }}-
+          checkpoint-${{ env.pythonLocation }}-${{ hashFiles('checkpoint/requirements-dev.txt') }}
+          checkpoint-${{ env.pythonLocation }}-
     - name: Cache MyPy
       uses: actions/cache@v2
       with:
         path: checkpoint/.mypy_cache
-        key: mypy-${{ hashFiles('checkpoint/**') }}
+        key: checkpoint-mypy-${{ hashFiles('checkpoint/**') }}
         restore-keys: |
-          mypy-
+          checkpoint-mypy-
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
