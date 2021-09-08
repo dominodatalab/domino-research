@@ -20,11 +20,26 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.9
+    - name: Cache Python Env
+      uses: actions/cache@v2
+      with:
+        path: ${{ env.pythonLocation }}
+        key: ${{ env.pythonLocation }}-${{ hashFiles('checkpoint/requirements-dev.txt') }}-${{ hashFiles('checkpoint/setup.py') }}
+        restore-keys: |
+          ${{ env.pythonLocation }}-${{ hashFiles('checkpoint/requirements-dev.txt') }}
+          ${{ env.pythonLocation }}-
+    - name: Cache MyPy
+      uses: actions/cache@v2
+      with:
+        path: checkpoint/.mypy_cache
+        key: mypy-${{ hashFiles('checkpoint/**') }}
+        restore-keys: |
+          mypy-
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
-        pip install -e .
+        pip install --upgrade --upgrade-strategy eager -r requirements-dev.txt
+        pip install --upgrade --upgrade-strategy eager -e .
     - name: Lint project with black
       run: |
         black --check --diff .
