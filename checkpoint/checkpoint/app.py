@@ -7,6 +7,8 @@ from checkpoint.constants import (
     ANONYMOUS_USERNAME,
     CHECKPOINT_REDIRECT_PREFIX,
     CHECKPOINT_REDIRECT_SEPARATOR,
+    NO_VERSION_SENTINAL,
+    STAGES_WITH_CHAMPIONS,
 )
 from checkpoint.views import (
     PromoteRequestDetailsView,
@@ -24,6 +26,7 @@ import logging
 import os
 from dataclasses import asdict
 import urllib.parse
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -105,15 +108,41 @@ def create_request():
         app.logger.error(e)
         raise e
 
-    internal_stage = registry.checkpoint_stage_for_registry_stage(
-        promote_request_data["target_stage"]
+    external_target_stage = promote_request_data["target_stage"]
+    internal_target_stage = registry.checkpoint_stage_for_registry_stage(
+        external_target_stage
     )
-    promote_request_data["target_stage"] = internal_stage
+
+    current_stage = registry.get_stage_for_model_version(
+        ModelVersion(
+            promote_request_data["version_id"],
+            promote_request_data["model_name"],
+        )
+    )
+
+    if current_stage == internal_target_stage:
+        return Response(
+            f"Invalid request: model already in {external_target_stage}",
+            400,
+        )
+
+    promote_request_data["target_stage"] = internal_target_stage
 
     # TODO: capture from oauth header if present
     promote_request_data["author_username"] = ANONYMOUS_USERNAME
 
     promote_request_data["status"] = PromoteRequestStatus.OPEN
+    promote_request_data["created_at"] = datetime.utcnow()
+
+    target_stage_has_champions = internal_target_stage in STAGES_WITH_CHAMPIONS
+
+    if not target_stage_has_champions:
+        app.logger.debug(
+            "Target stage has no champion. Setting no-version sentinal now."
+        )
+        promote_request_data[
+            "static_champion_version_id"
+        ] = NO_VERSION_SENTINAL
 
     app.logger.info(
         "Create PromoteRequest with data: " + f"{promote_request_data}"
@@ -194,9 +223,44 @@ def update_request(id: int):
     # TODO: capture from oauth header
     update_fields_and_values["reviewer_username"] = ANONYMOUS_USERNAME
 
+    update_fields_and_values["closed_at"] = datetime.utcnow()
+
     update_fields_and_values["status"] = PromoteRequestStatus(
         update_fields_and_values["status"]
     )
+
+    app.logger.debug("Setting static champion version.")
+
+    target_stage_has_champions = (
+        promote_request.target_stage in STAGES_WITH_CHAMPIONS
+    )
+
+    if not target_stage_has_champions:
+        app.logger.debug(
+            "Target stage has no champion. Setting no-version sentinal."
+        )
+        champion_version_id = NO_VERSION_SENTINAL
+    else:
+        app.logger.debug("Querying target stage for champion.")
+        current_champion_version = registry.get_model_version_for_stage(
+            Model(promote_request.model_name),
+            promote_request.target_stage,
+        )
+
+        if current_champion_version is None:
+            champion_version_id = NO_VERSION_SENTINAL
+            app.logger.debug(
+                "No current champion version. Setting no-version sentinal."
+            )
+        else:
+            champion_version_id = current_champion_version.id
+            app.logger.debug(
+                f"Setting champion version to v{current_champion_version.id}"
+            )
+
+    update_fields_and_values[
+        "static_champion_version_id"
+    ] = champion_version_id
 
     for field, val in update_fields_and_values.items():
         setattr(promote_request, field, val)
@@ -246,10 +310,25 @@ def update_request(id: int):
 def view_request_details(id):
     promote_request = PromoteRequest.query.get(id)
 
-    champion_version = registry.get_model_version_for_stage(
-        Model(promote_request.model_name),
-        promote_request.target_stage,
-    )
+    no_static_champion = (
+        champion_version_id := promote_request.static_champion_version_id
+    ) is None
+    static_champion_is_sentinal = champion_version_id == NO_VERSION_SENTINAL
+
+    if no_static_champion:
+        app.logger.debug("No static champion. Querying from target stage.")
+        champion_version = registry.get_model_version_for_stage(
+            Model(promote_request.model_name),
+            promote_request.target_stage,
+        )
+    elif static_champion_is_sentinal:
+        app.logger.debug("Sentinal champion detected, returning null champion")
+        champion_version = None
+    else:
+        app.logger.debug(f"Static champion present - v{champion_version_id}")
+        champion_version = ModelVersion(
+            champion_version_id, promote_request.model_name
+        )
 
     challenger_version = ModelVersion(
         promote_request.version_id, promote_request.model_name
@@ -342,13 +421,19 @@ def _to_promote_request_view(
     external_target_stage = registry.registry_stage_for_checkpoint_stage(
         promote_request.target_stage
     )
+
     return PromoteRequestView(
         id=promote_request.id,
         status=promote_request.status.value,
         title=promote_request.title,
         description=promote_request.description,
+        created_at_epoch=int(promote_request.created_at.timestamp()),
+        closed_at_epoch=int(closed_at.timestamp())
+        if (closed_at := promote_request.closed_at) is not None
+        else None,
         model_name=promote_request.model_name,
         version_id=promote_request.version_id,
+        static_champion_version_id=promote_request.static_champion_version_id,
         target_stage=external_target_stage,
         author_username=promote_request.author_username,
         reviewer_username=promote_request.reviewer_username,

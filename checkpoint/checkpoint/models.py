@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Enum  # type: ignore
+from sqlalchemy import Column, Integer, String, Enum, DateTime  # type: ignore
 from checkpoint.database import CheckpointBase
 from checkpoint.types import ModelVersionStage, PromoteRequestStatus
 
@@ -19,6 +19,9 @@ class PromoteRequest(CheckpointBase):
     title = Column(String(120), unique=False, nullable=False)
     description = Column(String(1000), unique=False, nullable=True)
 
+    created_at = Column(DateTime(), unique=False, nullable=False)
+    closed_at = Column(DateTime(), unique=False, nullable=True)
+
     model_name = Column(String(500), unique=False, nullable=False)
     version_id = Column(String(100), unique=False, nullable=False)
 
@@ -29,6 +32,10 @@ class PromoteRequest(CheckpointBase):
             validate_strings=True,
             nullable=False,
         )
+    )
+
+    static_champion_version_id = Column(
+        String(100), unique=False, nullable=True
     )
 
     author_username = Column(String(200), unique=False, nullable=False)
