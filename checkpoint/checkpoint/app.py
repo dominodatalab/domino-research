@@ -8,6 +8,7 @@ from checkpoint.constants import (
     CHECKPOINT_REDIRECT_PREFIX,
     CHECKPOINT_REDIRECT_SEPARATOR,
     NO_VERSION_SENTINAL,
+    STAGES_WITH_CHAMPIONS,
 )
 from checkpoint.views import (
     PromoteRequestDetailsView,
@@ -132,6 +133,16 @@ def create_request():
     promote_request_data["status"] = PromoteRequestStatus.OPEN
     promote_request_data["created_at"] = datetime.utcnow()
 
+    target_stage_has_champions = internal_target_stage in STAGES_WITH_CHAMPIONS
+
+    if not target_stage_has_champions:
+        app.logger.debug(
+            "Target stage has no champion. Setting no-version sentinal now."
+        )
+        promote_request_data[
+            "static_champion_version_id"
+        ] = NO_VERSION_SENTINAL
+
     app.logger.info(
         "Create PromoteRequest with data: " + f"{promote_request_data}"
     )
@@ -217,20 +228,34 @@ def update_request(id: int):
         update_fields_and_values["status"]
     )
 
-    current_champion_version = registry.get_model_version_for_stage(
-        Model(promote_request.model_name),
-        promote_request.target_stage,
+    app.logger.debug("Setting static champion version.")
+
+    target_stage_has_champions = (
+        promote_request.target_stage in STAGES_WITH_CHAMPIONS
     )
 
-    app.logger.debug("Saving current champion version as static champion")
-    if current_champion_version:
+    if not target_stage_has_champions:
         app.logger.debug(
-            f"Static champion version is {current_champion_version.id}"
+            "Target stage has no champion. Setting no-version sentinal."
         )
-        champion_version_id = current_champion_version.id
-    else:
-        app.logger.debug("No current champion version, persisting sentinal")
         champion_version_id = NO_VERSION_SENTINAL
+    else:
+        app.logger.debug("Querying target stage for champion.")
+        current_champion_version = registry.get_model_version_for_stage(
+            Model(promote_request.model_name),
+            promote_request.target_stage,
+        )
+
+        if current_champion_version is None:
+            champion_version_id = NO_VERSION_SENTINAL
+            app.logger.debug(
+                "No current champion version. Setting no-version sentinal."
+            )
+        else:
+            champion_version_id = current_champion_version.id
+            app.logger.debug(
+                f"Setting champion version to v{current_champion_version.id}"
+            )
 
     update_fields_and_values[
         "static_champion_version_id"
@@ -284,22 +309,25 @@ def update_request(id: int):
 def view_request_details(id):
     promote_request = PromoteRequest.query.get(id)
 
-    if (
+    no_static_champion = (
         champion_version_id := promote_request.static_champion_version_id
-    ) is None:
+    ) is None
+    static_champion_is_sentinal = champion_version_id == NO_VERSION_SENTINAL
+
+    if no_static_champion:
         app.logger.debug("No static champion. Querying from target stage.")
         champion_version = registry.get_model_version_for_stage(
             Model(promote_request.model_name),
             promote_request.target_stage,
         )
-    elif champion_version_id != NO_VERSION_SENTINAL:
-        app.logger.debug(f"Static champion {champion_version_id} present.")
+    elif static_champion_is_sentinal:
+        app.logger.debug("Sentinal champion detected, returning null champion")
+        champion_version = None
+    else:
+        app.logger.debug(f"Static champion present - v{champion_version_id}")
         champion_version = ModelVersion(
             champion_version_id, promote_request.model_name
         )
-    else:
-        app.logger.debug("Sentinal champion detected, returning no champion")
-        champion_version = None
 
     challenger_version = ModelVersion(
         promote_request.version_id, promote_request.model_name
@@ -404,10 +432,7 @@ def _to_promote_request_view(
         else None,
         model_name=promote_request.model_name,
         version_id=promote_request.version_id,
-        static_champion_version_id=version_id
-        if (version_id := promote_request.static_champion_version_id)
-        != NO_VERSION_SENTINAL
-        else None,
+        static_champion_version_id=promote_request.static_champion_version_id,
         target_stage=external_target_stage,
         author_username=promote_request.author_username,
         reviewer_username=promote_request.reviewer_username,

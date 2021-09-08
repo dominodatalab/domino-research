@@ -1,9 +1,17 @@
+from checkpoint.types import ModelVersionStage
+
+
 ANONYMOUS_USERNAME = "Anonymous"
 
 CHECKPOINT_REDIRECT_PREFIX = "checkpoint_redirect"
 CHECKPOINT_REDIRECT_SEPARATOR = ":"
 
 NO_VERSION_SENTINAL = "no_version"
+
+STAGES_WITH_CHAMPIONS = {
+    ModelVersionStage.STAGING,
+    ModelVersionStage.PRODUCTION,
+}
 
 INJECT_SCRIPT_TEMPLATE = """
 <script>
