@@ -426,9 +426,9 @@ def _to_promote_request_view(
         status=promote_request.status.value,
         title=promote_request.title,
         description=promote_request.description,
-        created_at_epoch=promote_request.created_at.timestamp(),
-        closed_at_epoch=promote_request.closed_at.timestamp()
-        if promote_request.closed_at
+        created_at_epoch=int(promote_request.created_at.timestamp()),
+        closed_at_epoch=int(closed_at.timestamp())
+        if (closed_at := promote_request.closed_at) is not None
         else None,
         model_name=promote_request.model_name,
         version_id=promote_request.version_id,

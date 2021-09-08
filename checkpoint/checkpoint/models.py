@@ -19,8 +19,8 @@ class PromoteRequest(CheckpointBase):
     title = Column(String(120), unique=False, nullable=False)
     description = Column(String(1000), unique=False, nullable=True)
 
-    created_at = Column(DateTime(1000), unique=False, nullable=False)
-    closed_at = Column(DateTime(1000), unique=False, nullable=True)
+    created_at = Column(DateTime(), unique=False, nullable=False)
+    closed_at = Column(DateTime(), unique=False, nullable=True)
 
     model_name = Column(String(500), unique=False, nullable=False)
     version_id = Column(String(100), unique=False, nullable=False)
