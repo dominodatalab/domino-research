@@ -11,7 +11,7 @@ from checkpoint.types import (
 from typing import List, Optional
 import logging
 from abc import ABC, abstractmethod
-from functools import cache
+
 
 logger = logging.getLogger(__name__)
 
@@ -187,7 +187,6 @@ class MlflowRegistry(Registry):
     ) -> str:
         return self.CHECKPOINT_TO_MLFLOW_STAGES[stage]
 
-    @cache
     def _get_mlflow_version(self, version: ModelVersion):
         return self.client.get_model_version(
             version.model_name, int(version.id)
