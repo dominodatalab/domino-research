@@ -10,11 +10,6 @@ COPY  ./frontend/packages/ui/package*.json ./packages/ui/
 # Run a reproducible install based on the the package-lock.json
 # with no modification/updates. Any updates occur via manual
 # npm install execution outside of docker.
-WORKDIR /home/node/packages/ui
-RUN npm ci
-
-
-WORKDIR /home/node
 RUN npm ci
 
 # Add app files to the image
@@ -46,4 +41,4 @@ ENV FLASK_ENV=production
 
 EXPOSE 5000
 
-CMD ["gunicorn", "-w 2", "-b 0.0.0.0:5000", "--log-level=warning", "checkpoint.app:app"]
+CMD ["gunicorn", "-w 2", "-b 0.0.0.0:5000", "--log-level=info", "--preload", "checkpoint.app:app"]
