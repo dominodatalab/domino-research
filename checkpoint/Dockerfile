@@ -1,5 +1,5 @@
 ## Build the frontend
-FROM node:14.17-buster as frontend-builder
+FROM quay.io/domino/node-public:14.16.1-alpine as frontend-builder
 WORKDIR /home/node
 
 # Add only the package files and run install to
