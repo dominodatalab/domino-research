@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Enum, DateTime
+from sqlalchemy import Column, Integer, String, Enum, DateTime  # type: ignore
 from checkpoint.database import CheckpointBase
 from checkpoint.types import ModelVersionStage, PromoteRequestStatus
 
