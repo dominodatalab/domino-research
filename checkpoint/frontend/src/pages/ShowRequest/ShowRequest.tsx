@@ -100,11 +100,6 @@ const diffMetrics = (challenger?: Record<string, number>, champion?: Record<stri
     let champion_value = undefined;
     if (champion[key] != null) {
       champion_value = champion[key].toFixed(4);
-      // TODO: Remove
-      if (champion_value == '0.5005') {
-        champion_value = '0.6005';
-        change = '0.1000';
-      }
     }
 
     let challenger_value = undefined;
@@ -128,6 +123,7 @@ interface ParameterDiff {
   challenger?: string;
 }
 
+// eslint-disable-next-line
 const diffParams = (challenger?: Record<string, any>, champion?: Record<string, any>): ParameterDiff[] => {
   if (!champion) {
     champion = {};
@@ -141,10 +137,6 @@ const diffParams = (challenger?: Record<string, any>, champion?: Record<string, 
     let champion_value = undefined;
     if (champion[key] != null) {
       champion_value = champion[key] + '';
-      // TODO: Remove
-      if (key == 'fit_intercept') {
-        champion_value = 'False';
-      }
     }
 
     let challenger_value = undefined;
@@ -208,8 +200,8 @@ const ShowRequest: React.FC<Props> = ({ request_id, details, request, onSubmit }
     <div>
       <OuterLayout>
         <Row justify="space-between" align="middle" style={{ marginTop: '20px' }}>
-          <Col span={16} offset={4}>
-            <PageHeader className="site-page-header" title={`Promote Request #${request_id}`} />
+          <Col lg={{ span: 16, offset: 4 }} xs={{ span: 24, offset: 0 }}>
+            <PageHeader className="site-page-header" title={`#${request_id}: ${request?.title}`} />
             <Row>
               <Col span={9}>
                 <Card size="small">
@@ -249,7 +241,7 @@ const ShowRequest: React.FC<Props> = ({ request_id, details, request, onSubmit }
               </Col>
             </Row>
             <Row gutter={[16, 16]} style={{ marginTop: '20px' }}>
-              <Col span={16}>
+              <Col lg={{ span: 16 }} xs={{ span: 24 }}>
                 <Card title="Description" style={{ height: '100%' }}>
                   {/* prettier-ignore */}
                   <pre style={{ maxHeight: '400px', overflow: 'scroll' }}>
@@ -263,7 +255,7 @@ const ShowRequest: React.FC<Props> = ({ request_id, details, request, onSubmit }
                   </pre>
                 </Card>
               </Col>
-              <Col span={8}>
+              <Col lg={{ span: 8 }} xs={{ span: 24 }}>
                 <Card title="Details" style={{ height: '100%' }}>
                   <p>
                     <strong>Model: </strong>
@@ -273,11 +265,15 @@ const ShowRequest: React.FC<Props> = ({ request_id, details, request, onSubmit }
                     <strong>Author: </strong>
                     {request?.author_username}
                   </p>
+                  <p>
+                    <strong>Created: </strong>
+                    {request && new Date(request?.created_at_epoch * 1000).toLocaleString('en-US')}
+                  </p>
                 </Card>
               </Col>
             </Row>
             <Row gutter={[16, 16]} style={{ marginTop: '20px' }}>
-              <Col span={16}>
+              <Col xl={{ span: 14 }} xs={{ span: 24 }}>
                 <Card title="Metrics" style={{ height: '100%' }} bodyStyle={{ padding: '0px' }}>
                   <Table
                     dataSource={metricData}
@@ -289,7 +285,7 @@ const ShowRequest: React.FC<Props> = ({ request_id, details, request, onSubmit }
                   />
                 </Card>
               </Col>
-              <Col span={8}>
+              <Col xl={{ span: 10 }} xs={{ span: 24 }}>
                 <Card title="Parameters" style={{ height: '100%' }} bodyStyle={{ padding: '0px' }}>
                   <Table
                     dataSource={paramData}
@@ -303,7 +299,7 @@ const ShowRequest: React.FC<Props> = ({ request_id, details, request, onSubmit }
               </Col>
             </Row>
             <Row gutter={[16, 16]} style={{ marginTop: '20px' }}>
-              <Col span={16} offset={4}>
+              <Col lg={{ span: 16, offset: 4 }} xs={{ span: 24, offset: 0 }}>
                 <Card title="Review" style={{ height: '100%' }} extra={state}>
                   {request?.status == 'open' && (
                     <Form name="review" labelCol={{ span: 3 }} wrapperCol={{ span: 21 }} onFinish={handleSubmit}>
@@ -325,10 +321,16 @@ const ShowRequest: React.FC<Props> = ({ request_id, details, request, onSubmit }
                   )}
                   {(request?.status == 'closed' || request?.status == 'approved') && (
                     <div>
-                      <Paragraph type="secondary">By {request?.reviewer_username} on January 1st, 1970.</Paragraph>
+                      <Paragraph type="secondary">
+                        By {request?.reviewer_username}
+                        {request && request?.closed_at_epoch && (
+                          <span> on {new Date(request?.closed_at_epoch * 1000).toLocaleString('en-US')}</span>
+                        )}
+                        .
+                      </Paragraph>
                       {request?.review_comment == undefined || request?.review_comment == '' ? (
                         <Paragraph disabled italic>
-                          No description provided.
+                          No comment provided.
                         </Paragraph>
                       ) : (
                         <Paragraph>{request?.review_comment}</Paragraph>

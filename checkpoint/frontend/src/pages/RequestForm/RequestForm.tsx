@@ -41,6 +41,10 @@ const RequestForm: React.FC<Props> = ({ error, models, versions, stages, fetchVe
     onSubmit(history, values);
   };
 
+  let defaultName = undefined;
+  if (defaultModel && defaultVersion && defaultTarget) {
+    defaultName = `Move ${defaultModel} v${defaultVersion} to ${defaultTarget}`;
+  }
   return (
     <div>
       <OuterLayout>
@@ -49,7 +53,7 @@ const RequestForm: React.FC<Props> = ({ error, models, versions, stages, fetchVe
             <PageHeader className="site-page-header" title="New Promote Request" />
             <Divider />
             <Form name="promote_request" labelCol={{ span: 6 }} wrapperCol={{ span: 14 }} onFinish={handleSubmit}>
-              <Form.Item label="Title" name="title" rules={[{ required: true }]}>
+              <Form.Item label="Title" name="title" rules={[{ required: true }]} initialValue={defaultName}>
                 <Input />
               </Form.Item>
               <Form.Item label="Description" name="description">

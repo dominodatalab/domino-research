@@ -15,6 +15,8 @@ export interface PromoteRequest {
   reviewer_username?: string;
   review_comment?: string,
   status: 'open' | 'closed' | 'approved';
+  closed_at_epoch: number;
+  created_at_epoch: number;
 }
 
 export interface CreatePromoteRequest {

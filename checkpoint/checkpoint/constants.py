@@ -28,12 +28,15 @@ function checkRequests () {
 }
 
 function setRequests(requests) {
+    var openRequests = requests.filter(function (request) {
+        return request.status == "open";
+    }).length;
     element = document.getElementById('requests-count');
-    element.innerHTML = requests.length;
-    if (requests.length === 0) {
-        element.classList.remove('ant-tag-red');
+    element.innerHTML = openRequests;
+    if (openRequests > 0) {
+        element.style.display = "inline";
     } else {
-        element.classList.add('ant-tag-red');
+        element.style.display = "none";
     }
 }
 
@@ -74,13 +77,20 @@ function checkRedirect() {
 }
 
 window.onload = function () {
-    element = document.getElementsByClassName("header-route-links")[0];
-    element.innerHTML += '<a class="header-nav-link header-nav-link-models" href="/checkpoint/requests"><div class="models"><span>Promote Requests</span> <span id="requests-count" class="ant-tag">-</span></div></a>';
     checkRequests();
     setInterval(checkRequests, 5000);
     setInterval(checkRedirect, 1000);
 }
 </script>
+"""  # noqa: E501
+
+INJECT_ELEMENT = """
+<button style="position: fixed; min-width: 165px; width: 10vw; left: 45vw; top: 0px;" type="button" class="ant-btn">
+    <a href="/checkpoint/requests">
+        🛂 Checkpoint
+        <span id="requests-count" style="background-color: red; color: white; margin-left: 10px;" class="ant-tag"></span>
+    </a>
+</button>
 """  # noqa: E501
 
 INJECT_SCRIPT = INJECT_SCRIPT_TEMPLATE.replace(

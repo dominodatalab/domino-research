@@ -10,6 +10,11 @@ export interface RequestTableProps {
 
 const columns: ColumnsType<PromoteRequest> = [
   {
+    key: 'id',
+    title: 'Id',
+    dataIndex: 'id',
+  },
+  {
     key: 'title',
     title: 'Title',
     dataIndex: 'title',
