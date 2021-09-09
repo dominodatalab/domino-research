@@ -53,7 +53,7 @@ If you don't have a model handy, you can run our example script
 to add a new model and model version to the local Mlflow registry:
 
 1. Stay in the `guides/mlflow` directory
-2. Run `pip install mlflow scikit-learn`
+2. Run `pip install -r scikit_model/code/requirements.txt`
 3. Run `python scikit_model/code/train_and_version.py`
 
 This trains a simple linear regression model, tracks the training as
