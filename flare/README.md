@@ -196,6 +196,28 @@ If you don't want to deploy your own model, try our example code by doing the fo
 5. Edit `infer.py` to add your Slack webhook path from the step above.
 5. Run `python infer.py`. You should get an alert in your Slack channel.
 
+## Analytics
+
+Flare collects *completely anonymous* usage metrics by default.
+
+We collect the following metrics:
+
+- Count of Baselines generated. Collected when you run `flare.generators.baseline(...)`.
+
+We do not collect any of your data or the constraints/statistics generated based on your data.
+
+To opt out, set the environment variable `FLARE_ANALYTICS_OPT_OUT=1` before importing flare.
+You can do this by adding `os.environ["FLARE_ANALYTICS_OPT_OUT"] = "1"` in your python code:
+
+```python
+import os
+os.environ["FLARE_ANALYTICS_OPT_OUT"] = "1"
+# ...
+from flare.generators import baseline
+df = pd.DataFrame(...)
+baseline(df)
+```
+
 ## Development
 
 #### 1. In this directory (`domino-research/flare`): 
