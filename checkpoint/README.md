@@ -1,6 +1,6 @@
 # :passport_control: Checkpoint
 
-Model approval layer for your model registry.
+Model approval for your model registry.
 
 ![build](https://github.com/dominodatalab/domino-research/actions/workflows/checkpoint.yml/badge.svg?branch=main)
 [![Docker Repository on Quay](https://quay.io/repository/checkpoint/bridge/status "Docker Repository on Quay")](https://quay.io/repository/domino/checkpoint)
@@ -8,6 +8,14 @@ Model approval layer for your model registry.
 ## Why
 
 ## Quick Start
+
+```bash
+docker run -it \
+-p 5000:5000 \
+-v $(PWD):/tmp \
+-e CHECKPOINT_REGISTRY_URL=<YOUR_MLFLOW_REGISTRY_HOST> \
+quay.io/domino/checkpoint
+```
 
 ## Development
 
