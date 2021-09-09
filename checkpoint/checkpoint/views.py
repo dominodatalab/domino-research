@@ -12,7 +12,6 @@ class PromoteRequestView:
     closed_at_epoch: Optional[int]
     model_name: str
     version_id: str
-    static_champion_version_id: Optional[str]
     target_stage: str
     author_username: str
     reviewer_username: str

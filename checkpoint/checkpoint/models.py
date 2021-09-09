@@ -34,6 +34,14 @@ class PromoteRequest(CheckpointBase):
         )
     )
 
+    static_challenger_origin_stage = Column(
+        Enum(
+            ModelVersionStage,
+            name="model_version_stage",
+            validate_strings=True,
+            nullable=False,
+        )
+    )
     static_champion_version_id = Column(
         String(100), unique=False, nullable=True
     )

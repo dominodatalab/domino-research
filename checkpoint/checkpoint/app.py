@@ -21,7 +21,7 @@ from sqlalchemy.exc import IntegrityError, StatementError  # type: ignore
 
 from bs4 import BeautifulSoup  # type: ignore
 import requests  # type: ignore
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 import logging
 import os
 from dataclasses import asdict
@@ -224,17 +224,30 @@ def update_request(id: int):
     update_fields_and_values["reviewer_username"] = ANONYMOUS_USERNAME
 
     update_fields_and_values["closed_at"] = datetime.utcnow()
-
     update_fields_and_values["status"] = PromoteRequestStatus(
         update_fields_and_values["status"]
     )
 
-    app.logger.debug("Setting static champion version.")
+    # Static origin stage for challenger
+    candidate_version = ModelVersion(
+        model_name=promote_request.model_name,
+        id=promote_request.version_id,
+    )
+    candidate_stage = registry.get_stage_for_model_version(candidate_version)
+    app.logger.debug(
+        f"Set static challenger origin state to {candidate_stage}."
+    )
 
+    update_fields_and_values[
+        "static_challenger_origin_stage"
+    ] = candidate_stage
+
+    app.logger.debug("Setting static champion version.")
     target_stage_has_champions = (
         promote_request.target_stage in STAGES_WITH_CHAMPIONS
     )
 
+    # Static champion version
     if not target_stage_has_champions:
         app.logger.debug(
             "Target stage has no champion. Setting no-version sentinal."
@@ -262,14 +275,14 @@ def update_request(id: int):
         "static_champion_version_id"
     ] = champion_version_id
 
+    # Update model in memory
     for field, val in update_fields_and_values.items():
         setattr(promote_request, field, val)
 
     try:
-        # detect any schema violations etc
+        # Flush to detect any schema violations etc
         db_session.flush()
 
-        # update mlflow
         app.logger.info(
             f"Updating model {promote_request.model_name} "
             + f"version {promote_request.version_id} "
@@ -277,11 +290,9 @@ def update_request(id: int):
         )
 
         if promote_request.status == PromoteRequestStatus.APPROVED:
+            # update mlflow
             registry.transition_model_version_stage(
-                ModelVersion(
-                    model_name=promote_request.model_name,
-                    id=promote_request.version_id,
-                ),
+                candidate_version,
                 promote_request.target_stage,
             )
 
@@ -334,6 +345,13 @@ def view_request_details(id):
         promote_request.version_id, promote_request.model_name
     )
 
+    challenger_origin_stage = (
+        stage
+        if (stage := promote_request.static_challenger_origin_stage)
+        is not None
+        else registry.get_stage_for_model_version(challenger_version)
+    )
+
     details_view = PromoteRequestDetailsView(
         promote_request.id,
         champion_version_details=_to_version_details_view(
@@ -342,7 +360,7 @@ def view_request_details(id):
         if champion_version
         else None,
         challenger_version_details=_to_version_details_view(
-            challenger_version
+            challenger_version, stage=challenger_origin_stage
         ),
     )
 
@@ -433,7 +451,6 @@ def _to_promote_request_view(
         else None,
         model_name=promote_request.model_name,
         version_id=promote_request.version_id,
-        static_champion_version_id=promote_request.static_champion_version_id,
         target_stage=external_target_stage,
         author_username=promote_request.author_username,
         reviewer_username=promote_request.reviewer_username,
@@ -442,10 +459,8 @@ def _to_promote_request_view(
 
 
 def _to_version_details_view(
-    version: ModelVersion, stage: Optional[ModelVersionStage] = None
+    version: ModelVersion, stage: ModelVersionStage
 ) -> VersionDetailsView:
-    if stage is None:
-        stage = registry.get_stage_for_model_version(version)
 
     external_stage = registry.registry_stage_for_checkpoint_stage(stage)
 
