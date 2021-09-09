@@ -31,7 +31,7 @@ date manually
 
 This quickstart assumes that you already have an MLflow registry to work with.
 If you do not have a registry, or would like to create a new registry for testing,
-please follow our [guide to setting up MLflow for local testing](#mlflow-quickstart).
+please follow our 5-min [guide to setting up MLflow locally](https://github.com/dominodatalab/domino-research/tree/main/guides/mlflow).
 
 #### 1. Initialize Bridge
 
@@ -55,10 +55,9 @@ docker run -it \
 
 #### 2. Run Bridge
 
-Next, start the Bridge server.
-Don't forget to set environment variables named `MLFLOW_REGISTRY_URI` and `MLFLOW_TRACKING_URI`
-with the correct values for your MLflow registry. If you'd like to set up a new registry, follow
-[our guide](#mlflow-quickstart):
+Next, start the Bridge server and point it at your Mlflow registry.
+This is done by setting environment variables named `MLFLOW_REGISTRY_URI` and `MLFLOW_TRACKING_URI`
+with the correct values for your MLflow registry. 
 
 ```
 docker run -it \
@@ -69,6 +68,23 @@ docker run -it \
     -e AWS_DEFAULT_REGION=${AWS_REGION} \
     quay.io/domino/bridge:latest
 ```
+
+If you followed our [guide for setting up Mlflow locally](https://github.com/dominodatalab/domino-research/tree/main/guides/mlflow), then you should configure your environment
+using the code snippets below:
+
+For Linux:
+```
+export MLFLOW_REGISTRY_URI=http://localhost:5000
+export MLFLOW_TRACKING_URI=http://localhost:5000
+```
+
+For macOS:
+```
+export MLFLOW_REGISTRY_URI=http://host.docker.internal:5000
+export MLFLOW_TRACKING_URI=http://host.docker.internal:5000
+```
+
+#### 3. See the results
 
 That's it! Bridge will begin syncing model versions from MlFlow to
 Sagemaker! By default, it will sync versions assigned to Production and
@@ -213,79 +229,4 @@ The checks above will run on each git commit.
 
 ```
 docker build .
-```
-
-## MLflow Quickstart
-
-This is a quick guide to running MLflow locally for testing. A full MLflow
-installation consists of 3 components:
-
-* MLflow tracking server / model registry
-* Database backend -  stores run and model metadata
-* Storage backend - stores run and model artifacts
-
-While it is possible to run just the MLflow server, the database backend is
-required to use the model registry. Furthermore, for Bridge to be able to fetch
-artifacts, you must use a non-local storage backend. We believe the simplest
-option is to configure an S3 bucket for this artifact storage.
-
-This guide assumes that you have:
-
-* Docker installed on your machine.
-* `docker-compose` installed on your machine.
-* AWS credentials for creating and accessing S3 buckets. 
-
-**This is not a production deployment.**
-
-#### 1. Set environment variables:
-
-```
-export AWS_REGION=XXX
-export AWS_BUCKET_NAME=XXX
-export AWS_ACCESS_KEY_ID=XXX
-export AWS_SECRET_ACCESS_KEY=XXX
-```
-
-#### 2. Create S3 bucket:
-
-```
-aws s3api create-bucket --bucket $AWS_BUCKET_NAME --acl private --create-bucket-configuration "{\"LocationConstraint\":\"${AWS_REGION}\"}"
-```
-
-#### 3. Change to the `bridge/examples/mlflow` directory and run `docker-compose up -d`.
-
-MLflow will take about 30-60 seconds to start up and that's it! You should be able
-to navigate to `http://localhost:5000` to see the MLflow UI.
-
-#### 4. Add model versions to the local MLFlow Registry.
-
-When configuring any Python MLflow clients, you should use
-`http://localhost:5000` for your tracking and registry URLs.
-
-The easiest way to get started with Bridge is to run the script
-at `examples/mlflow_model/code/train_and_version.py`.
-This trains a simple linear regression model in context of an MLflow
-run, creates the `SimpleLinearRegression` in MLflow, and registers
-the run as a new version of this model. Running the script again will
-create another version of the same model.
-
-If you are going to register your own models into MLflow,
-make sure they follow the guidelines in the [quickstart](#2-run-bridge).
-
-#### 5. Configuring Bridge to use the local MLflow registry
-
-Finally, run Bridge configured to look at your local registry. Do this by
-following the steps in the [quickstart](#quick-start) with the environment
-variables below:
-
-For Linux:
-```
-export MLFLOW_REGISTRY_URI=http://localhost:5000
-export MLFLOW_TRACKING_URI=http://localhost:5000
-```
-
-For macOS:
-```
-export MLFLOW_REGISTRY_URI=http://host.docker.internal:5000
-export MLFLOW_TRACKING_URI=http://host.docker.internal:5000
 ```
