@@ -1,6 +1,6 @@
 # :passport_control: Checkpoint
 
-Model approval for your model registry.
+A better process for promoting models to production.
 
 ![build](https://github.com/dominodatalab/domino-research/actions/workflows/checkpoint.yml/badge.svg?branch=main)
 [![Docker Repository on Quay](https://quay.io/repository/domino/checkpoint/status "Docker Repository on Quay")](https://quay.io/repository/domino/checkpoint)
