@@ -14,6 +14,7 @@ from flare.statistics import (
     CommonStatistics,
 )
 from flare.statistics import Feature as StatisticsFeature
+from flare.analytics import AnalyticsClient
 
 from flare.types import FeatureType
 import pandas as pd  # type: ignore
@@ -23,6 +24,8 @@ import numpy as np
 
 MAX_UNIQUES_THRESHOLD = 20
 MAX_ROWS_FOR_OBJECT_TYPE_INFERENCE = 10 ** 5
+
+analytics = AnalyticsClient()
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -45,6 +48,8 @@ def baseline(df: pd.DataFrame):
 
     with open("statistics.json", "w") as f:
         json.dump(asdict(statistics), f, cls=NumpyEncoder)
+
+    analytics.track_baseline_created()
 
 
 def gen_statistics(df: pd.DataFrame) -> Statistics:

@@ -11,8 +11,9 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         "dacite==1.6",
-        "pandas==1.3.1",
+        "mixpanel==4.9.0",
         "numpy==1.21.1",
+        "pandas==1.3.1",
         "requests==2.26.0",
     ],
 )

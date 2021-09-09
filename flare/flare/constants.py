@@ -1,0 +1,1 @@
+MIXPANEL_API_KEY = "fa624cf5c80af9b98fb383d4c3ea8dda"
