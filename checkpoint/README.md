@@ -35,11 +35,11 @@ quay.io/domino/checkpoint
 ### Usage
 
 - To create a promote request, visit the models page in Mlflow and attempt to transition
-a version to a new stage. You'll have the option to add/edit a title and description and that's it!
-You now have a pending Promote Request. _If you are not redirected, make sure you're accessing Mlflow via
-checkpoint and not directly via `http://YOUR_MLFLOW_REGISTRY_HOST`_
+a version to a new stage. You'll be redirected to a page where you can add/edit the Promote Request
+title and description and that's it! You now have an open Promote Request, waiting for approval.
 
-- To view a list of pending promote request, click the `Promote Requests` at the top of any Mlflow screen.
+- To view a list of open promote requests, click the floating `Promote Requests` control
+  at the top of any Mlflow screen.
 
 ### Sharing access with your Team
 
