@@ -38,7 +38,6 @@ app = Flask(
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-
 # If running in debug, log at debug
 if app.debug:
     logger.setLevel(logging.DEBUG)
