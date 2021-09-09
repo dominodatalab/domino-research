@@ -16,7 +16,7 @@ const OuterLayout: React.FC = ({ children }) => {
             <Link to="/checkpoint/requests">Promote Requests</Link>
           </Menu.Item>
           <Menu.Item key="mlflow" icon={<RollbackOutlined />} style={{ marginLeft: 'auto' }}>
-            <a href="/">Back to Registry</a>
+            <a href="/#/models">Back to Registry</a>
           </Menu.Item>
         </Menu>
       </Header>
