@@ -141,3 +141,4 @@ cython_debug/
 
 .DS_Store
 .brdg-models
+checkpoint.db
