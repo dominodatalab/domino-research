@@ -7,15 +7,22 @@ A better process for promoting models to production.
 
 ## Why
 
+Checkpoint provides a 'pull request for Machine Learning' workflow that enables better governance for model registries. This process, which we are calling _Promote Requests_, lets data scientists request that a model version be promoted to a deployment stage (e.g. Staging or Production). Team members can then review this request with any changes in parameters and metrics highlighted. Once the request is approved, the model stage is updated in the model registy.
+
+This process means you can trust that the model tagged Production is really meant for production. This, in turn, means you can (and should!) automatically update your model hosting infrastructure when a new model version is promoted - turning your registry into a declarative source-of-truth. We built :bridge_at_night: [Bridge](https://github.com/dominodatalab/domino-research/tree/main/bridge) to do exactly this.
+
 ## Quick Start
 
-Checkpoint proxies your existing Mlflow registry and augments it with approval functionality.
-So, to run checkpoint, you point it at your existing registry and then access the registry
-through checkpoint.
+Checkpoint proxies your existing Mlflow registry and augments it with the Promote Request workflow.
+You run checkpoint by pointing it at your existing Mlflow registry. You then access your registry + 
+Promote Requests via checkpoint. 
 
-I.E, when you run the command below, you will be able to access the registry
-hosted at `YOUR_MLFLOW_REGISTRY_HOST` by visiting `localhost:5000` (assuming you are
-running docker locally).
+### Setup
+
+When you run the command below, you will be able to access the registry
+hosted at `YOUR_MLFLOW_REGISTRY_HOST` by visiting `localhost:5000`. This is great
+way to take checkpoint for a test drive. If you don't have an Mlflow registry handy,
+checkout our 5-min guide for setting one up in AWS.
 
 ```bash
 docker run -it \
@@ -24,6 +31,27 @@ docker run -it \
 -e CHECKPOINT_REGISTRY_URL=<YOUR_MLFLOW_REGISTRY_HOST> \
 quay.io/domino/checkpoint
 ```
+
+### Usage
+
+- To create a promote request, visit the models page in Mlflow and attempt to transition
+a version to a new stage. You'll have the option to add/edit a title and description and that's it!
+You now have a pending Promote Request. _If you are not redirected, make sure you're accessing Mlflow via
+checkpoint and not directly via `http://YOUR_MLFLOW_REGISTRY_HOST`_
+
+- To view a list of pending promote request, click the `Promote Requests` at the top of any Mlflow screen.
+
+### Sharing access with your Team
+
+When you are ready to use checkpoint with your team, you have two options:
+
+1. Host checkpoint yourself on a shared server - perhaps the same server you are using to run Mlflow.
+  For example, run the same command above on an EC2 instance configured to allow your team
+  access to the exposed port. _(Make sure that you maintain the same access controls!
+  If checkpoint is publically accessible, then your Mlflow registry will be publically
+  accessible (authentication coming soon!)_
+  
+2. Use our Heroku button to deploy Checkpoint in one click (...coming soon).
 
 ## Analytics
 
