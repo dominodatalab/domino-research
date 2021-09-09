@@ -4,6 +4,7 @@ from checkpoint.database import db_session
 from checkpoint.registries import MlflowRegistry, RegistryException
 from checkpoint.constants import (
     INJECT_SCRIPT,
+    INJECT_ELEMENT,
     ANONYMOUS_USERNAME,
     CHECKPOINT_REDIRECT_PREFIX,
     CHECKPOINT_REDIRECT_SEPARATOR,
@@ -18,7 +19,13 @@ from checkpoint.views import (
 from checkpoint.analytics import AnalyticsClient
 
 from flask import Flask  # type: ignore
-from flask import request, Response, send_file, jsonify  # type: ignore
+from flask import (
+    request,
+    Response,
+    send_file,
+    jsonify,
+    send_from_directory,
+)  # type: ignore
 from sqlalchemy.exc import IntegrityError, StatementError  # type: ignore
 
 from bs4 import BeautifulSoup  # type: ignore
@@ -391,9 +398,15 @@ def list_models():
     return jsonify([asdict(m) for m in models])
 
 
-@app.route("/checkpoint/<path:path>")
-def spa_index(path):
+@app.route("/checkpoint/requests")
+@app.route("/checkpoint/requests/<path>")
+def spa_index(*args, **kwargs):
     return send_file("../frontend/build/index.html")
+
+
+@app.route("/checkpoint/<path:path>")
+def spa_assets(path):
+    return send_from_directory("../frontend/build", path)
 
 
 @app.route(
@@ -430,6 +443,7 @@ def proxy(path):
     if resp.content.startswith(bytes("<!doctype html>", "utf-8")):
         soup = BeautifulSoup(resp.content.decode("utf-8"), "html.parser")
         print(soup.body.append(BeautifulSoup(INJECT_SCRIPT)))
+        print(soup.body.append(BeautifulSoup(INJECT_ELEMENT)))
         content = str(soup).encode("utf-8")
     else:
         content = resp.content

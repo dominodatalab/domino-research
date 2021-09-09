@@ -1,13 +1,29 @@
 # :passport_control: Checkpoint
 
-Model approval layer for your model registry.
+Model approval for your model registry.
 
 ![build](https://github.com/dominodatalab/domino-research/actions/workflows/checkpoint.yml/badge.svg?branch=main)
-[![Docker Repository on Quay](https://quay.io/repository/checkpoint/bridge/status "Docker Repository on Quay")](https://quay.io/repository/domino/checkpoint)
+[![Docker Repository on Quay](https://quay.io/repository/domino/checkpoint/status "Docker Repository on Quay")](https://quay.io/repository/domino/checkpoint)
 
 ## Why
 
 ## Quick Start
+
+Checkpoint proxies your existing Mlflow registry and augments it with approval functionality.
+So, to run checkpoint, you point it at your existing registry and then access the registry
+through checkpoint.
+
+I.E, when you run the command below, you will be able to access the registry
+hosted at `YOUR_MLFLOW_REGISTRY_HOST` by visiting `localhost:5000` (assuming you are
+running docker locally).
+
+```bash
+docker run -it \
+-p 5000:5000 \
+-v $(PWD):/tmp \
+-e CHECKPOINT_REGISTRY_URL=<YOUR_MLFLOW_REGISTRY_HOST> \
+quay.io/domino/checkpoint
+```
 
 ## Analytics
 
