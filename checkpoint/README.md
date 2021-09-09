@@ -19,10 +19,12 @@ Promote Requests via checkpoint.
 
 ### Setup
 
-When you run the command below, you will be able to access the registry
+When you run the command below, you will be able to access the Mlflow registry
 hosted at `YOUR_MLFLOW_REGISTRY_HOST` by visiting `localhost:5000`. This is great
-way to take checkpoint for a test drive. If you don't have an Mlflow registry handy,
-checkout our 5-min guide for setting one up in AWS.
+way to take checkpoint for a test drive.
+
+If you do not have a registry, or would like to create a new registry for testing,
+please follow our 5-min [guide to setting up MLflow](https://github.com/dominodatalab/domino-research/tree/main/guides/mlflow).
 
 ```bash
 docker run -it \

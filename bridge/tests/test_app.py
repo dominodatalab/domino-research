@@ -18,13 +18,10 @@ try:
 except (NoRegionError, NoCredentialsError):
     aws_creds_present = False
 
-artifact_relative_path = "../bridge/examples/mlflow_model/model.tar.gz"
-artifact_path = os.path.abspath(artifact_relative_path)
-
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.abspath(os.path.join(TEST_DIR, os.pardir))
 ARTIFACT_PATH = os.path.abspath(
-    os.path.join(PROJECT_DIR, "examples/mlflow_model/model.tar.gz")
+    os.path.join(PROJECT_DIR, "tests/model.tar.gz")
 )
 artifact = Artifact(ARTIFACT_PATH)
 
