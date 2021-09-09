@@ -10,3 +10,5 @@ Here’s what we’re working on:
 - :bridge_at_night: [Bridge](https://github.com/dominodatalab/domino-research/tree/main/bridge) - declarative model hosting, with your model registry as the source of truth
 
 - :sparkler: [Flare](https://github.com/dominodatalab/domino-research/tree/main/flare) - monitor models and get alerts without capturing/exfiltrating production inference data.
+
+- :passport_control: [Checkpoint](https://github.com/dominodatalab/domino-research/tree/main/checkpoint) - a better process for promoting models to production.
