@@ -91,7 +91,7 @@ INJECT_ELEMENT = """
         <span id="requests-count" style="background-color: red; color: white; margin-left: 10px;" class="ant-tag"></span>
     </a>
 </button>
-"""
+"""  # noqa: E501
 
 INJECT_SCRIPT = INJECT_SCRIPT_TEMPLATE.replace(
     "CHECKPOINT_REDIRECT_PREFIX", CHECKPOINT_REDIRECT_PREFIX
