@@ -12,6 +12,7 @@ setuptools.setup(
         "beautifulsoup4==4.9",
         "Flask==2.0",
         "flask-sqlalchemy==2.5.1",
+        "mixpanel==4.9.0",
         "mlflow==1.19",
         "requests==2.26",
     ],

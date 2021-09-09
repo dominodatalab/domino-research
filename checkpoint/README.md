@@ -9,6 +9,17 @@ Model approval layer for your model registry.
 
 ## Quick Start
 
+## Analytics
+
+Checkpoint collects *completely anonymous* usage metrics by default.
+
+We only collect the following metrics:
+
+- Count of Checkpoint server initialization events. Collected when you start the checkpoint server.
+
+To opt out, set the environment variable `CHECKPOINT_ANALYTICS_OPT_OUT=1`. You can do this by adding
+the `-e CHECKPOINT_ANALYTICS_OPT_OUT=1` flag when you run Checkpoint in docker.
+
 ## Development
 
 #### 1. In this directory (`domino-research/checkpoint`):
