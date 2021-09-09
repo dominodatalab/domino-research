@@ -16,6 +16,8 @@ from checkpoint.views import (
     PromoteRequestView,
     VersionDetailsView,
 )
+from checkpoint.analytics import AnalyticsClient
+
 from flask import Flask  # type: ignore
 from flask import (
     request,
@@ -57,9 +59,14 @@ else:
     app.logger.setLevel(gunicorn_logger.level)
     logger.setLevel(gunicorn_logger.level)
 
+with open("/etc/hostname", "r") as f:
+    analytics = AnalyticsClient(f.readline().strip(), app.logger)
+
 
 @app.before_first_request
-def initialize_db():
+def initialize_app():
+    analytics.track_server_init()
+
     from checkpoint.database import init_db
 
     init_db()

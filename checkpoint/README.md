@@ -9,6 +9,14 @@ Model approval for your model registry.
 
 ## Quick Start
 
+Checkpoint proxies your existing Mlflow registry and augments it with approval functionality.
+So, to run checkpoint, you point it at your existing registry and then access the registry
+through checkpoint.
+
+I.E, when you run the command below, you will be able to access the registry
+hosted at `YOUR_MLFLOW_REGISTRY_HOST` by visiting `localhost:5000` (assuming you are
+running docker locally).
+
 ```bash
 docker run -it \
 -p 5000:5000 \
@@ -16,6 +24,17 @@ docker run -it \
 -e CHECKPOINT_REGISTRY_URL=<YOUR_MLFLOW_REGISTRY_HOST> \
 quay.io/domino/checkpoint
 ```
+
+## Analytics
+
+Checkpoint collects *completely anonymous* usage metrics by default.
+
+We only collect the following metrics:
+
+- Count of Checkpoint server initialization events. Collected when you start the checkpoint server.
+
+To opt out, set the environment variable `CHECKPOINT_ANALYTICS_OPT_OUT=1`. You can do this by adding
+the `-e CHECKPOINT_ANALYTICS_OPT_OUT=1` flag when you run Checkpoint in docker.
 
 ## Development
 
