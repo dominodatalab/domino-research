@@ -25,10 +25,20 @@ This guide assumes that you have:
 
 Clone the repo and change to the `guides/mlflow` directory.
 
-### 1. Start Mlflow
+### 1. Configure your shell environment
+
+If you do not plan to use Bridge, you can skip this step.
+
+If you are going to use your new MLflow registry with
+[Bridge](https://github.com/dominodatalab/domino-research/tree/main/bridge),
+you need to configure your shell for AWS access before proceeding.
+Detailed instructions are in the
+[Bridge README](https://github.com/dominodatalab/domino-research/tree/main/bridge)
+
+### 2. Start Mlflow
 
 Make sure you're in the `guides/mlflow` subdirectory.
-Run the command below to start mlflow.
+Run the command below to start mlflow:
 
 ```
 docker-compose up
@@ -38,7 +48,7 @@ MLflow will take about 30-60 seconds to start up and that's it!
 You should be able to navigate to `http://localhost:5000` to see
 the MLflow UI.
 
-### 2. Add model versions to the local MLFlow Registry.
+### 3. Add model versions to the MLFlow Registry.
 
 We have an example model training script that demonstrates
 how to use an Mlflow registry. It's a quick way to populate
@@ -65,7 +75,7 @@ tracks the training as an MLflow run (under 'Experiments' in the MLflow UI),
 and registers  the run as a new version of the `ScikitElasticnetWineModel`
 in the MLflow Model Registry (under 'Models' in the MLflow UI).
 
-### 3. Using the MLflow registry in your own scripts
+### 4. Using the MLflow registry in your own scripts
 
 If you'd like to use your local MLflow registry in your own code,
 you'll need the following config:

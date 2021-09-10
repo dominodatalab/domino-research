@@ -26,8 +26,8 @@ services:
     entrypoint: >
       /bin/sh -c "
       until (/usr/bin/mc config host add myminio http://minio:9000 ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY}) do echo '...waiting...' && sleep 1; done;
-      /usr/bin/mc mb --ignore-existing myminio/${AWS_BUCKET_NAME};
-      /usr/bin/mc policy set public myminio/${AWS_BUCKET_NAME};
+      /usr/bin/mc mb --ignore-existing myminio/${LOCAL_MLFLOW_BUCKET_NAME};
+      /usr/bin/mc policy set public myminio/${LOCAL_MLFLOW_BUCKET_NAME};
       exit 0;
       "
     networks:
@@ -63,7 +63,7 @@ services:
     - MLFLOW_S3_IGNORE_TLS=true
     networks:
     - mlflow
-    entrypoint: mlflow server --backend-store-uri mysql+pymysql://user:pass@db:3306/mlflow --default-artifact-root s3://${AWS_BUCKET_NAME}/ -h 0.0.0.0
+    entrypoint: mlflow server --backend-store-uri mysql+pymysql://user:pass@db:3306/mlflow --default-artifact-root s3://${LOCAL_MLFLOW_BUCKET_NAME}/ -h 0.0.0.0
     depends_on:
       - db
       - createbuckets
