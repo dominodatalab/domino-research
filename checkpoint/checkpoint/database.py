@@ -8,6 +8,9 @@ import os
 
 uri = os.environ.get("DATABASE_URL", "sqlite:////tmp/checkpoint.db")
 
+# Handle Heroku / SQLAlchemy bug https://stackoverflow.com/questions/62688256/sqlalchemy-exc-nosuchmoduleerror-cant-load-plugin-sqlalchemy-dialectspostgre
+uri = uri.replace("postgres://", "postgresql://")
+
 engine = create_engine(uri)
 db_session = scoped_session(
     sessionmaker(autocommit=False, autoflush=False, bind=engine)
