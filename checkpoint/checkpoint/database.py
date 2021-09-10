@@ -4,8 +4,14 @@ from sqlalchemy.ext.declarative import (  # type: ignore
     declared_attr,
     as_declarative,
 )
+import os
 
-engine = create_engine("sqlite:////tmp/checkpoint.db")
+uri = os.environ.get("DATABASE_URL", "sqlite:////tmp/checkpoint.db")
+
+# Handle Heroku / SQLAlchemy bug https://stackoverflow.com/questions/62688256/sqlalchemy-exc-nosuchmoduleerror-cant-load-plugin-sqlalchemy-dialectspostgre  # noqa: E501
+uri = uri.replace("postgres://", "postgresql://")
+
+engine = create_engine(uri)
 db_session = scoped_session(
     sessionmaker(autocommit=False, autoflush=False, bind=engine)
 )

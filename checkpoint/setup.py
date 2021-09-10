@@ -15,6 +15,7 @@ setuptools.setup(
         "mixpanel==4.9.0",
         "mlflow==1.19",
         "requests==2.26",
+        "psycopg2-binary==2.9",
     ],
     entry_points={"console_scripts": ["checkpoint = checkpoint.app:main"]},
 )
