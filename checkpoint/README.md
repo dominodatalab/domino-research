@@ -9,13 +9,13 @@ A better process for promoting models to production.
 
 Checkpoint provides a 'pull request for Machine Learning' workflow that enables better governance for model registries. This process, which we are calling _Promote Requests_, lets data scientists request that a model version be promoted to a deployment stage (e.g. Staging or Production). Team members can then review this request with any changes in parameters and metrics highlighted. Once the request is approved, the model stage is updated in the model registy.
 
-This process means you can trust that the model tagged Production is really meant for production. This, in turn, means you can (and should!) automatically update your model hosting infrastructure when a new model version is promoted - turning your registry into a declarative source-of-truth. We built :bridge_at_night: [Bridge](https://github.com/dominodatalab/domino-research/tree/main/bridge) to do exactly this.
+This process means you can trust that the model tagged Production is really meant for production. This, in turn, means you can (and should!) automatically update your model hosting infrastructure when a new model version is promoted - turning your registry into the declarative source-of-truth. We built :bridge_at_night: [Bridge](https://github.com/dominodatalab/domino-research/tree/main/bridge) to do exactly this.
 
 ## Quick Start
 
 Checkpoint proxies your existing Mlflow registry and augments it with the Promote Request workflow.
-You run checkpoint by pointing it at your existing Mlflow registry. You then access your registry + 
-Promote Requests via checkpoint. 
+You run Checkpoint by pointing it at your existing Mlflow registry. You then access your registry and 
+Promote Requests via Checkpoint. 
 
 ### Setup
 
@@ -24,7 +24,7 @@ hosted at `YOUR_MLFLOW_REGISTRY_HOST` by visiting `localhost:5000`. This is grea
 way to take checkpoint for a test drive.
 
 If you do not have a registry, or would like to create a new registry for testing,
-please follow our 5-min [guide to setting up MLflow](https://github.com/dominodatalab/domino-research/tree/main/guides/mlflow).
+please follow our 5-min [guide to setting up Mlflow](https://github.com/dominodatalab/domino-research/tree/main/guides/mlflow).
 
 ```bash
 docker run -it \
