@@ -1,8 +1,0 @@
-flavors:
-  sklearn:
-    sklearn_version: 0.24.2
-    pickled_model: model-binary
-  python_function:
-    model_path: model-binary
-    loader_module: mlflow.sklearn
-    env: conda.yaml
