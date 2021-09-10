@@ -4,8 +4,11 @@ from sqlalchemy.ext.declarative import (  # type: ignore
     declared_attr,
     as_declarative,
 )
+import os
 
-engine = create_engine("sqlite:////tmp/checkpoint.db")
+uri = os.environ.get("DATABASE_URL", "sqlite:////tmp/checkpoint.db")
+
+engine = create_engine(uri)
 db_session = scoped_session(
     sessionmaker(autocommit=False, autoflush=False, bind=engine)
 )
