@@ -9,54 +9,93 @@ installation consists of 3 components:
 
 While it is possible to run just the MLflow server, the database backend is
 required to use the model registry. Furthermore, to be able to fetch
-artifacts, you must use a non-local storage backend. We believe the simplest
-option is to configure an S3 bucket for this artifact storage. This guide
-uses `docker-compose` to run Mlflow, Postgres (as the database backend), and
-generates an S3 bucket for you in your account.
+artifacts, you must use a non-local-file-based storage backend.
+
+This guide uses `docker-compose` to run MLflow, MySQL (as the database backend),
+and Minio as an S3-compatible artifact backend.
 
 This guide assumes that you have:
 
 * Docker installed on your machine.
 * `docker-compose` installed on your machine.
-* AWS credentials for creating and accessing S3 buckets. 
 
-**This is not a production-grade deployment of Mlflow.**
+**This is not a production-grade deployment of MLflow.**
 
-#### 1. Set environment variables:
+### 0. Clone this repo
+
+Clone the repo and change to the `guides/mlflow` directory.
+
+### 1. Configure your shell environment
+
+If you are going to use your new MLflow registry with
+[Bridge](https://github.com/dominodatalab/domino-research/tree/main/bridge),
+you need to configure your shell for AWS access before proceeding.
+Detailed instructions are in the
+[Bridge README](https://github.com/dominodatalab/domino-research/tree/main/bridge).
+
+**If you do not plan to use Bridge, you can skip this step.**
+
+### 2. Start MLflow
+
+Make sure you're in the `guides/mlflow` subdirectory.
+Run the command below to start MLflow:
 
 ```
-export AWS_REGION=XXX
-export AWS_BUCKET_NAME=XXX
-export AWS_ACCESS_KEY_ID=XXX
-export AWS_SECRET_ACCESS_KEY=XXX
+docker-compose up
 ```
 
-#### 2. Create S3 bucket:
+MLflow will take about 30-60 seconds to start up and that's it!
+You should be able to navigate to `http://localhost:5000` to see
+the MLflow UI.
 
+### 3. Add model versions to the MLflow Registry.
+
+We have an example model training script that demonstrates
+how to use an MLflow registry. It's a quick way to populate
+your local registry with a few model versions to try out
+the tools in this repo.
+
+If you have your own model code and don't want to use our
+example model, skip ahead to section 3 below.
+
+Follow these steps to train a model and register it in MLflow:
+
+1. Open a new terminal tab/window
+2. Change to/stay in the `guides/mlflow` directory
+3. Run `source .env` to configure your shell's environment variables
+4. Run `pip install -r scikit_elasticnet_wine/requirements.txt` to install
+   the required packages.
+5. Run `python scikit_elasticnet_wine/train.py 0.1` to train the model
+6. Run `python scikit_elasticnet_wine/train.py 0.5` to train the model
+   again with a different value of the `alpha` hyperparameter.
+7. Head to `localhost:5000` to view the results.
+
+The `train.py` script trains a simple Elasticnet model on wine quality data,
+tracks the training as an MLflow run (under 'Experiments' in the MLflow UI),
+and registers  the run as a new version of the `ScikitElasticnetWineModel`
+in the MLflow Model Registry (under 'Models' in the MLflow UI).
+
+### 4. Using the MLflow registry in your own scripts
+
+If you'd like to use your local MLflow registry in your own code,
+you'll need the following config:
+
+```python
+import os
+import mlflow
+
+SERVER_URI = "http://localhost:5000"
+S3_ENDPOINT_URL = "http://localhost:9000"
+
+os.environ["MLFLOW_S3_ENDPOINT_URL"] = S3_ENDPOINT_URL
+
+# For MLflow tracking:
+mlflow.set_tracking_uri(SERVER_URI)
+# ...
+
+# For the MLflow API client:
+MlflowClient(
+    registry_uri=SERVER_URI, tracking_uri=SERVER_URI
+)
+# ...
 ```
-aws s3api create-bucket --bucket $AWS_BUCKET_NAME --acl private --create-bucket-configuration "{\"LocationConstraint\":\"${AWS_REGION}\"}"
-```
-
-#### 3. Run using `docker-compose`
-
-- Clone this repo and change to the `guides/mlflow` directory.
-- In the directory, run `docker-compose up`.
-- MLflow will take about 30-60 seconds to start up and that's it! You should be able
-  to navigate to `http://localhost:5000` to see the MLflow UI.
-
-#### 4. Add model versions to the local MLFlow Registry.
-
-If you're familiar with Mlflow and have a model at hand, you
-can add a model yourself. Simply configure the Mlflow Python clients
-with `http://localhost:5000` as the tracking and registry URLs.
-If you don't have a model handy, you can run our example script
-to add a new model and model version to the local Mlflow registry:
-
-1. Stay in the `guides/mlflow` directory
-2. Run `pip install -r scikit_model/code/requirements.txt`
-3. Run `python scikit_model/code/train_and_version.py`
-
-This trains a simple linear regression model, tracks the training as
-an MLflow run, and using the run to create a new version of the
-`SimpleLinearRegression` in the MLflow Model Registry.
-You can run the script again to add another version to the same model.

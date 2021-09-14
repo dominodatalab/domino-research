@@ -1,9 +1,42 @@
 version: '3.2'
 services:
+  minio:
+    image: minio/minio
+    container_name: mlflow-minio
+    environment:
+      - "MINIO_ROOT_USER=${AWS_ACCESS_KEY_ID}"
+      - "MINIO_ROOT_PASSWORD=${AWS_SECRET_ACCESS_KEY}"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    ports:
+      - 9000:9000
+    command: "server /data"
+    volumes:
+    - ./artifactdata:/data
+    networks:
+    - mlflow
+
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc config host add myminio http://minio:9000 ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY}) do echo '...waiting...' && sleep 1; done;
+      /usr/bin/mc mb --ignore-existing myminio/${LOCAL_MLFLOW_BUCKET_NAME};
+      /usr/bin/mc policy set public myminio/${LOCAL_MLFLOW_BUCKET_NAME};
+      exit 0;
+      "
+    networks:
+    - mlflow
+
   db:
     restart: always
     image: mysql/mysql-server:5.7.28
-    container_name: mlflow_db
+    container_name: mlflow-db
     expose:
     - "3306"
     environment:
@@ -14,9 +47,9 @@ services:
     volumes:
     - ./dbdata:/var/lib/mysql
     networks:
-    - demo
+    - mlflow
   mlflow:
-    container_name: tracker_mlflow
+    container_name: mlflow-server
     image: tracker_ml
     build:
       context: .
@@ -26,10 +59,15 @@ services:
     environment: 
     - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
     - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-    - AWS_DEFAULT_REGION=${AWS_REGION}
+    - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+    - MLFLOW_S3_IGNORE_TLS=true
     networks:
-    - demo
-    entrypoint: mlflow server --backend-store-uri mysql+pymysql://user:pass@db:3306/mlflow --default-artifact-root s3://${AWS_BUCKET_NAME}/ -h 0.0.0.0
+    - mlflow
+    entrypoint: mlflow server --backend-store-uri mysql+pymysql://user:pass@db:3306/mlflow --default-artifact-root s3://${LOCAL_MLFLOW_BUCKET_NAME}/ -h 0.0.0.0
+    depends_on:
+      - db
+      - createbuckets
+
 networks:
-  demo:
+  mlflow:
     driver: bridge
