@@ -111,7 +111,7 @@ docker run -it \
     quay.io/domino/bridge:latest
 ```
 
-**Using the local MLflow from our quickstart** 
+**Using the local MLflow from our MLflow guide** 
 
 On macOS:
 ```
