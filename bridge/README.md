@@ -55,16 +55,20 @@ docker run -it \
 #### AWS Config
 
 After you have initialized Bridge once, you can switch to AWS
-credentials with more restrictive access. The AWS CLI in your
-shell needs to have access to:
+credentials with more restrictive access. You'll need credentials for
+an AWS IAM user with the permissions below (if you'd like to create a user
+with only these permissions, see the appendix at the bottom of this page):
 
 - List/describe/create/delete SageMaker Endpoints, EndpointConfigs, and Models
-- Create and delete objects in the `AWS_BUCKET_NAME` configured in your shell
+- List, put, and delete objects in the `AWS_BUCKET_NAME` configured in your shell
+- Have the `IAM::PassRole` permission needed to pass the `bridge-sagemaker-execution` role created during init
+  to SageMaker endpoints.
 
 So, before proceeding, ensure the environment variables below are set and that
 the IAM user credentials specified have at least the permissions above. You can also
 use [named profiles](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html)
-to make this config more convenient.
+to make this config more convenient. If you use a profile, you'll only need to set `AWS_BUCKET_NAME`
+and `AWS_PROFILE=your_profile`. The other values will come from the profile itself.
 
 ```
 export AWS_REGION=us-east-2
@@ -280,4 +284,87 @@ The checks above will run on each git commit.
 
 ```
 docker build .
+```
+
+## Appendix
+
+### AWS Policy
+
+To create an AWS user with only the access necessary for Bridge to operate,
+do the following:
+
+1. Sign into the AWS Management Console
+2. Access the IAM Service
+3. Navigate to Policies in the left menu
+4. Click the button to create a Policy
+5. Switch to the JSON editor, clear the existing content, and paste the content below.
+   DO NOT proceed to the next step.
+6. Find your account ID and paste it to replace the 4 instances of `<YOUR_ACCOUNT_ID>`:
+    1. In a terminal configured with existing AWS access, run `aws sts get-caller-identity`
+       and copy the account id.
+    2. In the management console, select your username in the top right of the navigation bar
+       and copy the number next to "my account".
+7. Replace the 2 instances of `<YOUR_AWS_BUCKET_NAME>` with the value you'll use for your
+   `AWS_BUCKET_NAME` environment variable.
+8. When you've made the replacements above, proceed to the next step and give your new policy
+  a descriptive name like `BridgeLimitedAccess`
+9. Navigate to users in the IAM left menu
+10. Click the button to add users, input a username and select programmatic access
+11. Under set permissions, select "attach an existing policy" and then find and select
+   the policy you just created
+12. Copy the Access Key and Secret Access Key and use them in the steps in the quickstart above
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "ListObjectsInBucket",
+            "Effect": "Allow",
+            "Action": ["s3:ListBucket"],
+            "Resource": ["arn:aws:s3:::<YOUR_AWS_BUCKET_NAME>"]
+        },
+        {
+            "Sid": "AllObjectActions",
+            "Effect": "Allow",
+            "Action": "s3:*Object*",
+            "Resource": ["arn:aws:s3:::<YOUR_AWS_BUCKET_NAME>/*"]
+        },
+        {
+            "Sid": "MutateSagemakerResources",
+            "Effect": "Allow",
+            "Action": [
+                "sagemaker:CreateModel",
+                "sagemaker:DeleteEndpointConfig",
+                "sagemaker:CreateEndpoint",
+                "sagemaker:DescribeModel",
+                "sagemaker:DeleteModel",
+                "sagemaker:UpdateEndpoint",
+                "sagemaker:CreateEndpointConfig",
+                "iam:PassRole",
+                "sagemaker:DescribeEndpointConfig",
+                "sagemaker:DeleteEndpoint",
+                "sagemaker:InvokeEndpointAsync",
+                "sagemaker:DescribeEndpoint",
+                "sagemaker:InvokeEndpoint"
+            ],
+            "Resource": [
+                "arn:aws:sagemaker:*:<YOUR_ACCOUNT_ID>:endpoint-config/*",
+                "arn:aws:sagemaker:*:<YOUR_ACCOUNT_ID>:model/*",
+                "arn:aws:sagemaker:*:<YOUR_ACCOUNT_ID>:endpoint/*",
+                "arn:aws:iam::<YOUR_ACCOUNT_ID>:role/bridge-sagemaker-execution"
+            ]
+        },
+        {
+            "Sid": "ListSagemakerResources",
+            "Effect": "Allow",
+            "Action": [
+                "sagemaker:ListEndpointConfigs",
+                "sagemaker:ListModels",
+                "sagemaker:ListEndpoints"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
 ```

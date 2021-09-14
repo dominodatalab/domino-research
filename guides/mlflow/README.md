@@ -11,7 +11,7 @@ While it is possible to run just the MLflow server, the database backend is
 required to use the model registry. Furthermore, to be able to fetch
 artifacts, you must use a non-local-file-based storage backend.
 
-This guide uses `docker-compose` to run Mlflow, Postgres (as the database backend),
+This guide uses `docker-compose` to run MLflow, MySQL (as the database backend),
 and Minio as an S3-compatible artifact backend.
 
 This guide assumes that you have:
@@ -19,7 +19,7 @@ This guide assumes that you have:
 * Docker installed on your machine.
 * `docker-compose` installed on your machine.
 
-**This is not a production-grade deployment of Mlflow.**
+**This is not a production-grade deployment of MLflow.**
 
 ### 0. Clone this repo
 
@@ -27,18 +27,18 @@ Clone the repo and change to the `guides/mlflow` directory.
 
 ### 1. Configure your shell environment
 
-If you do not plan to use Bridge, you can skip this step.
-
 If you are going to use your new MLflow registry with
 [Bridge](https://github.com/dominodatalab/domino-research/tree/main/bridge),
 you need to configure your shell for AWS access before proceeding.
 Detailed instructions are in the
-[Bridge README](https://github.com/dominodatalab/domino-research/tree/main/bridge)
+[Bridge README](https://github.com/dominodatalab/domino-research/tree/main/bridge).
 
-### 2. Start Mlflow
+**If you do not plan to use Bridge, you can skip this step.**
+
+### 2. Start MLflow
 
 Make sure you're in the `guides/mlflow` subdirectory.
-Run the command below to start mlflow:
+Run the command below to start MLflow:
 
 ```
 docker-compose up
@@ -48,10 +48,10 @@ MLflow will take about 30-60 seconds to start up and that's it!
 You should be able to navigate to `http://localhost:5000` to see
 the MLflow UI.
 
-### 3. Add model versions to the MLFlow Registry.
+### 3. Add model versions to the MLflow Registry.
 
 We have an example model training script that demonstrates
-how to use an Mlflow registry. It's a quick way to populate
+how to use an MLflow registry. It's a quick way to populate
 your local registry with a few model versions to try out
 the tools in this repo.
 
