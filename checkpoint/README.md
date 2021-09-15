@@ -5,63 +5,103 @@ A better process for promoting models to production.
 ![build](https://github.com/dominodatalab/domino-research/actions/workflows/checkpoint.yml/badge.svg?branch=main)
 [![Docker Repository on Quay](https://quay.io/repository/domino/checkpoint/status "Docker Repository on Quay")](https://quay.io/repository/domino/checkpoint)
 
-## Why
+## Why Checkpoint
 
-Checkpoint provides a 'pull request for Machine Learning' workflow that enables better governance for model registries. This process, which we are calling _Promote Requests_, lets data scientists request that a model version be promoted to a deployment stage (e.g. Staging or Production). Team members can then review this request with any changes in parameters and metrics highlighted. Once the request is approved, the model stage is updated in the model registy.
+Checkpoint provides a 'pull request for Machine Learning' in your model registries:
+- Data scientists request that a model version be promoted to a deployment stage (e.g. Staging or Production).
+  This creates a _Promote Request_.
+- Team members can then review this request, with changes in any parameters and metrics highlighted.
+- Once the request is approved, the model stage is updated in the model registy.
 
-This process means you can trust that the model tagged Production is really meant for production. This, in turn, means you can (and should!) automatically update your model hosting infrastructure when a new model version is promoted - turning your registry into the declarative source-of-truth. We built :bridge_at_night: [Bridge](https://github.com/dominodatalab/domino-research/tree/main/bridge) to do exactly this.
+With checkpoint installed, promoted Model Versions are reviewed and can be trusted. This means you can
+(and should) trigger automated updates to your model hosting/inference infra when versions are promoted.
+We built [:bridge_at_night: Bridge](https://github.com/dominodatalab/domino-research/tree/main/bridge)
+to enable exactly this - registry-based Continuous Deployment.
 
 ## Quick Start
 
-Checkpoint proxies your existing MLflow registry and augments it with the Promote Request workflow.
-You run Checkpoint by pointing it at your existing MLflow registry. You then access your registry and 
-Promote Requests via Checkpoint. 
+You run Checkpoint by pointing it at your existing MLflow registry. You then access your MLflow registry
+and Checkpoint's Promote Requests via Checkpoint. Checkpoint works by proxying your MLflow registry,
+augmenting it with the Promote Request workflow.
 
-### Setup
+### Running locally
+
+Checkpoint requires an MLflow registry. If you do not have a registry, or would like to create a new registry for testing,
+please follow our 5-min
+[guide to setting up MLflow](https://github.com/dominodatalab/domino-research/tree/main/guides/mlflow).
 
 When you run the command below, you will be able to access the MLflow registry
-hosted at `YOUR_MLFLOW_REGISTRY_HOST` by visiting `localhost:5000`. This is great
-way to take checkpoint for a test drive.
+hosted at `YOUR_MLFLOW_REGISTRY_HOST` by visiting `localhost:6000`. This is great
+way to take checkpoint for a test drive. For more on using Checkpoint with your
+team, see the sections below.
 
-If you do not have a registry, or would like to create a new registry for testing,
-please follow our 5-min [guide to setting up MLflow](https://github.com/dominodatalab/domino-research/tree/main/guides/mlflow).
+**Using your own MLflow:**
 
 ```bash
 docker run -it \
--p 5000:5000 \
+-p 6000:5000 \
 -v $(PWD):/tmp \
 -e CHECKPOINT_REGISTRY_URL=<YOUR_MLFLOW_REGISTRY_HOST> \
 quay.io/domino/checkpoint
 ```
 
+**Using the local MLflow from our MLflow guide** 
+
+On macOS:
+
+```bash
+docker run -it \
+-p 6000:5000 \
+-v $(PWD):/tmp \
+-e CHECKPOINT_REGISTRY_URL=http://host.docker.internal:5000 \
+quay.io/domino/checkpoint
+```
+
+On Linux:
+
+```bash
+docker run -it \
+-p 6000:5000 \
+-v $(PWD):/tmp \
+-e CHECKPOINT_REGISTRY_URL=http://localhost:5000 \
+quay.io/domino/checkpoint
+```
+
 ### Usage
 
-- To create a promote request, visit the models page in MLflow and attempt to transition
-a version to a new stage. You'll be redirected to a page where you can add/edit the Promote Request
-title and description and that's it! You now have an open Promote Request, waiting for approval.
+*Note: if you're using the local MLflow from our MLflow guide, make sure to follow the instructions*
+*provided to add a few model versions with different parameters and metrics to the registry*.
+
+- To create a promote request, visit the models page in MLflow. Click into a model and then into
+  a version. Then attempt to transition the version to a new stage. You'll be redirected to the 
+  new Promote Request page where you can add/edit the Promote Request title and description and
+  that's it! You now have an open Promote Request, waiting for approval.
 
 - To view a list of open promote requests, click the floating `Promote Requests` control
   at the top of any MLflow screen.
 
-### Sharing access with your Team
+- To review a Promote Request, click into it from the list view, scroll to the bottom of the page
+  and select approve (or close, if you do not want to approve) in the drop down control. Add an 
+  optional comment and click submit.
+
+### Using Checkpoint with your Team
 
 When you are ready to use checkpoint with your team, you have two options:
 
 1. Host checkpoint yourself on a shared server - perhaps the same server you are using to run MLflow.
-  For example, run the same command above on an EC2 instance configured to allow your team
-  access to the exposed port. _(Make sure that you maintain the same access controls!
-  If checkpoint is publically accessible, then your MLflow registry will be publically
-  accessible (authentication coming soon!)_
+  For example, run the same command used to run locally on an EC2 instance that is configured to allow
+  your team access to the exposed port (6000). Make sure that you maintain the same access controls
+  to the Checkpoint process that you apply to your MLflow registry! If checkpoint is publically accessible,
+  then your MLflow registry will be publically accessible (authentication coming soon!).
   
 2. Use our Heroku button to deploy Checkpoint in one click (just supply your MLflow URL):
-
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/domino-research/heroku-checkpoint/tree/main)
+  [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/domino-research/heroku-checkpoint/tree/main)
 
 ## Analytics
 
 Checkpoint collects *completely anonymous* usage metrics by default.
 
-We only collect the following metrics:
+We collect the following metrics:
 
 - Count of Checkpoint server initialization events. Collected when you start the checkpoint server.
 
