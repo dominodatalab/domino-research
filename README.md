@@ -7,9 +7,9 @@ We build tools that help Data Scientists and ML engineers train and deploy ML mo
 
 Here’s what we’re working on:
 
-- :bridge_at_night: [Bridge](https://github.com/dominodatalab/domino-research/tree/main/bridge) - declarative model hosting, with your model registry as the source of truth
+- :bridge_at_night: [Bridge](https://github.com/dominodatalab/domino-research/tree/main/bridge) - deploy directly from your registry, turning it into a declarative source of truth for your model hosting.
 
-- :passport_control: [Checkpoint](https://github.com/dominodatalab/domino-research/tree/main/checkpoint) - a better process for promoting models to production.
+- :passport_control: [Checkpoint](https://github.com/dominodatalab/domino-research/tree/main/checkpoint) - adds 'Pull Requests' to your registry to create a better process for promoting models to production.
 
 - :sparkler: [Flare](https://github.com/dominodatalab/domino-research/tree/main/flare) - monitor models and get alerts without capturing, storing or processing production inference data.
 
