@@ -1,6 +1,6 @@
 # :sparkler: Flare
 
-Monitor models and get alerts without capturing/exfiltrating production inference data.
+Monitor models and get alerts without capturing, storing, or processing production inference data.
 
 ![build](https://github.com/dominodatalab/domino-research/actions/workflows/flare.yml/badge.svg?branch=main)
 [![PyPI version](https://badge.fury.io/py/domino-flare.svg)](https://badge.fury.io/py/domino-flare)
