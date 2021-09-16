@@ -28,7 +28,7 @@ augmenting it with the Promote Request workflow.
 
 Checkpoint requires an MLflow registry. If you do not have a registry, or would like to create a new registry for testing,
 please follow our 5-min
-[guide to setting up MLflow](https://github.com/dominodatalab/domino-research/tree/main/guides/mlflow).
+[guide to setting up MLflow](https://bit.ly/3tKeiZb).
 
 When you run the command below, you will be able to access the MLflow registry
 hosted at `YOUR_MLFLOW_REGISTRY_HOST` by visiting `localhost:6000`. This is great

@@ -81,7 +81,7 @@ export AWS_SECRET_ACCESS_KEY=XXX
 #### MLflow Config
 
 If you do not have a registry, or want a new registry just for testing Bridge,
-follow our 5-min [local MLflow quickstart](https://github.com/dominodatalab/domino-research/tree/main/guides/mlflow).
+follow our 5-min [local MLflow quickstart](https://bit.ly/3AvThUN).
 _You must configure AWS as above before following this guide._
 
 If you already have an MLflow registry, set the environment variables below
