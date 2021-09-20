@@ -1,11 +1,15 @@
 # AWS Sagemaker Deploy Target Docs
 
-## Permissions
+## 1. Explanation of Commands
+
+<a name="sagemaker-commands"></a>
 
 The sections below describe the AWS permissions needed by the Bridge commands
 for the Sagemaker Deploy Target.
 
-### 1. Initialization
+### 1.1 Initialization
+
+<a name="sagemaker-command-init"></a>
 
 Running the `init` command will create:
 
@@ -14,28 +18,23 @@ Running the `init` command will create:
   that will allow SageMaker to assume the SagemakerFullAccess managed policy.
 
 This means the AWS IAM user specified by the `AWS_ACCESS_KEY_ID` and
-`AWS_SECRET_ACCESS_KEY` will need access to the following permissions:
-- `s3:CreateBucket`
-- `iam:CreateRole`
-- `iam:AttachRolePolicy`
+`AWS_SECRET_ACCESS_KEY` will need access to the permissions specified
+in this [IAM Policy](#init-destroy-policy). To create an IAM user with these permissions, see section 3 below.
 
-To create an IAM user with these permissions, see section 3 below.
+### 1.2 Running
 
-### 2. Running
+<a name="sagemaker-command-run"></a>
 
 Running the `run` command will using Bridge to create, update, and delete  SageMaker models, endpoints, and endpoint configurations in your AWS account as you make changes in your
 registry.
 
 This means the AWS IAM user specified by the `AWS_ACCESS_KEY_ID` and
-`AWS_SECRET_ACCESS_KEY` will need access to the following permissions:
+`AWS_SECRET_ACCESS_KEY` will need access to the permissions specified
+in this [IAM Policy](#run-policy). To create an IAM user with these permissions, see section 3 below.
 
-- List/describe/create/delete SageMaker Endpoints, EndpointConfigs, and Models
-- List, put, and delete objects in the `AWS_BUCKET_NAME` configured in your shell
-- Have the `IAM::PassRole` permission needed to pass the `bridge-sagemaker-execution` role created during init to SageMaker endpoints.
+### 1.3 Destroy
 
-To create an IAM user with these permissions, see section 3 below.
-
-### 3. Destroy
+<a name="sagemaker-command-destroy"></a>
 
 Running the `destroy` command will remove:
 
@@ -44,14 +43,10 @@ Running the `destroy` command will remove:
 * The Bridge Sagemaker IAM role.
 
 This means the AWS IAM user specified by the `AWS_ACCESS_KEY_ID` and
-`AWS_SECRET_ACCESS_KEY` will need access to the following permissions:
-- `s3:DeleteBucket`
-- `iam:DeleteRole`
-- `iam:DetachRolePolicy`
+`AWS_SECRET_ACCESS_KEY` will need access to the permissions specified
+in this [IAM Policy](#init-destroy-policy). To create an IAM user with these permissions, see section 3 below.
 
-To create an IAM user with these permissions, see section 3 below.
-
-## Passing Permissions to Bridge in Docker
+## 2. Passing Permissions to Bridge in Docker
 
 Internally, Bridge uses the standard AWS CLI and boto3 SDK. This means
 that you can configure access to AWS in the same ways you would locally.
@@ -61,7 +56,7 @@ environment variables in addition to the other environment variables
 specified in the docs. However, you can also
 use [named profiles](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html) by mounting your AWS profile config file to the docker container and setting the `AWS_PROFILE` environment variable.
 
-## Creating Restricted, Bridge-specific AWS IAM Users
+## 3. Creating Restricted, Bridge-specific AWS IAM Users
 
 It is best practice to use AWS IAM users with the minimal permissions needed for their task. To create such a user for Bridge `init`/`destroy` and `run` commands respectively, do the following:
 
@@ -72,17 +67,19 @@ It is best practice to use AWS IAM users with the minimal permissions needed for
 3. Navigate to Policies in the left menu
 4. Click the button to create a Policy
 5. Switch to the JSON editor, clear the existing content, and paste the content below. DO NOT proceed to the next step.
-6. Find your account ID and paste it to replace the 4 instances of `<YOUR_ACCOUNT_ID>`:
+6. Find your account ID and paste it to replace the 7 instances of `<YOUR_ACCOUNT_ID>`:
     1. In a terminal configured with existing AWS access, run `aws sts get-caller-identity`
        and copy the account id.
     2. In the management console, select your username in the top right of the navigation bar
        and copy the number next to "my account".
-7. Replace the 1 instances of `<YOUR_AWS_BUCKET_NAME>` with the value you'll use for your `AWS_BUCKET_NAME` environment variable.
+7. Replace the 3 instances of `<YOUR_REGION>` with the value you use for your `AWS_REGION` environment variable.
 8. When you've made the replacements above, proceed to the next step and give your new policy a descriptive name like `BridgeInitDestroy`
 9. Navigate to users in the IAM left menu
 10. Click the button to add users, input a username `BridgeInitDestroyUser` and select programmatic access
 11. Under set permissions, select "attach an existing policy" and then find and select the policy you just created
 12. Copy the Access Key and Secret Access Key and use them in the init/destroy steps in the [quickstart guide](../README.md)
+
+<a name="init-destroy-policy"></a>
 
 ```json
 {
@@ -106,7 +103,29 @@ It is best practice to use AWS IAM users with the minimal permissions needed for
                 "s3:CreateBucket",
                 "s3:DeleteBucket"
             ],
-            "Resource": ["arn:aws:s3:::<YOUR_AWS_BUCKET_NAME>"]
+            "Resource": ["arn:aws:s3:::bridge-models-<YOUR_ACCOUNT_ID>-<YOUR_REGION>"]
+        },
+        {
+            "Sid": "ListObjectsInBucket",
+            "Effect": "Allow",
+            "Action": ["s3:ListBucket"],
+            "Resource": ["arn:aws:s3:::bridge-models-<YOUR_ACCOUNT_ID>-<YOUR_REGION>"]
+        },
+        {
+            "Sid": "AllObjectActions",
+            "Effect": "Allow",
+            "Action": "s3:*Object*",
+            "Resource": ["arn:aws:s3:::bridge-models-<YOUR_ACCOUNT_ID>-<YOUR_REGION>/*"]
+        },
+        {
+            "Sid": "ListSagemakerResources",
+            "Effect": "Allow",
+            "Action": [
+                "sagemaker:ListEndpointConfigs",
+                "sagemaker:ListModels",
+                "sagemaker:ListEndpoints"
+            ],
+            "Resource": "*"
         },
         {
             "Sid": "DeleteSagemakerResources",
@@ -114,14 +133,14 @@ It is best practice to use AWS IAM users with the minimal permissions needed for
             "Action": [
                 "sagemaker:DeleteEndpointConfig",
                 "sagemaker:DeleteModel",
-                "sagemaker:DeleteEndpoint",
+                "sagemaker:DeleteEndpoint"
             ],
             "Resource": [
                 "arn:aws:sagemaker:*:<YOUR_ACCOUNT_ID>:endpoint-config/brdg-*",
                 "arn:aws:sagemaker:*:<YOUR_ACCOUNT_ID>:model/brdg-*",
                 "arn:aws:sagemaker:*:<YOUR_ACCOUNT_ID>:endpoint/brdg-*"
             ]
-        },
+        }
     ]
 }
 ```
@@ -133,17 +152,19 @@ It is best practice to use AWS IAM users with the minimal permissions needed for
 3. Navigate to Policies in the left menu
 4. Click the button to create a Policy
 5. Switch to the JSON editor, clear the existing content, and paste the content below. DO NOT proceed to the next step.
-6. Find your account ID and paste it to replace the 4 instances of `<YOUR_ACCOUNT_ID>`:
+6. Find your account ID and paste it to replace the 6 instances of `<YOUR_ACCOUNT_ID>`:
     1. In a terminal configured with existing AWS access, run `aws sts get-caller-identity`
        and copy the account id.
     2. In the management console, select your username in the top right of the navigation bar
        and copy the number next to "my account".
-7. Replace the 2 instances of `<YOUR_AWS_BUCKET_NAME>` with the value you'll use for your `AWS_BUCKET_NAME` environment variable.
+7. Replace the 2 instances of `<YOUR_REGION>` with the value you use for your `AWS_REGION` environment variable.
 8. When you've made the replacements above, proceed to the next step and give your new policy a descriptive name like `BridgeRun`
 9. Navigate to users in the IAM left menu
 10. Click the button to add users, input a username like `BridgeRunUser` and select programmatic access
 11. Under set permissions, select "attach an existing policy" and then find and select the policy you just created
 12. Copy the Access Key and Secret Access Key and use them in the steps in the [quickstart guide](../README.md)
+
+<a name="run-policy"></a>
 
 ```json
 {
@@ -153,13 +174,13 @@ It is best practice to use AWS IAM users with the minimal permissions needed for
             "Sid": "ListObjectsInBucket",
             "Effect": "Allow",
             "Action": ["s3:ListBucket"],
-            "Resource": ["arn:aws:s3:::<YOUR_AWS_BUCKET_NAME>"]
+            "Resource": ["arn:aws:s3:::bridge-models-<YOUR_ACCOUNT_ID>-<YOUR_REGION>"]
         },
         {
             "Sid": "AllObjectActions",
             "Effect": "Allow",
             "Action": "s3:*Object*",
-            "Resource": ["arn:aws:s3:::<YOUR_AWS_BUCKET_NAME>/*"]
+            "Resource": ["arn:aws:s3:::bridge-models-<YOUR_ACCOUNT_ID>-<YOUR_REGION>/*"]
         },
         {
             "Sid": "ManageSagemakerResources",
@@ -199,7 +220,7 @@ It is best practice to use AWS IAM users with the minimal permissions needed for
             "Effect": "Allow",
             "Action": "iam:PassRole",
             "Resource": "arn:aws:iam::<YOUR_ACCOUNT_ID>:role/bridge-sagemaker-execution"
-        },
+        }
     ]
 }
 ```

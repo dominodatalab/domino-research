@@ -7,7 +7,7 @@ The easiest way to deploy from MLflow to SageMaker
 
 ## Why Bridge
 
-Bridge is designed to enable declarative model deployment, with a model registry
+Bridge enables declarative model deployment with a model registry
 as the source of truth.
 
 - Data scientists manage the lifecycle of their models exclusively
@@ -29,7 +29,7 @@ as the source of truth.
 ## Quick Start
 
 This quickstart has 4 steps. When you're done, Bridge will monitor your MLflow registry
-and, upon seeing a new version of a model or an update to a version's stage, will create/update SageMaker endpoints. This means you'll have an always-up-to-date hosted endpoint for the `Latest`, `Staging` and `Production` version of each of the models in your MLflow registry.
+and, upon seeing a new version of a model or an update to a version's stage, will create/update SageMaker endpoints. You'll have always-up-to-date hosted endpoints for the `Latest`, `Staging` and `Production` versions of each of the models in your MLflow registry.
 
 Check out a 7 min demo of this Quick Start [here](https://bit.ly/39tL8nz).
 
@@ -52,11 +52,10 @@ export AWS_SECRET_ACCESS_KEY=XXX
 # You can change these or stick with the defaults supplied here.
 export AWS_REGION=us-east-2
 export AWS_DEFAULT_REGION=us-east-2
-export AWS_BUCKET_NAME=bridge-demo-artifacts
 ```
 
 If you'd like to know which AWS permissions are needed for each command so that you can
-create a restricted-access IAM user for Bridge, see the AWS Sagemaker Deploy Target permissions docs [here](./docs/sagemaker.md#permissions).
+create a restricted-access IAM user for Bridge, see the AWS Sagemaker Deploy Target permissions docs [here](./docs/sagemaker.md#sagemaker-commands).
 
 #### 1.2 MLflow
 
@@ -88,7 +87,7 @@ docker run -it \
 ```
 
 If you'd like to know exactly what the command does and what permissions it needs, see
-the AWS Sagemaker Deploy Target docs [here](./docs/sagemaker.md#initialization).
+the AWS Sagemaker Deploy Target docs [here](./docs/sagemaker.md#sagemaker-command-init).
 
 ### 3. Run Bridge
 
@@ -135,6 +134,8 @@ docker run -it \
     quay.io/domino/bridge:latest
 ```
 
+If you'd like to know exactly what the command does and what permissions it needs, see the AWS Sagemaker Deploy Target docs [here](./docs/sagemaker.md#sagemaker-command-run).
+
 ### 4. Welcome to RegistryOps
 
 That's it! Bridge will begin syncing model versions from MlFlow to
@@ -171,7 +172,7 @@ docker run -it \
 ```
 
 If you'd like to know exactly what the command does and what permissions it needs, see
-the AWS Sagemaker Deploy Target docs [here](./docs/sagemaker.md#destroy).
+the AWS Sagemaker Deploy Target docs [here](./docs/sagemaker.md#sagemaker-command-destroy).
 
 ## Analytics
 
