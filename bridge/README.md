@@ -7,40 +7,77 @@ The easiest way to deploy from MLflow to SageMaker
 
 ## Why Bridge
 
-Bridge is designed to enable declarative model management, with your model registry as the source of truth.
+Bridge is designed to enable declarative model deployment, with a model registry
+as the source of truth.
 
 - Data scientists manage the lifecycle of their models exclusively
-through the built-for-purpose API and user interface of their 
-Model registry. Stage labels (dev/staging/prod/etc) in the registry
-become a declarative specification of which models should be deployed.
+  through the API and user interface of their Model registry.
+  Stage labels (dev/staging/prod/etc) in the registry
+  become a declarative specification of which models should be deployed.
 
 - DevOps and machine learning engineering teams use Bridge to
-automate the often complex and frustrating management of SageMaker
-resources. You manage Bridge, Bridge herds the AWS cats and manages
-the repetitive wrapper code.
+  automate the often complex and frustrating management of SageMaker
+  resources. You manage Bridge, Bridge herds the AWS cats and manages
+  the repetitive wrapper code.
 
 - Both teams can be confident that the models tagged in the
-registry are the models being served, without having to dig
-through git and CI logs or worrying about keeping things up to
-date manually
+  registry are the models being served, without having to dig
+  through git and CI logs or worrying about keeping things up to
+  date manually.
 
 
 ## Quick Start
 
-[Check out a 7 min demo of this Quick Start!](https://www.loom.com/share/c4498403c2794664a91be0d8e5119ecf)
+This quickstart has 4 steps. When you're done, Bridge will monitor your MLflow registry
+and, upon seeing a new version of a model or an update to a version's stage, will create/update SageMaker endpoints. This means you'll have an always-up-to-date hosted endpoint for the `Latest`, `Staging` and `Production` version of each of the models in your MLflow registry.
 
-### 1. Initialize Bridge
+Check out a 7 min demo of this Quick Start [here](https://bit.ly/39tL8nz).
 
-First, run the `init` command to create the AWS resources that Bridge needs to operate.
-Running this command will create:
+### 1. Configure AWS and MLFlow Access
 
-* An S3 bucket for model artifacts.
-* An IAM role for Sagemaker execution, `bridge-sagemaker-execution`,
-  that will allow SageMaker to assume the SagemakerFullAccess managed policy.
+First, we'll configure your terminal with the environment variables that Bridge will use to access MLflow and AWS.
 
-This command only needs to be run once for a given AWS account and region.
-The snippet below assumes you have an `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
-in your shell environment with sufficient permissions to create S3 buckets and an IAM role.
+#### 1.1 AWS
+
+Bridge currently deploys models to AWS SageMaker. This means you'll need an AWS account to use Bridge. (If you're interested in other deployment targets, let us know through [Slack](https://domino-research.slack.com/archives/C02FJ1RH5AL)). The simplest way to get started is to set the environment variables below, using an `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` for a user with read/write permissions for S3, SageMaker and IAM.
+
+To configure AWS access for Bridge, run this command in your terminal - editing the template values:
+
+```
+# Use credentials for an AWS user
+# with read/write to S3, Sagemaker and IAM
+export AWS_ACCESS_KEY_ID=XXX
+export AWS_SECRET_ACCESS_KEY=XXX
+
+# You can change these or stick with the defaults supplied here.
+export AWS_REGION=us-east-2
+export AWS_DEFAULT_REGION=us-east-2
+export AWS_BUCKET_NAME=bridge-demo-artifacts
+```
+
+If you'd like to know which AWS permissions are needed for each command so that you can
+create a restricted-access IAM user for Bridge, see the AWS Sagemaker Deploy Target permissions docs [here](./docs/sagemaker.md#permissions).
+
+#### 1.2 MLflow
+
+Bridge deploys and updates hosted models based on changes in your MLflow registry. This
+means you'll need an MLflow registry to use Bridge.
+
+**If you don't have an MLflow registry**, or want a new registry just for testing Bridge, follow our 5-min [local MLflow quickstart](https://bit.ly/3AvThUN). When you have followed our guide, you can skip to step 2 - initializing bridge.
+
+**If you want to use an existing MLflow registry**, set the environment variables below with the correct values - usually just the hostname of your registry like `http://mlflow.acme.org`.Do this by running this command in your terminal - editing the template values:
+
+  ```
+  # Only needed if you are using an existing MLflow registry
+  export MLFLOW_REGISTRY_URI=http://mlflow.acme.org
+  export MLFLOW_TRACKING_URI=http://mlflow.acme.org
+  ```
+
+### 2. Initialize Bridge
+
+Run the `init` command to create the AWS resources that Bridge needs to operate. This command only needs to be run once for a given AWS account and region.
+
+To initialize Bridge, run the command below in the terminal you configured:
 
 ```
 docker run -it \
@@ -50,66 +87,13 @@ docker run -it \
     quay.io/domino/bridge:latest init sagemaker
 ```
 
-### 2. Run Bridge
+If you'd like to know exactly what the command does and what permissions it needs, see
+the AWS Sagemaker Deploy Target docs [here](./docs/sagemaker.md#initialization).
 
-#### AWS Config
+### 3. Run Bridge
 
-After you have initialized Bridge once, you can switch to AWS
-credentials with more restrictive access. You'll need credentials for
-an AWS IAM user with the permissions below (if you'd like to create a user
-with only these permissions, see the appendix at the bottom of this page):
-
-- List/describe/create/delete SageMaker Endpoints, EndpointConfigs, and Models
-- List, put, and delete objects in the `AWS_BUCKET_NAME` configured in your shell
-- Have the `IAM::PassRole` permission needed to pass the `bridge-sagemaker-execution` role created during init
-  to SageMaker endpoints.
-
-So, before proceeding, ensure the environment variables below are set and that
-the IAM user credentials specified have at least the permissions above. You can also
-use [named profiles](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html)
-to make this config more convenient. If you use a profile, you'll only need to set `AWS_BUCKET_NAME`
-and `AWS_PROFILE=your_profile`. The other values will come from the profile itself.
-
-```
-export AWS_REGION=us-east-2
-export AWS_DEFAULT_REGION=us-east-2
-export AWS_BUCKET_NAME=bridge-demo-artifacts
-export AWS_ACCESS_KEY_ID=XXX
-export AWS_SECRET_ACCESS_KEY=XXX
-```
-
-#### MLflow Config
-
-If you do not have a registry, or want a new registry just for testing Bridge,
-follow our 5-min [local MLflow quickstart](https://bit.ly/3AvThUN).
-_You must configure AWS as above before following this guide._
-
-If you already have an MLflow registry, set the environment variables below
-with the correct values - usually just the hostname of your registry
-like `http://mlflow.acme.org`.
-
-```
-export MLFLOW_REGISTRY_URI=http://mlflow.acme.org
-export MLFLOW_TRACKING_URI=http://mlflow.acme.org
-```
-
-#### Run Bridge
-
-Finaly, start the Bridge server, pointing it at your Mlflow registry and AWS account,
-using the environment variables from the previous steps.
-Select the right command from the options below based on your configuration:
-
-**Using your own MLflow:**
-
-```
-docker run -it \
-    -e BRIDGE_MLFLOW_REGISTRY_URI=${MLFLOW_REGISTRY_URI} \
-    -e BRIDGE_MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI} \
-    -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
-    -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
-    -e AWS_DEFAULT_REGION=${AWS_REGION} \
-    quay.io/domino/bridge:latest
-```
+To run Bridge, select the right command from the options below
+and run it in the terminal you configured:
 
 **Using the local MLflow from our MLflow guide** 
 
@@ -139,7 +123,19 @@ docker run -it \
     quay.io/domino/bridge:latest
 ```
 
-### 3. See the results
+**Using your own MLflow:**
+
+```
+docker run -it \
+    -e BRIDGE_MLFLOW_REGISTRY_URI=${MLFLOW_REGISTRY_URI} \
+    -e BRIDGE_MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI} \
+    -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+    -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+    -e AWS_DEFAULT_REGION=${AWS_REGION} \
+    quay.io/domino/bridge:latest
+```
+
+### 4. Welcome to RegistryOps
 
 That's it! Bridge will begin syncing model versions from MlFlow to
 Sagemaker! By default, it will sync versions assigned to Production and
@@ -151,7 +147,7 @@ version. If you then tag that version as `Staging` it will create/update the
 `Staging` endpoint for the model with the version. Welcome to RegistryOps.
 
 To stop syncing, simply exit the container process. If you want
-to resume, re-run the same command above.
+to resume, re-run the `run` command from Section 2 above.
 
 **Note:** Bridge deploys the *models* in MLflow (not runs).
 Models must use the MLflow [storage format](https://www.mlflow.org/docs/latest/models.html#storage-format).
@@ -164,7 +160,7 @@ or using the `create_model_version` command with appropriate inputs.
 
 If you are done using Bridge in a given AWS account and region, you can run
 the command below to remove all traces of Bridge. This will **delete all
-the resources** managed by Bridge but no resources from your registry.
+the resources** managed by Bridge but no resources from your MLflow registry.
 
 ```
 docker run -it \
@@ -174,11 +170,8 @@ docker run -it \
     destroy sagemaker
 ```
 
-The command will remove:
-
-* All Bridge-created Sagemaker models and endpoints.
-* The Bridge S3 model artifact bucket.
-* The Bridge Sagemaker IAM role.
+If you'd like to know exactly what the command does and what permissions it needs, see
+the AWS Sagemaker Deploy Target docs [here](./docs/sagemaker.md#destroy).
 
 ## Analytics
 
@@ -284,87 +277,4 @@ The checks above will run on each git commit.
 
 ```
 docker build .
-```
-
-## Appendix
-
-### AWS Policy
-
-To create an AWS user with only the access necessary for Bridge to operate,
-do the following:
-
-1. Sign into the AWS Management Console
-2. Access the IAM Service
-3. Navigate to Policies in the left menu
-4. Click the button to create a Policy
-5. Switch to the JSON editor, clear the existing content, and paste the content below.
-   DO NOT proceed to the next step.
-6. Find your account ID and paste it to replace the 4 instances of `<YOUR_ACCOUNT_ID>`:
-    1. In a terminal configured with existing AWS access, run `aws sts get-caller-identity`
-       and copy the account id.
-    2. In the management console, select your username in the top right of the navigation bar
-       and copy the number next to "my account".
-7. Replace the 2 instances of `<YOUR_AWS_BUCKET_NAME>` with the value you'll use for your
-   `AWS_BUCKET_NAME` environment variable.
-8. When you've made the replacements above, proceed to the next step and give your new policy
-  a descriptive name like `BridgeLimitedAccess`
-9. Navigate to users in the IAM left menu
-10. Click the button to add users, input a username and select programmatic access
-11. Under set permissions, select "attach an existing policy" and then find and select
-   the policy you just created
-12. Copy the Access Key and Secret Access Key and use them in the steps in the quickstart above
-
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "ListObjectsInBucket",
-            "Effect": "Allow",
-            "Action": ["s3:ListBucket"],
-            "Resource": ["arn:aws:s3:::<YOUR_AWS_BUCKET_NAME>"]
-        },
-        {
-            "Sid": "AllObjectActions",
-            "Effect": "Allow",
-            "Action": "s3:*Object*",
-            "Resource": ["arn:aws:s3:::<YOUR_AWS_BUCKET_NAME>/*"]
-        },
-        {
-            "Sid": "MutateSagemakerResources",
-            "Effect": "Allow",
-            "Action": [
-                "sagemaker:CreateModel",
-                "sagemaker:DeleteEndpointConfig",
-                "sagemaker:CreateEndpoint",
-                "sagemaker:DescribeModel",
-                "sagemaker:DeleteModel",
-                "sagemaker:UpdateEndpoint",
-                "sagemaker:CreateEndpointConfig",
-                "iam:PassRole",
-                "sagemaker:DescribeEndpointConfig",
-                "sagemaker:DeleteEndpoint",
-                "sagemaker:InvokeEndpointAsync",
-                "sagemaker:DescribeEndpoint",
-                "sagemaker:InvokeEndpoint"
-            ],
-            "Resource": [
-                "arn:aws:sagemaker:*:<YOUR_ACCOUNT_ID>:endpoint-config/*",
-                "arn:aws:sagemaker:*:<YOUR_ACCOUNT_ID>:model/*",
-                "arn:aws:sagemaker:*:<YOUR_ACCOUNT_ID>:endpoint/*",
-                "arn:aws:iam::<YOUR_ACCOUNT_ID>:role/bridge-sagemaker-execution"
-            ]
-        },
-        {
-            "Sid": "ListSagemakerResources",
-            "Effect": "Allow",
-            "Action": [
-                "sagemaker:ListEndpointConfigs",
-                "sagemaker:ListModels",
-                "sagemaker:ListEndpoints"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
 ```
