@@ -172,11 +172,12 @@ that follow the Scikit Learn predict API.
 When you create the context, you supply a unique model name,
 your input features, and the alert target configured above.
 
-```
+```python
 X = ... # Example input features from your API/DB read etc
 model = load("model.joblib") # your model
 
-# This is the Flare context. 
+# This is the Flare context. It loads the Constraints/Statistics
+# JSON
 with Flare("wine-quality", X, alert_target):
     
     # Your normal inference code goes here
