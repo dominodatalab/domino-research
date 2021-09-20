@@ -176,8 +176,7 @@ your input features, and the alert target configured above.
 X = ... # Example input features from your API/DB read etc
 model = load("model.joblib") # your model
 
-# This is the Flare context. It loads the Constraints/Statistics
-# JSON
+# This is the Flare context. It loads the Constraints/Statistics JSON
 with Flare("wine-quality", X, alert_target):
     
     # Your normal inference code goes here
