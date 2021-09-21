@@ -1,6 +1,6 @@
 ## MLflow Quickstart
 
-This is a quick guide to running and MLflow locally. A full MLflow
+This is a quick guide to running MLflow locally. A full MLflow
 installation consists of 3 components:
 
 * MLflow tracking server / model registry
