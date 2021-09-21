@@ -11,7 +11,7 @@ Checkpoint provides a 'pull request for Machine Learning' in your model registri
 - Data scientists request that a model version be promoted to a deployment stage (e.g. Staging or Production).
   This creates a _Promote Request_.
 - Team members can then review this request, with changes in any parameters and metrics highlighted.
-- Once the request is approved, the model stage is updated in the model registy.
+- Once the request is approved, the model stage is updated in the model registry.
 
 With checkpoint installed, promoted Model Versions are reviewed and can be trusted. This means you can
 (and should) trigger automated updates to your model hosting/inference infra when versions are promoted.
@@ -24,6 +24,31 @@ You run Checkpoint by pointing it at your existing MLflow registry. You then acc
 and Checkpoint's Promote Requests via Checkpoint. Checkpoint works by proxying your MLflow registry,
 augmenting it with the Promote Request workflow.
 
+### Try Checkpoint in our Hosted Sandbox
+
+We're hosting a sandbox version of Checkpoint at [domino-research-checkpoint.herokuapp.com](https://bit.ly/2XF2xac). Try the following in the sandbox:
+
+#### Create a Promote Request
+
+1. Click into the `ScikitElasticNetWineModel` in the MLflow models tab.
+2. Click into a version that is not marked as `Production`.
+3. Use the stage control in the top right to move the version into `Production`.
+   (When prompted, select the option to archive the current Production version).
+4. You'll be presented with the new Promote Request screen, add a description and click create.
+5. You'll be presented with the diff view. Note the highlighted changes in metric and parameter values. You can share this URL for a team member to review.
+
+#### Review and Approve a Promote Request
+
+1. If you're already in the Promote Request view, you're ready to go. If you need to create
+   a new Promote Request, follow the steps above.
+2. Note the highlighted changes in metric and parameter values.
+3. Scroll to the bottom of the page and select the approve action from the action drop down.
+4. Click submit. This approves the Promote Request and promotes the model version.
+5. Navigate back to the registry using the control in the top right. The version you selected is now in Production.
+6. To return to see the list of open Promote Requests, click the Checkpoint control at the top
+   of any MLflow screen.
+
+
 ### Running locally
 
 Checkpoint requires an MLflow registry. If you do not have a registry, or would like to create a new registry for testing,
@@ -32,7 +57,7 @@ please follow our 5-min
 
 When you run the command below, you will be able to access the MLflow registry
 hosted at `YOUR_MLFLOW_REGISTRY_HOST` by visiting `localhost:6000`. This is great
-way to take checkpoint for a test drive. For more on using Checkpoint with your
+way to take Checkpoint for a test drive. For more on using Checkpoint with your
 team, see the sections below.
 
 **Using your own MLflow:**
