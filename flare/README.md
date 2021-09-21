@@ -164,7 +164,7 @@ alert_target = CustomAlertTarget("https://yourserver.com/incoming/hooks")
 
 #### Configure the Flare Context
 
-Once you have configure your alert target, add the following to your
+Once you have configured your alert target, add the following to your
 inference code. Note that we expect your inference data to be formatted
 as a Pandas DataFrame. This should work for most modeling frameworks
 that follow the Scikit Learn predict API.
