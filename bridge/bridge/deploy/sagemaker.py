@@ -575,8 +575,9 @@ class SageMakerDeployTarget(DeployTarget):
             execution_role_arn = (
                 f"arn:aws:iam::{self.account_id}:role/{self.execution_role}"
             )
+            model_name = self._sagemaker_model_name_for_version(version)
             self.sagemaker_client.create_model(
-                ModelName=self._sagemaker_model_name_for_version(version),
+                ModelName=model_name,
                 PrimaryContainer={
                     "Image": f"667552661262.dkr.ecr.{self.region}.amazonaws.com/bridge-mlflow-runtime:latest",  # noqa: E501
                     "ImageConfig": {
@@ -594,18 +595,33 @@ class SageMakerDeployTarget(DeployTarget):
                 Tags=[],
             )
         except ClientError as e:
-            logging.error(e)
-            raise e
+            # If this error was caused by the model already existing
+            # then ignore
+            error_msg = e.response["Error"]["Message"]
+            if error_msg.startswith("Cannot create already existing model"):
+                logger.info(
+                    f"Sagemaker Model {model_name} exists, skipping creation."
+                )
+            else:
+                logging.error(e)
+                raise e
 
     def _delete_sagemaker_model(self, version: ModelVersion):
         # TODO: better error handling
+        model_name = self._sagemaker_model_name_for_version(version)
         try:
-            self.sagemaker_client.delete_model(
-                ModelName=self._sagemaker_model_name_for_version(version)
-            )
+            self.sagemaker_client.delete_model(ModelName=model_name)
         except ClientError as e:
-            logging.error(e)
-            raise e
+            # If this error was caused by the model already deleted
+            # then ignore
+            error_msg = e.response["Error"]["Message"]
+            if error_msg.startswith("Could not find model"):
+                logger.info(
+                    f"Sagemaker Model {model_name} missing, skipping deletion."
+                )
+            else:
+                logging.error(e)
+                raise e
 
     # NOTE: we happen to use the same name for the endpoint
     # and endpoint config but this may not always be the case
