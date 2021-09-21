@@ -7,25 +7,21 @@ installation consists of 3 components:
 * Database backend -  stores run and model metadata
 * Storage backend - stores run and model artifacts
 
-While it is possible to run just the MLflow server, the database backend is
-required to use the model registry. Furthermore, to be able to fetch
-artifacts, you must use a non-local-file-based storage backend.
-
 This guide uses `docker-compose` to run MLflow, MySQL (as the database backend),
-and Minio as an S3-compatible artifact backend.
-
-This guide assumes that you have:
-
-* Docker installed on your machine.
-* `docker-compose` installed on your machine.
-
-**This is not a production-grade deployment of MLflow.**
+and Minio as an S3-compatible artifact backend. You'll need Docker and `docker-compose`
+installed on your machine.
 
 ### 0. Clone this repo
 
 Clone the repo and change to the `guides/mlflow` directory.
 
+HTTPS:  `git clone https://github.com/dominodatalab/domino-research.git && cd domino-research/guides/mlflow`
+
+SSH:  `git clone git@github.com:dominodatalab/domino-research.git && cd domino-research/guides/mlflow`
+
 ### 1. Configure your shell environment
+
+**If you do not plan to use Bridge, you can skip this step.**
 
 If you are going to use your new MLflow registry with
 [Bridge](https://github.com/dominodatalab/domino-research/tree/main/bridge),
@@ -33,38 +29,28 @@ you need to configure your shell for AWS access before proceeding.
 Detailed instructions are in the
 [Bridge README](https://github.com/dominodatalab/domino-research/tree/main/bridge).
 
-**If you do not plan to use Bridge, you can skip this step.**
-
 ### 2. Start MLflow
 
-Make sure you're in the `guides/mlflow` subdirectory.
-Run the command below to start MLflow:
+Make sure you're in the `guides/mlflow` subdirectory then
+run the command below to start MLflow:
 
 ```
 docker-compose up
 ```
 
-MLflow will take about 30-60 seconds to start up and that's it!
+MLflow will take about 15-30 seconds to start up and that's it!
 You should be able to navigate to `http://localhost:5000` to see
 the MLflow UI.
 
-### 3. Add model versions to the MLflow Registry.
+### 3. Add model versions to the MLflow registry
 
-We have an example model training script that demonstrates
-how to use an MLflow registry. It's a quick way to populate
-your local registry with a few model versions to try out
-the tools in this repo.
-
-If you have your own model code and don't want to use our
-example model, skip ahead to section 3 below.
-
-Follow these steps to train a model and register it in MLflow:
+Use the steps below to quickly populate your new local registry
+with a couple model versions so that you can try out the tools in this repo.
 
 1. Open a new terminal tab/window
 2. Change to/stay in the `guides/mlflow` directory
 3. Run `source .env` to configure your shell's environment variables
-4. Run `pip install -r scikit_elasticnet_wine/requirements.txt` to install
-   the required packages.
+4. Run `pip install -r scikit_elasticnet_wine/requirements.txt` to install the required packages. We strongly suggest doing this in a virtual environment with Python 3.7+ as the base python such that `pip == pip3`. If not, you will need to ensure you are installing into a valid Python3 runtime and adjust the commands below to use this runtime.
 5. Run `python scikit_elasticnet_wine/train.py 0.1` to train the model
 6. Run `python scikit_elasticnet_wine/train.py 0.5` to train the model
    again with a different value of the `alpha` hyperparameter.
@@ -78,7 +64,7 @@ in the MLflow Model Registry (under 'Models' in the MLflow UI).
 ### 4. Using the MLflow registry in your own scripts
 
 If you'd like to use your local MLflow registry in your own code,
-you'll need the following config:
+you can use the sample code below:
 
 ```python
 import os

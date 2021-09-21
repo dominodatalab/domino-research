@@ -21,15 +21,15 @@ class SageMakerDeployTarget(DeployTarget):
     execution_role_policy_arn = (
         "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
     )
+    sagemaker_name_prefix = "brdg"
 
-    def __init__(self, sagemaker_resource_name_prefix: str = "brdg"):
+    def __init__(self):
         if profile := os.environ.get("BRDG_DEPLOY_AWS_PROFILE"):
             logger.info(f"Using deploy AWS profile {profile}")
             session = boto3.Session(profile_name=profile)
         else:
             session = boto3.session.Session()
 
-        self.sagemaker_name_prefix = sagemaker_resource_name_prefix
         self.region = session.region_name
 
         try:
