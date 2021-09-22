@@ -26,7 +26,7 @@ augmenting it with the Promote Request workflow.
 
 ### Try Checkpoint in our Hosted Sandbox
 
-We're hosting a sandbox version of Checkpoint at [domino-research-checkpoint.herokuapp.com](https://bit.ly/3ihLjYj). Try the following in the sandbox:
+We're hosting a sandbox version of Checkpoint at [checkpoint.research.dominodatalab.com](https://bit.ly/3ihLjYj). Try the following in the sandbox:
 
 #### Create a Promote Request
 
