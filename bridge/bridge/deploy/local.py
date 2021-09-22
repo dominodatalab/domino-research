@@ -193,9 +193,10 @@ class ModelDeployment:
         )
 
     def destroy(self):
-        os.killpg(os.getpgid(self.handle.pid), signal.SIGTERM)
-        self.serve_handle.wait()
-        self.serve_handle = None
+        if self.serve_handle is not None:
+            os.killpg(os.getpgid(self.serve_handle.pid), signal.SIGTERM)
+            self.serve_handle.wait()
+            self.serve_handle = None
 
 
 class LocalDeployTarget(DeployTarget):
