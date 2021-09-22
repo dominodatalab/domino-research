@@ -24,13 +24,13 @@ You run Checkpoint by pointing it at your existing MLflow registry. You then acc
 and Checkpoint's Promote Requests via Checkpoint. Checkpoint works by proxying your MLflow registry,
 augmenting it with the Promote Request workflow.
 
-### Try Checkpoint in our Hosted Sandbox
+### Option 1: Try Checkpoint in our Hosted Sandbox
 
 We're hosting a sandbox version of Checkpoint at [checkpoint.research.dominodatalab.com](https://bit.ly/3ihLjYj). Try the following in the sandbox:
 
 #### Create a Promote Request
 
-1. Click into the `ScikitElasticNetWineModel` in the MLflow models tab.
+1. Click into the `ScikitElasticNetWineModel` in the [MLflow models tab](https://bit.ly/3ihLjYj).
 2. Click into a version that is not marked as `Production`.
 3. Use the stage control in the top right to move the version into `Production`.
    (When prompted, select the option to archive the current Production version).
@@ -49,7 +49,7 @@ We're hosting a sandbox version of Checkpoint at [checkpoint.research.dominodata
    of any MLflow screen.
 
 
-### Running locally
+### Option 3: Run yourself (locally or on a self-hosted server)
 
 Checkpoint requires an MLflow registry. If you do not have a registry, or would like to create a new registry for testing,
 please follow our 5-min
