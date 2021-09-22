@@ -8,8 +8,61 @@ from subprocess import Popen
 from collections import defaultdict
 import logging
 from pprint import pformat
+import threading
+from flask import Flask, request, Response
+import requests
 
 logger = logging.getLogger(__name__)
+
+
+class LocalDeploymentProxy:
+    def __init__(self, target):
+        self.target = target
+        self.app = Flask(__name__)
+        self.app.add_url_rule(
+            "/<model>/<stage>/<path:path>",
+            view_func=self.proxy,
+            methods=["POST"],
+        )
+
+    def proxy(self, model, stage, path):
+        port = self.target.routes.get(model, {}).get(stage)
+
+        if port is None:
+            return 404
+
+        resp = requests.request(
+            method=request.method,
+            url=f"http://localhost:{port}/{path}",
+            headers={
+                key: value for (key, value) in request.headers if key != "Host"
+            },
+            data=request.get_data(),
+            cookies=request.cookies,
+            allow_redirects=False,
+            params=dict(request.args),
+        )
+
+        excluded_headers = [
+            "content-encoding",
+            "content-length",
+            "transfer-encoding",
+            "connection",
+        ]
+        headers = [
+            (name, value)
+            for (name, value) in resp.raw.headers.items()
+            if name.lower() not in excluded_headers
+        ]
+
+        response = Response(resp.content, resp.status_code, headers)
+        return response
+
+    def run(self):
+        self.handle = threading.Thread(
+            target=self.app.run, kwargs={"host": "0.0.0.0", "port": 3000}
+        )
+        self.handle.start()
 
 
 class ModelDeployment:
@@ -18,6 +71,12 @@ class ModelDeployment:
 
         stdout = open(f"{path}.stdout", "w")
         stderr = open(f"{path}.stderr", "w")
+
+        env = {}
+        if env_path := os.environ.get("PATH"):
+            env["PATH"] = env_path
+        if env_home := os.environ.get("HOME"):
+            env["HOME"] = env_home
 
         self.port = port
         self.handle = Popen(
@@ -30,11 +89,12 @@ class ModelDeployment:
                 "--port",
                 str(port),
                 "--host",
-                "0.0.0.0",
+                "127.0.0.1",
             ],
             stdout=stdout,
             stderr=stderr,
             preexec_fn=os.setsid,
+            env=env,
         )
 
     def destroy(self):
@@ -80,6 +140,8 @@ class LocalDeployTarget(DeployTarget):
         self.running_models: Dict[ModelVersion, ModelDeployment] = {}
         # model, stage, port
         self.routes: Dict[str, Dict[str, int]] = {}
+        self.proxy = LocalDeploymentProxy(self)
+        self.proxy.run()
 
     def init(self):
         pass
