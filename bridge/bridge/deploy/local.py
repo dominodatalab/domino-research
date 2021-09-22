@@ -13,6 +13,7 @@ from flask import Flask, request, Response
 import requests
 
 logger = logging.getLogger(__name__)
+CONDA_LOCK_FILE = ".brdg_local.lock"
 
 
 class LocalDeploymentProxy:
@@ -65,10 +66,104 @@ class LocalDeploymentProxy:
         self.handle.start()
 
 
+def destroy_failed_conda(model_dir):
+    from mlflow.utils.conda import _get_conda_env_name  # type: ignore
+    from mlflow.pyfunc import _load_model_env  # type: ignore
+    from shutil import rmtree
+
+    env = _load_model_env(model_dir)
+    conda_env_path = f"{model_dir}/{env}"
+    logger.info(f"Conda env path: {conda_env_path}")
+    name = _get_conda_env_name(conda_env_path)
+    logger.info(f"Destroying Conda environment {name}.")
+    handle = Popen(
+        [
+            "conda",
+            "env",
+            "remove",
+            "-n",
+            name,
+        ],
+    )
+    handle.wait()
+    prefix = os.environ.get("CONDA_PREFIX", "/opt/conda")
+    conda_env_dir = f"{prefix}/envs/{name}"
+    logger.info(f"Conda Env Dir: {conda_env_dir}")
+    rmtree(conda_env_dir, ignore_errors=True)
+    logger.info(f"Done {handle.returncode}")
+
+
+def prepare_conda_environment(model_dir, returns):
+    from filelock import FileLock
+    from mlflow.utils.conda import get_or_create_conda_env  # type: ignore
+    from mlflow.pyfunc import _load_model_env  # type: ignore
+
+    env = _load_model_env(model_dir)
+    conda_env_path = f"{model_dir}/{env}"
+    lock = FileLock(CONDA_LOCK_FILE)
+    logger.info(f"Obtaining lock {CONDA_LOCK_FILE}.")
+    try:
+        with lock:
+            logger.info("Got lock.")
+            get_or_create_conda_env(conda_env_path)
+        returns[0] = 0
+    except Exception as e:
+        logger.exception(e)
+        returns[0] = 1
+
+
 class ModelDeployment:
     def __init__(self, model_version: ModelVersion, model_uri: str, port: int):
-        path = f"{model_version.model_name}:{model_version.version_id}"
+        self.model_version = model_version
+        self.model_uri = model_uri
+        self.serve_handle = None
+        self.port = port
+        self._install()
 
+    def _install(self):
+        # Install return code
+        self.returns = [None]
+        logger.info(f"Preparing Conda environment for {self.model_version}")
+        self.install_handle = threading.Thread(
+            target=prepare_conda_environment,
+            args=(
+                self.model_uri,
+                self.returns,
+            ),
+        )
+        self.install_handle.start()
+
+    def check(self):
+        # Check if currently installing
+        if self.install_handle.is_alive() or self.returns[0] is None:
+            logger.info(f"{self.model_version} installing...")
+            return
+
+        # Check if install complete and failed
+        if self.returns[0]:
+            logger.warning(f"{self.model_version} install failed.")
+            destroy_failed_conda(self.model_uri)
+            self._install()
+            return
+
+        # Check if install complete and success, but server not started
+        if self.serve_handle is None:
+            logger.info(f"Serving {self.model_version}")
+            self._serve()
+            return
+
+        # Check if server process exited (restart)
+        if self.serve_handle.poll() is not None:
+            logger.info(
+                f"Detected stopped model deployment {self.model_version}."
+            )
+            destroy_failed_conda(self.model_uri)
+            self._install()
+            self.serve_handle = None
+
+    def _serve(self):
+        model_version = self.model_version
+        path = f"{model_version.model_name}:{model_version.version_id}"
         stdout = open(f"{path}.stdout", "w")
         stderr = open(f"{path}.stderr", "w")
 
@@ -78,16 +173,15 @@ class ModelDeployment:
         if env_home := os.environ.get("HOME"):
             env["HOME"] = env_home
 
-        self.port = port
-        self.handle = Popen(
+        self.serve_handle = Popen(
             [
                 "mlflow",
                 "models",
                 "serve",
                 "--model-uri",
-                model_uri,
+                self.model_uri,
                 "--port",
-                str(port),
+                str(self.port),
                 "--host",
                 "127.0.0.1",
             ],
@@ -99,7 +193,8 @@ class ModelDeployment:
 
     def destroy(self):
         os.killpg(os.getpgid(self.handle.pid), signal.SIGTERM)
-        self.handle.wait()
+        self.serve_handle.wait()
+        self.serve_handle = None
 
 
 class LocalDeployTarget(DeployTarget):
@@ -110,11 +205,10 @@ class LocalDeployTarget(DeployTarget):
         return socket.gethostname()
 
     def list_models(self) -> List[Model]:
+        # Run reconciliation loop for deployments
         mvs = list(self.running_models.keys())
         for mv in mvs:
-            if self.running_models[mv].handle.poll() is not None:
-                logger.info(f"Detected stopped model deployment: {mv}")
-                del self.running_models[mv]
+            self.running_models[mv].check()
 
         result = []
         for model_name, d in self.routes.items():
