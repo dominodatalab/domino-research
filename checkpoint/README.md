@@ -7,7 +7,7 @@ A better process for promoting models to production.
 
 ## Why Checkpoint
 
-Checkpoint provides a 'pull request for Machine Learning' in your model registries:
+Checkpoint provides a 'pull request for Machine Learning' in your model registry:
 - Data scientists request that a model version be promoted to a deployment stage (e.g. Staging or Production).
   This creates a _Promote Request_.
 - Team members can then review this request, with changes in any parameters and metrics highlighted.
