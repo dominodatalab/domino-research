@@ -1,10 +1,13 @@
 import argparse
 import logging
 import os
+import sys
 from pprint import pformat
 from bridge.deploy.registry import DEPLOY_REGISTRY
 from bridge.analytics import AnalyticsClient
 
+# The minimal required version of Python
+MIN_PYTHON_VERSION = (3,9)
 
 def cli_init(args):
     logger = logging.getLogger(__name__)
@@ -31,6 +34,9 @@ def cli_run(args):
 
 
 def main():
+    if sys.version_info < MIN_PYTHON_VERSION:
+        raise AssertionError("Invalid Python version")
+
     LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
     level = logging.getLevelName(LOG_LEVEL)
     logging.basicConfig(level=level)
