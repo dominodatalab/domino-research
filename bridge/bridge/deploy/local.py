@@ -62,7 +62,6 @@ class LocalDeploymentProxy:
         return response
 
     def run(self):
-        pass
         port = os.environ.get("PORT", 3000)
         self.handle = threading.Thread(
             target=self.app.run, kwargs={"host": "0.0.0.0", "port": port}

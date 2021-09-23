@@ -31,7 +31,7 @@ as the source of truth.
 ### Option 1: Try Bridge in our Hosted Sandbox
 <a name="try-bridge-in-our-hosted-sandbox"></a>
 
-We're hosting a sandbox version of Mlflow with Bridge at [mlflow.research.dominodatalab.com](https://bit.ly/2W7wy2h). Try the following in the sandbox:
+We're hosting a sandbox version of MLflow with Bridge at [mlflow.research.dominodatalab.com](https://bit.ly/2W7wy2h). Try the following in the sandbox:
 
 #### Query the model version running in production
 
@@ -147,7 +147,7 @@ docker run -it \
 
 #### 2. Query your Deployed Models
 
-That's it! Bridge will begin syncing model versions from MlFlow and running them on Localhost. When you push a new version, bridge will update the `latest` endpoint. If you tag a new version for `Staging` or `Production`, Bridge will update the respective endpoint. Welcome to RegistryOps :tada:.
+That's it! Bridge will begin syncing model versions from MLflow and running them on Localhost. When you push a new version, Bridge will update the `latest` endpoint. If you tag a new version for `Staging` or `Production`, Bridge will update the respective endpoint. Welcome to RegistryOps :tada:.
 
 To query your models, send a POST request to `localhost:3000/<ModelName>/<Stage>/invocations` with a JSON and headers body matching the [MLflow model deployment docs](https://www.mlflow.org/docs/latest/models.html#deploy-mlflow-models).
 - The Stage is one of `Latest`, `Staging` and `Production`. If you get a 404 error, make sure you have a version in the model that is in the stage you are querying.
@@ -225,7 +225,7 @@ The local MLflow set up using our guide **does not support** deploying to SageMa
 #### 4. Query your Deployed Models
 
 That's it! Bridge will begin syncing model versions from MlFlow to
-SageMaker. When you push a new version, bridge will update the `latest`
+SageMaker. When you push a new version, Bridge will update the `latest`
 endpoint. If you tag a new version for `Staging` or `Production`, Bridge
 will update the respective endpoint. Welcome to RegistryOps :tada:.
 
