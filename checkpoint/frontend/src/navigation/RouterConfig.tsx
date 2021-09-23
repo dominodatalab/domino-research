@@ -2,10 +2,8 @@ import * as React from 'react';
 import { Switch, Route } from 'react-router-dom';
 import { RequestList, ShowRequest, RequestForm } from '../pages';
 import { REQUEST_LIST, REQUEST_FORM, SHOW_REQUEST } from './CONSTANTS';
-import { default as usePageTracking } from '../util/usePageTracking';
 
 export const RouterConfig: React.FC = () => {
-  usePageTracking();
   return (
     <Switch>
       {/* List all public routes here */}
