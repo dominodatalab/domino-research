@@ -25,6 +25,7 @@ and Checkpoint's Promote Requests via Checkpoint. Checkpoint works by proxying y
 augmenting it with the Promote Request workflow.
 
 ### Option 1: Try Checkpoint in our Hosted Sandbox
+<a name="try-checkpoint-in-our-hosted-sandbox"></a>
 
 We're hosting a sandbox version of Checkpoint at [checkpoint.research.dominodatalab.com](https://bit.ly/3ihLjYj). Try the following in the sandbox:
 
@@ -49,7 +50,7 @@ We're hosting a sandbox version of Checkpoint at [checkpoint.research.dominodata
    of any MLflow screen.
 
 
-### Option 3: Run yourself (locally or on a self-hosted server)
+### Option 2: Run yourself (locally or on a self-hosted server)
 
 Checkpoint requires an MLflow registry. If you do not have a registry, or would like to create a new registry for testing,
 please follow our 5-min
