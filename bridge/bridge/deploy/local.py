@@ -7,7 +7,6 @@ import os
 from subprocess import Popen
 from collections import defaultdict
 import logging
-from pprint import pformat
 import threading
 from flask import Flask, request, Response
 import requests
@@ -158,9 +157,7 @@ class ModelDeployment:
             logger.info(
                 f"Detected stopped model deployment {self.model_version}."
             )
-            destroy_failed_conda(self.model_uri)
-            self._install()
-            self.serve_handle = None
+            self._serve()
 
     def _serve(self):
         model_version = self.model_version
@@ -200,7 +197,14 @@ class ModelDeployment:
 
 
 class LocalDeployTarget(DeployTarget):
-    target_name = "local"
+    target_name = "localhost"
+
+    def __init__(self):
+        self.running_models: Dict[ModelVersion, ModelDeployment] = {}
+        # model, stage, port
+        self.routes: Dict[str, Dict[str, int]] = {}
+        self.proxy = LocalDeploymentProxy(self)
+        self.proxy.run()
 
     @property
     def target_id(self) -> str:
@@ -221,23 +225,14 @@ class LocalDeployTarget(DeployTarget):
                         model.versions[stage] = set([mv])
                         break
             result.append(model)
-        logger.info(result)
         return result
 
     def teardown(self):
-        # TODO: Shutdown Flask
         self.routes = {}
         models = list(self.running_models.keys())
         for model in models:
             self.running_models[model].destroy()
             del self.running_models[model]
-
-    def __init__(self):
-        self.running_models: Dict[ModelVersion, ModelDeployment] = {}
-        # model, stage, port
-        self.routes: Dict[str, Dict[str, int]] = {}
-        self.proxy = LocalDeploymentProxy(self)
-        self.proxy.run()
 
     def init(self):
         pass
@@ -273,7 +268,6 @@ class LocalDeployTarget(DeployTarget):
                         self.routes[model][stage] = md.port
                     else:
                         logger.warning(f"Unknown version: {mv}")
-        logger.info(pformat(self.routes))
 
     def delete_versions(self, deleted_versions: Set[ModelVersion]):
         for model_version in deleted_versions:
