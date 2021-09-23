@@ -6,7 +6,7 @@ import { RollbackOutlined } from '@ant-design/icons';
 
 const OuterLayout: React.FC = ({ children }) => {
   return (
-    <Layout style={{ minHeight: '100vh', paddingBottom: '100px' }}>
+    <Layout style={{ minHeight: '100vh', paddingBottom: '100px', minWidth: '100vw' }}>
       <Header>
         <Menu theme="dark" mode="horizontal" selectable={false}>
           <Menu.Item key="brand">
