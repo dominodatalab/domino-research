@@ -7,7 +7,8 @@ from bridge.deploy.registry import DEPLOY_REGISTRY
 from bridge.analytics import AnalyticsClient
 
 # The minimal required version of Python
-MIN_PYTHON_VERSION = (3,9)
+MIN_PYTHON_VERSION = (3, 9)
+
 
 def cli_init(args):
     logger = logging.getLogger(__name__)

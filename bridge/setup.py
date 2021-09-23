@@ -3,6 +3,7 @@ import setuptools
 setuptools.setup(
     name="bridge",
     version="0.1.0",
+    python_requires=">=3.9",
     author="Kevin Flansburg, Josh Broomberg",
     author_email="kevin.flansburg@dominodatalab.com,josh.broomberg@dominodatalab.com",
     description="Automatically configure serving infrastructure based on model registry.",
