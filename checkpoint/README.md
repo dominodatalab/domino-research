@@ -24,8 +24,9 @@ You run Checkpoint by pointing it at your existing MLflow registry. You then acc
 and Checkpoint's Promote Requests via Checkpoint. Checkpoint works by proxying your MLflow registry,
 augmenting it with the Promote Request workflow.
 
-### Option 1: Try Checkpoint in our Hosted Sandbox
 <a name="try-checkpoint-in-our-hosted-sandbox"></a>
+
+### Option 1: Try Checkpoint in our Hosted Sandbox
 
 We're hosting a sandbox version of Checkpoint at [checkpoint.research.dominodatalab.com](https://bit.ly/3ihLjYj). Try the following in the sandbox:
 
