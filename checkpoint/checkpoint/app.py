@@ -10,6 +10,8 @@ from checkpoint.constants import (
     CHECKPOINT_REDIRECT_SEPARATOR,
     NO_VERSION_SENTINAL,
     STAGES_WITH_CHAMPIONS,
+    GTM_BODY_SCRIPT,
+    GTM_HEAD_SCRIPT,
 )
 from checkpoint.views import (
     PromoteRequestDetailsView,
@@ -442,8 +444,10 @@ def proxy(path):
 
     if resp.content.startswith(bytes("<!doctype html>", "utf-8")):
         soup = BeautifulSoup(resp.content.decode("utf-8"), "html.parser")
-        print(soup.body.append(BeautifulSoup(INJECT_SCRIPT)))
-        print(soup.body.append(BeautifulSoup(INJECT_ELEMENT)))
+        soup.head.insert(0, BeautifulSoup(GTM_HEAD_SCRIPT, "html.parser"))
+        soup.body.insert(0, BeautifulSoup(GTM_BODY_SCRIPT, "html.parser"))
+        soup.body.append(BeautifulSoup(INJECT_SCRIPT, "html.parser"))
+        soup.body.append(BeautifulSoup(INJECT_ELEMENT, "html.parser"))
         content = str(soup).encode("utf-8")
     else:
         content = resp.content
