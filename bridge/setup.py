@@ -13,6 +13,9 @@ setuptools.setup(
         "boto3==1.18.*",
         "requests==2.26",
         "mixpanel==4.9.0",
+        "flask==2.0.1",
+        "requests==2.26.0",
+        "filelock==3.0.12",
     ],
     entry_points={"console_scripts": ["bridge = bridge.cli:main"]},
 )
