@@ -15,7 +15,7 @@ services:
       - 9000:9000
     command: "server /data"
     volumes:
-    - ./artifactdata:/data
+    - ./mlflowArtifactData:/data
     networks:
     - mlflow
 
@@ -26,7 +26,7 @@ services:
     entrypoint: >
       /bin/sh -c "
       until (/usr/bin/mc config host add myminio http://minio:9000 ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY}) do echo '...waiting...' && sleep 1; done;
-      /usr/bin/mc mb --ignore-existing myminio/${LOCAL_MLFLOW_BUCKET_NAME};
+      /usr/bin/mc mb --ignore-existing --region ${AWS_DEFAULT_REGION} myminio/${LOCAL_MLFLOW_BUCKET_NAME};
       /usr/bin/mc policy set public myminio/${LOCAL_MLFLOW_BUCKET_NAME};
       exit 0;
       "
@@ -45,7 +45,7 @@ services:
     - MYSQL_PASSWORD=pass
     - MYSQL_ROOT_PASSWORD=rootpass
     volumes:
-    - ./dbdata:/var/lib/mysql
+    - ./mlflowDBData:/var/lib/mysql
     networks:
     - mlflow
   mlflow:

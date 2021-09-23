@@ -8,8 +8,10 @@ from subprocess import Popen
 from collections import defaultdict
 import logging
 import threading
-from flask import Flask, request, Response
-import requests
+from flask import Flask, request, Response, abort
+import requests  # type: ignore
+
+requests.adapters.DEFAULT_RETRIES = 1
 
 logger = logging.getLogger(__name__)
 CONDA_LOCK_FILE = ".brdg_local.lock"
@@ -29,7 +31,7 @@ class LocalDeploymentProxy:
         port = self.target.routes.get(model, {}).get(stage)
 
         if port is None:
-            return 404
+            return abort(404)
 
         resp = requests.request(
             method=request.method,
@@ -41,6 +43,7 @@ class LocalDeploymentProxy:
             cookies=request.cookies,
             allow_redirects=False,
             params=dict(request.args),
+            timeout=5,
         )
 
         excluded_headers = [
@@ -90,11 +93,11 @@ def destroy_failed_conda(model_dir):
     conda_env_dir = f"{prefix}/envs/{name}"
     logger.info(f"Conda Env Dir: {conda_env_dir}")
     rmtree(conda_env_dir, ignore_errors=True)
-    logger.info(f"Done {handle.returncode}")
+    logger.info(f"Done removing Conda env {handle.returncode}")
 
 
 def prepare_conda_environment(model_dir, returns):
-    from filelock import FileLock
+    from filelock import FileLock  # type: ignore
     from mlflow.utils.conda import get_or_create_conda_env  # type: ignore
     from mlflow.pyfunc import _load_model_env  # type: ignore
 
