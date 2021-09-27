@@ -72,8 +72,7 @@ Bridge deploys and updates hosted models based on changes in your MLflow registr
 
 ```bash
 # Only needed if you are using an existing MLflow registry
-export MLFLOW_REGISTRY_URI=http://mlflow.acme.org
-export MLFLOW_TRACKING_URI=http://mlflow.acme.org
+export BRIDGE_MLFLOW_URI=http://mlflow.acme.org
 ```
 
 <details>
@@ -107,8 +106,7 @@ On macOS:
 docker run -it \
     -p 3000:3000 \
     -e BRIDGE_DEPLOY_KIND=localhost \
-    -e BRIDGE_MLFLOW_REGISTRY_URI=http://host.docker.internal:5000 \
-    -e BRIDGE_MLFLOW_TRACKING_URI=http://host.docker.internal:5000 \
+    -e BRIDGE_MLFLOW_URI=http://host.docker.internal:5000 \
     -e MLFLOW_S3_ENDPOINT_URL=http://host.docker.internal:9000 \
     -e MLFLOW_S3_IGNORE_TLS=true \
     -e AWS_ACCESS_KEY_ID=AKIAIfoobar \
@@ -122,8 +120,7 @@ On Linux:
 docker run -it \
     -p 3000:3000 \
     -e BRIDGE_DEPLOY_KIND=localhost \
-    -e BRIDGE_MLFLOW_REGISTRY_URI=http://localhost:5000 \
-    -e BRIDGE_MLFLOW_TRACKING_URI=http://localhost:5000 \
+    -e BRIDGE_MLFLOW_URI=http://localhost:5000 \
     -e MLFLOW_S3_ENDPOINT_URL=http://localhost:9000 \
     -e MLFLOW_S3_IGNORE_TLS=true \
     -e AWS_ACCESS_KEY_ID=AKIAIfoobar \
@@ -138,8 +135,7 @@ docker run -it \
 docker run -it \
     -p 3000:3000 \
     -e BRIDGE_DEPLOY_KIND=localhost \
-    -e BRIDGE_MLFLOW_REGISTRY_URI=${MLFLOW_REGISTRY_URI} \
-    -e BRIDGE_MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI} \
+    -e BRIDGE_MLFLOW_URI=${BRIDGE_MLFLOW_URI} \
     -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
     -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
     -e AWS_DEFAULT_REGION=${AWS_REGION} \
@@ -209,8 +205,7 @@ and run it in the terminal you configured:
 
 ```
 docker run -it \
-    -e BRIDGE_MLFLOW_REGISTRY_URI=${MLFLOW_REGISTRY_URI} \
-    -e BRIDGE_MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI} \
+    -e BRIDGE_MLFLOW_URI=${BRIDGE_MLFLOW_URI} \
     -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
     -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
     -e AWS_DEFAULT_REGION=${AWS_REGION} \
@@ -282,8 +277,7 @@ To opt out, set the environment variable `BRIDGE_ANALYTICS_OPT_OUT=1`. You can d
 
 ```
 docker run -it \
-    -e BRIDGE_MLFLOW_REGISTRY_URI=${MLFLOW_REGISTRY_URI} \
-    -e BRIDGE_MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI} \
+    -e BRIDGE_MLFLOW_URI=${BRIDGE_MLFLOW_URI} \
     -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
     -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
     -e AWS_DEFAULT_REGION=${AWS_REGION} \
@@ -308,8 +302,7 @@ pip install -e .
 * `LOG_LEVEL`: Customize log level (default INFO).
 * `BRIDGE_MODEL_CACHE_PATH`: Path for caching model artifacts (default .brdg-models)
 * `BRIDGE_SCAN_INTERVAL_S`: Control loop refresh interval (default 15s).
-* `BRIDGE_MLFLOW_REGISTRY_URI`: MlFlow registry uri.
-* `BRIDGE_MLFLOW_TRACKING_URI`: MlFlow tracking uri.
+* `BRIDGE_MLFLOW_URI`: MlFlow registry uri.
 
 In addition, you can use any standard `boto3` or MlFlow environment variables.
 

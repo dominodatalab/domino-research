@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 class Client(ModelRegistry):
     def __init__(self, model_cache_path: str):
-        registry_uri = os.environ.get("BRIDGE_MLFLOW_REGISTRY_URI")
-        tracking_uri = os.environ.get("BRIDGE_MLFLOW_TRACKING_URI")
+        registry_uri = os.environ.get("BRIDGE_MLFLOW_URI")
+        tracking_uri = os.environ.get("BRIDGE_MLFLOW_URI")
 
         logger.info(
             (
