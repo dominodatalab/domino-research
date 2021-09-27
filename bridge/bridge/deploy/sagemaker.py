@@ -14,6 +14,10 @@ import time
 
 logger = logging.getLogger(__name__)
 
+_ENDPOINT_URL_PATTERN = (
+    "{0}://runtime.sagemaker.{1}.amazonaws.com/endpoints/{2}/invocations"
+)
+
 
 class SageMakerDeployTarget(DeployTarget):
     target_name = "sagemaker"
@@ -31,6 +35,7 @@ class SageMakerDeployTarget(DeployTarget):
             session = boto3.session.Session()
 
         self.region = session.region_name
+        self.proto = "https"  # always?
 
         try:
             self.sagemaker_client = session.client("sagemaker")
@@ -100,10 +105,11 @@ class SageMakerDeployTarget(DeployTarget):
                 f"-{stage}"
             )  # eg: modelA
 
+            endpoint_url = _ENDPOINT_URL_PATTERN.format(
+                self.proto, self.region, endpoint_name
+            )
             endpoint_config = self.sagemaker_client.describe_endpoint_config(
-                EndpointConfigName=self._endpoint_config_name(
-                    model_name, stage
-                )
+                EndpointConfigName=endpoint_name
             )
 
             versions = set(
@@ -114,6 +120,7 @@ class SageMakerDeployTarget(DeployTarget):
                             sagemaker_model_name=variant["ModelName"],
                             model_name=model_name,
                         ),  # eg: 1 from brdg-modelC-1
+                        location=endpoint_url,
                     )
                     for variant in endpoint_config[
                         "ProductionVariants"

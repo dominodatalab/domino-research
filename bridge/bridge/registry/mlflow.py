@@ -2,6 +2,8 @@ import logging
 from typing import List, Dict, Optional
 from bridge.types import Model, ModelVersion, Artifact
 from bridge.constants import LATEST_STAGE_NAME
+from bridge.constants import DEPLOY_URL_TAG
+from bridge.constants import DEPLOY_STAGE_TAG
 from bridge.registry import ModelRegistry
 from bridge.util import compress
 from mlflow.tracking import MlflowClient  # type: ignore
@@ -79,3 +81,57 @@ class Client(ModelRegistry):
             raise Exception(
                 "Could not determine model root path. No MLmodel definition."
             )
+
+    def tag_deployed_models(self, models: List[Model]):
+        deployed_model_names = set[str]()
+        deployed_versions = set[ModelVersion]()
+        for model in models:
+            for stage, versions in model.versions.items():
+                for ver in versions:
+                    deployed_model_names.add(ver.model_name)
+                    deployed_versions.add(ver)
+                    if ver.location is not None:
+                        logger.info(
+                            f"Tagging {ver.model_name}/{ver.version_id}"
+                        )
+                        self.client.set_model_version_tag(
+                            ver.model_name,
+                            ver.version_id,
+                            DEPLOY_URL_TAG,
+                            ver.location,
+                        )
+                        # TODO: DEPLOY_STAGE_TAG
+        for model_name in deployed_model_names:
+            for res in self.client.search_model_versions(
+                "name='{}'".format(model_name)
+            ):
+                mv = ModelVersion(
+                    model_name=res.name, version_id=res.version
+                )  # For proper comparison
+                if (mv not in deployed_versions) and (
+                    (res.tags.get(DEPLOY_URL_TAG) is not None)
+                    or (res.tags.get(DEPLOY_STAGE_TAG) is not None)
+                ):
+                    logger.info(f"Untagging {res.name}/{res.version}")
+                    self.client.delete_model_version_tag(
+                        res.name, res.version, DEPLOY_URL_TAG
+                    )
+                    self.client.delete_model_version_tag(
+                        res.name, res.version, DEPLOY_STAGE_TAG
+                    )
+
+    def reset_tags(self):
+        for model in self.client.list_registered_models():
+            for res in self.client.search_model_versions(
+                "name='{}'".format(model.name)
+            ):
+                if (res.tags.get(DEPLOY_URL_TAG) is not None) or (
+                    res.tags.get(DEPLOY_STAGE_TAG) is not None
+                ):
+                    logger.info(f"Untagging {res.name}/{res.version}")
+                    self.client.delete_model_version_tag(
+                        res.name, res.version, DEPLOY_URL_TAG
+                    )
+                    self.client.delete_model_version_tag(
+                        res.name, res.version, DEPLOY_STAGE_TAG
+                    )
