@@ -35,7 +35,7 @@ docker-compose up -d
 ```
 
 MLflow will take about 15-30 seconds to start up and that's it!
-You should be able to navigate to `http://localhost:5000` to see
+You should be able to navigate to `http://localhost:5555` to see
 the MLflow UI.
 
 ### 2. Add model versions to the MLflow registry
@@ -50,7 +50,7 @@ with a couple model versions so that you can try out the tools in this repo.
 5. Run `python scikit_elasticnet_wine/train.py 0.1` to train the model
 6. Run `python scikit_elasticnet_wine/train.py 0.5` to train the model
    again with a different value of the `alpha` hyperparameter.
-7. Head to `localhost:5000` to view the results.
+7. Head to `localhost:5555` to view the results.
 
 The `train.py` script trains a simple Elasticnet model on wine quality data,
 tracks the training as an MLflow run (under 'Experiments' in the MLflow UI),
