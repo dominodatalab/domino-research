@@ -21,46 +21,27 @@ SSH:  `git clone git@github.com:dominodatalab/domino-research.git && cd domino-r
 
 ### 1. Start MLflow
 
-Make sure you're in the `guides/mlflow` subdirectory then
-run the commands below to start MLflow:
+Make sure you're in the `guides/mlflow` subdirectory then run the command below to start MLflow:
 
-```
-source .env
-```
-
-And then:
-
-```
+```bash
 docker-compose up -d
 ```
 
 MLflow will take about 15-30 seconds to start up and that's it!
-You should be able to navigate to `http://localhost:5555` to see
-the MLflow UI.
+If you navigate to `http://localhost:5555`, you should see the MLflow UI.
+You can now proceed with the quick start for the project that brought your here.
 
-### 2. Add model versions to the MLflow registry
+Note that we pre-seed the registry with a simple demo model called `ScikitElasticnetWineModel`.
+It has 3 versions, with one marked for Staging and one marked for Production. The training
+code for this model is in `seed_models/scikit_elasticnet_wine/train.py`.
 
-Use the steps below to quickly populate your new local registry
-with a couple model versions so that you can try out the tools in this repo.
+### 2. [Optional] Using the MLflow registry with your own models
 
-1. Open a new terminal tab/window
-2. Change to/stay in the `guides/mlflow` directory
-3. Run `source .env` to configure your shell's environment variables
-4. Run `pip install -r scikit_elasticnet_wine/requirements.txt` to install the required packages. We strongly suggest doing this in a virtual environment with Python 3.7+ as the base python such that `pip == pip3`. If not, you will need to ensure you are installing into a valid Python3 runtime and adjust the commands below to use this runtime.
-5. Run `python scikit_elasticnet_wine/train.py 0.1` to train the model
-6. Run `python scikit_elasticnet_wine/train.py 0.5` to train the model
-   again with a different value of the `alpha` hyperparameter.
-7. Head to `localhost:5555` to view the results.
-
-The `train.py` script trains a simple Elasticnet model on wine quality data,
-tracks the training as an MLflow run (under 'Experiments' in the MLflow UI),
-and registers  the run as a new version of the `ScikitElasticnetWineModel`
-in the MLflow Model Registry (under 'Models' in the MLflow UI).
-
-### 3. Using the MLflow registry in your own scripts
-
-If you'd like to use your local MLflow registry in your own code,
-you can use the sample code below:
+If you'd like to add new models using your own training code,
+you can use the sample configuration below. Note that any model versions
+used with Bridge will need a valid `MLmodel` specification (one that allows you to call
+`mlflow models serve -m your_model`). This file will be created for you if you log
+with the `mlflow.<framework>.log_model` sdk.
 
 ```python
 import os
@@ -82,7 +63,7 @@ MlflowClient(
 # ...
 ```
 
-### 4. Stop MLflow
+### 3. [Optional] Stop MLflow
 
 Make sure you're in the `guides/mlflow` subdirectory then
 run the command below to stop MLflow:
