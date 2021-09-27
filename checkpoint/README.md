@@ -54,23 +54,22 @@ We're hosting a sandbox version of Checkpoint at [checkpoint.research.dominodata
 ### Option 2: Run yourself (locally or on a self-hosted server)
 
 Checkpoint requires an MLflow registry. If you do not have a registry, or would like to create a new registry for testing,
-please follow our 5-min
-[guide to setting up MLflow](https://bit.ly/3tKeiZb).
-
-When you run the command below, you will be able to access the MLflow registry
-hosted at `YOUR_MLFLOW_REGISTRY_HOST` by visiting `localhost:6000`. This is great
-way to take Checkpoint for a test drive. For more on using Checkpoint with your
-team, see the sections below.
+please follow our 5-min [guide to setting up MLflow](https://bit.ly/3tKeiZb).
 
 **Using your own MLflow:**
 
 ```bash
 docker run -it \
--p 6000:5000 \
+-p 5000:5000 \
 -v $(PWD):/tmp \
 -e CHECKPOINT_REGISTRY_URL=<YOUR_MLFLOW_REGISTRY_HOST> \
 quay.io/domino/checkpoint
 ```
+
+When you run the command above, you will be able to access the MLflow registry
+hosted at `YOUR_MLFLOW_REGISTRY_HOST` by visiting `localhost:5000` on _your_ machine.
+Team members accessing `YOUR_MLFLOW_REGISTRY_HOST` directly will not see Checkpoint yet.
+For details on using Checkpoint with your team, see [here](#use-checkpoint-with-team).
 
 **Using the local MLflow from our MLflow guide** 
 
@@ -78,9 +77,9 @@ On macOS:
 
 ```bash
 docker run -it \
--p 6000:5000 \
+-p 5000:5000 \
 -v $(PWD):/tmp \
--e CHECKPOINT_REGISTRY_URL=http://host.docker.internal:5000 \
+-e CHECKPOINT_REGISTRY_URL=http://host.docker.internal:5555 \
 quay.io/domino/checkpoint
 ```
 
@@ -88,9 +87,9 @@ On Linux:
 
 ```bash
 docker run -it \
--p 6000:5000 \
+-p 5000:5000 \
 -v $(PWD):/tmp \
--e CHECKPOINT_REGISTRY_URL=http://localhost:5000 \
+-e CHECKPOINT_REGISTRY_URL=http://localhost:5555 \
 quay.io/domino/checkpoint
 ```
 
@@ -110,6 +109,8 @@ quay.io/domino/checkpoint
 - To review a Promote Request, click into it from the list view, scroll to the bottom of the page
   and select approve (or close, if you do not want to approve) in the drop down control. Add an 
   optional comment and click submit.
+
+<a name="use-checkpoint-with-team"></a>
 
 ### Using Checkpoint with your Team
 

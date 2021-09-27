@@ -106,7 +106,7 @@ On macOS:
 docker run -it \
     -p 3000:3000 \
     -e BRIDGE_DEPLOY_KIND=localhost \
-    -e BRIDGE_MLFLOW_URI=http://host.docker.internal:5000 \
+    -e BRIDGE_MLFLOW_URI=http://host.docker.internal:5555 \
     -e MLFLOW_S3_ENDPOINT_URL=http://host.docker.internal:9000 \
     -e MLFLOW_S3_IGNORE_TLS=true \
     -e AWS_ACCESS_KEY_ID=AKIAIfoobar \
@@ -120,7 +120,7 @@ On Linux:
 docker run -it \
     -p 3000:3000 \
     -e BRIDGE_DEPLOY_KIND=localhost \
-    -e BRIDGE_MLFLOW_URI=http://localhost:5000 \
+    -e BRIDGE_MLFLOW_URI=http://localhost:5555 \
     -e MLFLOW_S3_ENDPOINT_URL=http://localhost:9000 \
     -e MLFLOW_S3_IGNORE_TLS=true \
     -e AWS_ACCESS_KEY_ID=AKIAIfoobar \
@@ -148,7 +148,7 @@ That's it! Bridge will begin syncing model versions from MLflow and running them
 
 To query your models, send a POST request to `localhost:3000/<ModelName>/<Stage>/invocations` with a JSON and headers body matching the [MLflow model deployment docs](https://www.mlflow.org/docs/latest/models.html#deploy-mlflow-models).
 - The Stage is one of `Latest`, `Staging` and `Production`. If you get a 404 error, make sure you have a version in the model that is in the stage you are querying.
-- Port `3000` is the default port, but will be different if you set the used a different host port in the `run` command. For example, with `-p 5555:3000` you should query `localhost:5555`.
+- Port `3000` is the port set in the `run` command above. If you use a different host port in the `run` command - for example, `-p 6789:3000` - you should query `localhost:6789`.
 
 **Note:** It may take 30 seconds or more to build the initial Conda environment for your model as specified in the `conda.yml` from the `MLmodel` file. During this time, you will not be able to query the model. The length of the build depends on your internet speed and the complexity of your environment. Identical environments are cached and re-used. So, updates to models, after first deploy, have only a few seconds of down time.
 
