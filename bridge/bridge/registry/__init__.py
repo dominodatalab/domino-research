@@ -15,7 +15,9 @@ class ModelRegistry(ABC):
         pass
 
     @abstractmethod
-    def tag_deployed_models(self, models: List[Model]):
+    def tag_deployed_models(
+        self, deployed_models: List[Model], registered_models: List[Model]
+    ):
         pass
 
     @abstractmethod

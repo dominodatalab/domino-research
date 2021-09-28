@@ -101,7 +101,7 @@ def main():
                 current_routing, desired_routing
             )
             deploy_client.delete_versions(expired_versions)
-            registry_client.tag_deployed_models(current_models)
+            registry_client.tag_deployed_models(current_models, desired_models)
             logger.info("Update complete.")
             end_time = time.time()
 
