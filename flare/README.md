@@ -79,6 +79,7 @@ executing your inference code inside a Flare context.
   `requirements.txt`, `conda.yaml`, `Dockerfile` or other environment management solution.
 
 #### Configure an Alert Target
+<a name="configure-alert-target"></a>
 
 Flare supports three alert targets: Slack, Zapier, and Custom Webhooks. Zapier is a great way
 to integrate Flare with an enormous variety of other services.

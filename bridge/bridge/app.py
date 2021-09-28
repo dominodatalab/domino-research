@@ -46,7 +46,7 @@ def main():
 
     analytics_client = AnalyticsClient(deploy_client)
 
-    SCAN_INTERVAL = float(os.environ.get("BRIDGE_SCAN_INTERVAL_S", "15"))
+    SCAN_INTERVAL = float(os.environ.get("BRIDGE_SCAN_INTERVAL_S", "5"))
     while True:
         try:
             start_time = time.time()

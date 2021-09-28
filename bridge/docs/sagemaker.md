@@ -1,11 +1,11 @@
-# AWS Sagemaker Deploy Target Docs
+# AWS SageMaker Deploy Target Docs
 
 ## 1. Explanation of Commands
 
 <a name="sagemaker-commands"></a>
 
 The sections below describe the AWS permissions needed by the Bridge commands
-for the Sagemaker Deploy Target.
+for the SageMaker Deploy Target.
 
 ### 1.1 Initialization
 
@@ -14,7 +14,7 @@ for the Sagemaker Deploy Target.
 Running the `init` command will create:
 
 * An S3 bucket for model artifacts.
-* An IAM role for Sagemaker execution, `bridge-sagemaker-execution`,
+* An IAM role for SageMaker execution, `bridge-sagemaker-execution`,
   that will allow SageMaker to assume the SagemakerFullAccess managed policy.
 
 This means the AWS IAM user specified by the `AWS_ACCESS_KEY_ID` and
@@ -38,9 +38,9 @@ in this [IAM Policy](#run-policy). To create an IAM user with these permissions,
 
 Running the `destroy` command will remove:
 
-* All Bridge-created Sagemaker models and endpoints.
+* All Bridge-created SageMaker models and endpoints.
 * The Bridge S3 model artifact bucket.
-* The Bridge Sagemaker IAM role.
+* The Bridge SageMaker IAM role.
 
 This means the AWS IAM user specified by the `AWS_ACCESS_KEY_ID` and
 `AWS_SECRET_ACCESS_KEY` will need access to the permissions specified
@@ -118,7 +118,7 @@ It is best practice to use AWS IAM users with the minimal permissions needed for
             "Resource": ["arn:aws:s3:::bridge-models-<YOUR_ACCOUNT_ID>-<YOUR_REGION>/*"]
         },
         {
-            "Sid": "ListSagemakerResources",
+            "Sid": "ListSageMakerResources",
             "Effect": "Allow",
             "Action": [
                 "sagemaker:ListEndpointConfigs",
@@ -128,7 +128,7 @@ It is best practice to use AWS IAM users with the minimal permissions needed for
             "Resource": "*"
         },
         {
-            "Sid": "DeleteSagemakerResources",
+            "Sid": "DeleteSageMakerResources",
             "Effect": "Allow",
             "Action": [
                 "sagemaker:DeleteEndpointConfig",
@@ -183,7 +183,7 @@ It is best practice to use AWS IAM users with the minimal permissions needed for
             "Resource": ["arn:aws:s3:::bridge-models-<YOUR_ACCOUNT_ID>-<YOUR_REGION>/*"]
         },
         {
-            "Sid": "ManageSagemakerResources",
+            "Sid": "ManageSageMakerResources",
             "Effect": "Allow",
             "Action": [
                 "sagemaker:CreateModel",
@@ -206,7 +206,7 @@ It is best practice to use AWS IAM users with the minimal permissions needed for
             ]
         },
         {
-            "Sid": "ListSagemakerResources",
+            "Sid": "ListSageMakerResources",
             "Effect": "Allow",
             "Action": [
                 "sagemaker:ListEndpointConfigs",

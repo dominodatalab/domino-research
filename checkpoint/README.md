@@ -7,7 +7,7 @@ A better process for promoting models to production.
 
 ## Why Checkpoint
 
-Checkpoint provides a 'pull request for Machine Learning' in your model registries:
+Checkpoint provides a 'pull request for Machine Learning' in your model registry:
 - Data scientists request that a model version be promoted to a deployment stage (e.g. Staging or Production).
   This creates a _Promote Request_.
 - Team members can then review this request, with changes in any parameters and metrics highlighted.
@@ -24,13 +24,15 @@ You run Checkpoint by pointing it at your existing MLflow registry. You then acc
 and Checkpoint's Promote Requests via Checkpoint. Checkpoint works by proxying your MLflow registry,
 augmenting it with the Promote Request workflow.
 
-### Try Checkpoint in our Hosted Sandbox
+<a name="try-checkpoint-in-our-hosted-sandbox"></a>
+
+### Option 1: Try Checkpoint in our Hosted Sandbox
 
 We're hosting a sandbox version of Checkpoint at [checkpoint.research.dominodatalab.com](https://bit.ly/3ihLjYj). Try the following in the sandbox:
 
 #### Create a Promote Request
 
-1. Click into the `ScikitElasticNetWineModel` in the MLflow models tab.
+1. Click into the `ScikitElasticNetWineModel` in the [MLflow models tab](https://bit.ly/3ihLjYj).
 2. Click into a version that is not marked as `Production`.
 3. Use the stage control in the top right to move the version into `Production`.
    (When prompted, select the option to archive the current Production version).
@@ -49,26 +51,25 @@ We're hosting a sandbox version of Checkpoint at [checkpoint.research.dominodata
    of any MLflow screen.
 
 
-### Running locally
+### Option 2: Run yourself (locally or on a self-hosted server)
 
 Checkpoint requires an MLflow registry. If you do not have a registry, or would like to create a new registry for testing,
-please follow our 5-min
-[guide to setting up MLflow](https://bit.ly/3tKeiZb).
-
-When you run the command below, you will be able to access the MLflow registry
-hosted at `YOUR_MLFLOW_REGISTRY_HOST` by visiting `localhost:6000`. This is great
-way to take Checkpoint for a test drive. For more on using Checkpoint with your
-team, see the sections below.
+please follow our 5-min [guide to setting up MLflow](https://bit.ly/3tKeiZb).
 
 **Using your own MLflow:**
 
 ```bash
 docker run -it \
--p 6000:5000 \
+-p 5000:5000 \
 -v $(PWD):/tmp \
 -e CHECKPOINT_REGISTRY_URL=<YOUR_MLFLOW_REGISTRY_HOST> \
 quay.io/domino/checkpoint
 ```
+
+When you run the command above, you will be able to access the MLflow registry
+hosted at `YOUR_MLFLOW_REGISTRY_HOST` by visiting `localhost:5000` on _your_ machine.
+Team members accessing `YOUR_MLFLOW_REGISTRY_HOST` directly will not see Checkpoint yet.
+For details on using Checkpoint with your team, see [here](#use-checkpoint-with-team).
 
 **Using the local MLflow from our MLflow guide** 
 
@@ -76,9 +77,9 @@ On macOS:
 
 ```bash
 docker run -it \
--p 6000:5000 \
+-p 5000:5000 \
 -v $(PWD):/tmp \
--e CHECKPOINT_REGISTRY_URL=http://host.docker.internal:5000 \
+-e CHECKPOINT_REGISTRY_URL=http://host.docker.internal:5555 \
 quay.io/domino/checkpoint
 ```
 
@@ -86,9 +87,9 @@ On Linux:
 
 ```bash
 docker run -it \
--p 6000:5000 \
+-p 5000:5000 \
 -v $(PWD):/tmp \
--e CHECKPOINT_REGISTRY_URL=http://localhost:5000 \
+-e CHECKPOINT_REGISTRY_URL=http://localhost:5555 \
 quay.io/domino/checkpoint
 ```
 
@@ -108,6 +109,8 @@ quay.io/domino/checkpoint
 - To review a Promote Request, click into it from the list view, scroll to the bottom of the page
   and select approve (or close, if you do not want to approve) in the drop down control. Add an 
   optional comment and click submit.
+
+<a name="use-checkpoint-with-team"></a>
 
 ### Using Checkpoint with your Team
 

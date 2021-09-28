@@ -19,30 +19,26 @@ HTTPS:  `git clone https://github.com/dominodatalab/domino-research.git && cd do
 
 SSH:  `git clone git@github.com:dominodatalab/domino-research.git && cd domino-research/guides/mlflow`
 
-### 1. Configure your shell environment
-
-**If you do not plan to use Bridge, you can skip this step.**
-
-If you are going to use your new MLflow registry with
-[Bridge](https://github.com/dominodatalab/domino-research/tree/main/bridge),
-you need to configure your shell for AWS access before proceeding.
-Detailed instructions are in the
-[Bridge README](https://github.com/dominodatalab/domino-research/tree/main/bridge).
-
-### 2. Start MLflow
+### 1. Start MLflow
 
 Make sure you're in the `guides/mlflow` subdirectory then
-run the command below to start MLflow:
+run the commands below to start MLflow:
 
 ```
-docker-compose up
+source .env
+```
+
+And then:
+
+```
+docker-compose up -d
 ```
 
 MLflow will take about 15-30 seconds to start up and that's it!
-You should be able to navigate to `http://localhost:5000` to see
+You should be able to navigate to `http://localhost:5555` to see
 the MLflow UI.
 
-### 3. Add model versions to the MLflow registry
+### 2. Add model versions to the MLflow registry
 
 Use the steps below to quickly populate your new local registry
 with a couple model versions so that you can try out the tools in this repo.
@@ -54,14 +50,14 @@ with a couple model versions so that you can try out the tools in this repo.
 5. Run `python scikit_elasticnet_wine/train.py 0.1` to train the model
 6. Run `python scikit_elasticnet_wine/train.py 0.5` to train the model
    again with a different value of the `alpha` hyperparameter.
-7. Head to `localhost:5000` to view the results.
+7. Head to `localhost:5555` to view the results.
 
 The `train.py` script trains a simple Elasticnet model on wine quality data,
 tracks the training as an MLflow run (under 'Experiments' in the MLflow UI),
 and registers  the run as a new version of the `ScikitElasticnetWineModel`
 in the MLflow Model Registry (under 'Models' in the MLflow UI).
 
-### 4. Using the MLflow registry in your own scripts
+### 3. Using the MLflow registry in your own scripts
 
 If you'd like to use your local MLflow registry in your own code,
 you can use the sample code below:
@@ -85,3 +81,15 @@ MlflowClient(
 )
 # ...
 ```
+
+### 4. Stop MLflow
+
+Make sure you're in the `guides/mlflow` subdirectory then
+run the command below to stop MLflow:
+
+```
+docker-compose down
+```
+
+To wipe the artifact and metadata stored locally by MLflow, delete
+the `mlflowArtifactData` and `mlflowDBData` subdirectories in the `guides/mlflow` folder.
