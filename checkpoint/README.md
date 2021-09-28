@@ -50,6 +50,7 @@ We're hosting a sandbox version of Checkpoint at [checkpoint.research.dominodata
 6. To return to see the list of open Promote Requests, click the Checkpoint control at the top
    of any MLflow screen.
 
+<a name="install-checkpoint"></a>
 
 ### Option 2: Run yourself (locally or on a self-hosted server)
 
