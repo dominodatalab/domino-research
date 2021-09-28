@@ -16,6 +16,8 @@ requests.adapters.DEFAULT_RETRIES = 1
 logger = logging.getLogger(__name__)
 CONDA_LOCK_FILE = ".brdg_local.lock"
 
+_ENDPOINT_URL_PATTERN = "http://localhost:{0}/{1}/{2}/invocations"
+
 
 class LocalDeploymentProxy:
     def __init__(self, target):
@@ -62,9 +64,9 @@ class LocalDeploymentProxy:
         return response
 
     def run(self):
-        port = os.environ.get("PORT", 3000)
+        self.port = os.environ.get("PORT", 3000)
         self.handle = threading.Thread(
-            target=self.app.run, kwargs={"host": "0.0.0.0", "port": port}
+            target=self.app.run, kwargs={"host": "0.0.0.0", "port": self.port}
         )
         self.handle.start()
 
@@ -225,6 +227,9 @@ class LocalDeployTarget(DeployTarget):
             for stage, port in d.items():
                 for mv, md in self.running_models.items():
                     if port == md.port:
+                        mv.location = _ENDPOINT_URL_PATTERN.format(
+                            self.proxy.port, model_name, stage
+                        )
                         model.versions[stage] = set([mv])
                         break
             result.append(model)
