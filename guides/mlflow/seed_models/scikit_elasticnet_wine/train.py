@@ -20,8 +20,8 @@ logging.basicConfig(level=logging.WARN)
 logger = logging.getLogger(__name__)
 
 
-REMOTE_SERVER_URI = "http://localhost:5555"
-S3_ENDPOINT_URL = "http://localhost:9000"
+REMOTE_SERVER_URI = "http://mlflow:5555"
+S3_ENDPOINT_URL = "http://minio:9000"
 
 mlflow.set_tracking_uri(REMOTE_SERVER_URI)
 os.environ["MLFLOW_S3_ENDPOINT_URL"] = S3_ENDPOINT_URL
