@@ -39,10 +39,25 @@ at http://localhost:3000.
 
 ## Local Development
 
-### Mock API
-### Local API
-### Staging API
+### MLflow
 
-## Branch Deployments
+Follow the [MLflow guide](/guides/mlflow) to set up MLflow running on `localhost:5555`.
 
-## Storybook
+### API
+
+Launch the Python API on `localhost:5000` in development mode by running in the `/checkpoint` directory:
+
+```bash
+pip install -e .
+./dev.sh
+```
+
+### Frontend
+
+Start the Frontend in development mode:
+
+```bash
+npm run dev
+```
+
+Finally, navigate to [http://localhost:3000/checkpoint/requests](http://localhost:3000/checkpoint/requests).
