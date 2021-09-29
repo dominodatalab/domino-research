@@ -10,6 +10,8 @@ import {
 import { AnyAction } from 'redux';
 import { History } from 'history';
 
+const root = process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : '';
+
 export const API_ERROR = 'API_ERROR';
 
 export const FETCH_MODELS = 'FETCH_MODELS';
@@ -23,7 +25,7 @@ export const gotModels = (models: string[]): AnyAction => ({
 
 export const fetchModels = () => {
   return async (dispatch: ThunkDispatch<AppState, void, AnyAction>): Promise<void> => {
-    const response = await fetch('/checkpoint/api/models');
+    const response = await fetch(`${root}/checkpoint/api/models`);
     if (response.status === 200) {
       try {
         dispatch(gotModels(await response.json()));
@@ -45,7 +47,7 @@ export const gotVersions = (versions: string[]): AnyAction => ({
 
 export const fetchVersions = (model: string) => {
   return async (dispatch: ThunkDispatch<AppState, void, AnyAction>): Promise<void> => {
-    const response = await fetch(`/checkpoint/api/models/${model}/versions`);
+    const response = await fetch(`${root}/checkpoint/api/models/${model}/versions`);
     if (response.status === 200) {
       try {
         dispatch(gotVersions(await response.json()));
@@ -67,7 +69,7 @@ export const gotRequests = (requests: PromoteRequest[]): AnyAction => ({
 
 export const fetchRequests = () => {
   return async (dispatch: ThunkDispatch<AppState, void, AnyAction>): Promise<void> => {
-    const response = await fetch(`/checkpoint/api/requests`);
+    const response = await fetch(`${root}/checkpoint/api/requests`);
     if (response.status === 200) {
       try {
         dispatch(gotRequests(await response.json()));
@@ -89,7 +91,7 @@ export const gotStages = (stages: string[]): AnyAction => ({
 
 export const fetchStages = () => {
   return async (dispatch: ThunkDispatch<AppState, void, AnyAction>): Promise<void> => {
-    const response = await fetch(`/checkpoint/api/stages`);
+    const response = await fetch(`${root}/checkpoint/api/stages`);
     if (response.status === 200) {
       try {
         dispatch(gotStages(await response.json()));
@@ -118,7 +120,7 @@ export const clearSubmitRequestError = (): AnyAction => ({
 export const submitRequest = (history: History, request: CreatePromoteRequest) => {
   return async (dispatch: ThunkDispatch<AppState, void, AnyAction>): Promise<void> => {
     try {
-      const response = await fetch(`/checkpoint/api/requests`, {
+      const response = await fetch(`${root}/checkpoint/api/requests`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -160,7 +162,7 @@ export const gotRequestDetails = (details: RequestDetails): AnyAction => ({
 
 export const fetchRequestDetails = (request_id: number) => {
   return async (dispatch: ThunkDispatch<AppState, void, AnyAction>): Promise<void> => {
-    const response = await fetch(`/checkpoint/api/requests/${request_id}/details`);
+    const response = await fetch(`${root}/checkpoint/api/requests/${request_id}/details`);
     if (response.status === 200) {
       try {
         dispatch(gotRequestDetails(await response.json()));
@@ -176,7 +178,7 @@ export const SUBMIT_REVIEW = 'SUBMIT_REVIEW';
 export const submitReview = (history: History, request_id: string, request: CreateReview) => {
   return async (dispatch: ThunkDispatch<AppState, void, AnyAction>): Promise<void> => {
     try {
-      const response = await fetch(`/checkpoint/api/requests/${request_id}`, {
+      const response = await fetch(`${root}/checkpoint/api/requests/${request_id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
