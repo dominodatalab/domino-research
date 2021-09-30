@@ -5,7 +5,7 @@ A better process for promoting models to production.
 ![build](https://github.com/dominodatalab/domino-research/actions/workflows/checkpoint.yml/badge.svg?branch=main)
 [![Docker Repository on Quay](https://quay.io/repository/domino/checkpoint/status "Docker Repository on Quay")](https://quay.io/repository/domino/checkpoint)
 
-[![Try Demo](assets/try-demo.png)](https://bit.ly/3zW7h93)
+[<img src="assets/try-demo.png" alt="Try Demo" width="300px"/>](https://bit.ly/3zW7h93)
 
 ## Why Checkpoint
 
