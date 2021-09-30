@@ -289,33 +289,26 @@ docker run -it \
 
 ## Development
 
-#### 1. In this directory (`domino-research/bridge`): 
+#### 0. Make sure that MLflow is running locally by using our [guide](/guides/mlflow).
 
-```bash
-# Install as local package
-pip install -e .
-```
+#### 1. Next, configure any environment variables:
 
-#### 2. Next, configure any environment variables, most importantly AWS credentials
-   and MlFlow tracking and registry URIs:
-
-* `BRDG_DEPLOY_AWS_PROFILE`: AWS profile for SageMaker deployer (if different from MlFlow backend).
-* `BRDG_DEPLOY_AWS_INSTANCE_TYPE`: AWS instance type for SageMaker endpoints (default ml.t2.medium).
 * `LOG_LEVEL`: Customize log level (default INFO).
 * `BRIDGE_MODEL_CACHE_PATH`: Path for caching model artifacts (default .brdg-models)
 * `BRIDGE_SCAN_INTERVAL_S`: Control loop refresh interval (default 15s).
-* `BRIDGE_MLFLOW_URI`: MlFlow registry uri.
 
-In addition, you can use any standard `boto3` or MlFlow environment variables.
+In addition, you can use any standard `boto3` or MLflow environment variables.
 
-#### 3. Finally, run the control loop:
+#### 2. In this directory (`domino-research/bridge`): 
 
 ```bash
-bridge init sagemaker
-bridge run
+./dev.sh
 ```
 
-Any changes you make to the code will be picked up only on a restart of `bridge run`.
+This will start Bridge in local deploy mode. You must restart the script after
+making code changes. Be sure that it is not in the middle of creating
+a Conda environment. If a Conda environment is corrupted, you may need to
+remove any environments that have a name that starts with `mlflow-`.
 
 ## Linting / Testing
 
