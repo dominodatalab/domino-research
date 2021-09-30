@@ -8,9 +8,9 @@ from bridge.registry import ModelRegistry
 from bridge.util import compress
 from mlflow.tracking import MlflowClient  # type: ignore
 from mlflow.entities.model_registry import RegisteredModel  # type: ignore
-from mlflow.entities.model_registry.model_version import (
+from mlflow.entities.model_registry.model_version import (  # type: ignore
     ModelVersion as MlflowModelVersion,
-)  # type: ignore
+)
 
 import os
 from enum import Enum
