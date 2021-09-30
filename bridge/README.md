@@ -289,8 +289,7 @@ docker run -it \
 
 ## Development
 
-#### 0. Make sure that MLflow is running locally by using our
-[guide](/guides/mlflow).
+#### 0. Make sure that MLflow is running locally by using our [guide](/guides/mlflow).
 
 #### 1. Next, configure any environment variables:
 
