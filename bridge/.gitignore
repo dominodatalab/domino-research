@@ -139,3 +139,6 @@ cython_debug/
 
 .DS_Store
 .brdg-models
+*.stdout
+*.stderr
+.brdg_local.lock
