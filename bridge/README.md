@@ -58,6 +58,8 @@ Rerun the command below and observe the new result. Bridge detected the new vers
 curl http://bridge.research.dominodatalab.com/ScikitElasticnetWineModel/Production/invocations -H 'Content-Type: application/json' -d '{"data":[[0.1, 0.1, 0.5, 0.66, 2, 0.6, 0.17, 8, 1.1, 1.23, 11]]}'
 ```
 
+<a name="install-bridge"></a>
+
 ### Option 2: Run yourself (locally or on a self-hosted server)
 
 When you complete the steps below, Bridge will monitor your MLflow registry and, upon seeing a new version of a model or an update to a version's stage, will create/update inference endpoints. You'll have always-up-to-date endpoints for the `Latest`, `Staging` and `Production` versions of each of the models in your MLflow registry.
