@@ -1,6 +1,6 @@
 import logging
 from typing import List, Dict, Optional
-from bridge.types import Model, ModelVersion, Artifact
+from bridge.types import Model, ModelVersion, Artifact, ModelEndpoint
 from bridge.constants import LATEST_STAGE_NAME
 from bridge.constants import DEPLOY_URL_TAG
 from bridge.constants import DEPLOY_STATE_TAG
@@ -8,9 +8,20 @@ from bridge.registry import ModelRegistry
 from bridge.util import compress
 from mlflow.tracking import MlflowClient  # type: ignore
 from mlflow.entities.model_registry import RegisteredModel  # type: ignore
+from mlflow.entities.model_registry.model_version import (
+    ModelVersion as MlflowModelVersion,
+)  # type: ignore
+
 import os
+from enum import Enum
 
 logger = logging.getLogger(__name__)
+
+
+class DeploymentState(Enum):
+    DEPLOYED = "DEPLOYED"  # Fully deployed to the target
+    DEPLOYING = "DEPLOYING"  # In the process of being deployed to the target
+    # Models that are being un-deployed are ignored
 
 
 class Client(ModelRegistry):
@@ -33,7 +44,7 @@ class Client(ModelRegistry):
     def list_models(self) -> List[Model]:
         output = []
         for model in self.client.list_registered_models():
-            versions: Dict[str, set[ModelVersion]] = {}
+            versions: Dict[str, set[ModelEndpoint]] = {}
 
             for version in model.latest_versions:
                 stage = (
@@ -44,11 +55,14 @@ class Client(ModelRegistry):
                 )
                 if stage == "Archived":
                     continue
-                versions[stage] = set[ModelVersion](
+                versions[stage] = set[ModelEndpoint](
                     [
-                        ModelVersion(
-                            model_name=model.name,
-                            version_id=version.version,
+                        ModelEndpoint(
+                            ModelVersion(
+                                model_name=model.name,
+                                version_id=version.version,
+                            ),
+                            None,
                         )
                     ]
                 )
@@ -85,74 +99,84 @@ class Client(ModelRegistry):
     def tag_deployed_models(
         self, deployed_models: List[Model], registered_models: List[Model]
     ):
-        all_model_names = set[str]()
-        registered_versions = set[ModelVersion]()
+        # All versions of registered models currently found on MLflow
+        all_mf_versions: List[MlflowModelVersion] = []
+
+        # Collecting registered versions: ((name, version), stage)
+        registered = set[(ModelVersion, str)]()  # type: ignore
+        registered_to_mf = dict[ModelVersion, MlflowModelVersion]()
         for model in registered_models:
-            for versions in model.versions.values():
-                for mv in versions:
-                    all_model_names.add(mv.model_name)
-                    registered_versions.add(mv)
+            for stage, endpoints in model.versions.items():
+                for ep in endpoints:
+                    ver = ep.version
+                    registered.add((ver, stage))
+                    query = "name='{}'".format(ver.model_name)
+                    for mf_ver in self.client.search_model_versions(query):
+                        all_mf_versions.append(mf_ver)
+                        if (
+                            mf_ver.name == ver.model_name
+                            and mf_ver.version == ver.version_id
+                        ):
+                            registered_to_mf[ver] = mf_ver
 
-        deployed_versions = set[ModelVersion]()
+        # Collecting & tagging deployed versions: ((name, version), stage)
+        deployed = set[(ModelVersion, str)]()  # type: ignore
         for model in deployed_models:
-            for versions in model.versions.values():
-                for mv in versions:
-                    all_model_names.add(mv.model_name)
+            for stage, endpoints in model.versions.items():
+                for ep in endpoints:
+                    ver = ep.version
                     if (
-                        mv in registered_versions
-                    ):  # Otherwise, this model is being un-deployed
-                        deployed_versions.add(mv)
-                        self.client.set_model_version_tag(
-                            mv.model_name,
-                            mv.version_id,
+                        ver,
+                        stage,
+                    ) in registered:
+                        # Otherwise, the model is being un-deployed
+                        deployed.add((ver, stage))
+                        mf_ver = registered_to_mf[ver]
+                        self.set_tag(
+                            mf_ver,
                             DEPLOY_STATE_TAG,
-                            "DEPLOYED",
+                            DeploymentState.DEPLOYED.value,
                         )
-                        if mv.location is not None:
-                            self.client.set_model_version_tag(
-                                mv.model_name,
-                                mv.version_id,
-                                DEPLOY_URL_TAG,
-                                mv.location,
-                            )
+                        if ep.location is not None:
+                            self.set_tag(mf_ver, DEPLOY_URL_TAG, ep.location)
 
-        for mv in registered_versions - deployed_versions:
-            self.client.set_model_version_tag(
-                mv.model_name,
-                mv.version_id,
-                DEPLOY_STATE_TAG,
-                "DEPLOYING",
+        # Untagging models that are not deployed
+        for mf_ver in all_mf_versions:
+            ver = ModelVersion(
+                model_name=mf_ver.name, version_id=mf_ver.version
             )
+            if ver not in {deployed_ver for deployed_ver, _ in deployed}:
+                self.remove_tag(mf_ver, DEPLOY_URL_TAG)
+                self.remove_tag(mf_ver, DEPLOY_STATE_TAG)
 
-        for model_name in all_model_names:
-            for res in self.client.search_model_versions(
-                "name='{}'".format(model_name)
-            ):
-                mv = ModelVersion(model_name=res.name, version_id=res.version)
-                if (mv not in deployed_versions) and (
-                    (res.tags.get(DEPLOY_URL_TAG) is not None)
-                    or (res.tags.get(DEPLOY_STATE_TAG) is not None)
-                ):
-                    logger.info(f"Untagging {res.name}/{res.version}")
-                    self.client.delete_model_version_tag(
-                        res.name, res.version, DEPLOY_URL_TAG
-                    )
-                    self.client.delete_model_version_tag(
-                        res.name, res.version, DEPLOY_STATE_TAG
-                    )
+        # Tagging models that are being currently deployed
+        for ver, _ in registered - deployed:
+            mf_ver = registered_to_mf[ver]
+            self.set_tag(
+                mf_ver, DEPLOY_STATE_TAG, DeploymentState.DEPLOYING.value
+            )
+            self.remove_tag(mf_ver, DEPLOY_URL_TAG)
 
     def reset_tags(self):
         for model in self.client.list_registered_models():
-            for res in self.client.search_model_versions(
-                "name='{}'".format(model.name)
-            ):
-                if (res.tags.get(DEPLOY_URL_TAG) is not None) or (
-                    res.tags.get(DEPLOY_STATE_TAG) is not None
-                ):
-                    logger.info(f"Untagging {res.name}/{res.version}")
-                    self.client.delete_model_version_tag(
-                        res.name, res.version, DEPLOY_URL_TAG
-                    )
-                    self.client.delete_model_version_tag(
-                        res.name, res.version, DEPLOY_STATE_TAG
-                    )
+            query = "name='{}'".format(model.name)
+            for mod_ver in self.client.search_model_versions(query):
+                self.remove_tag(mod_ver, DEPLOY_URL_TAG)
+                self.remove_tag(mod_ver, DEPLOY_STATE_TAG)
+
+    def set_tag(self, mf_ver: MlflowModelVersion, tag: str, value: str):
+        current_value = mf_ver.tags.get(tag)
+        if current_value != value:
+            logger.info(
+                f"Tagging {mf_ver.name}/{mf_ver.version}: {tag}={value}"
+            )
+            self.client.set_model_version_tag(
+                mf_ver.name, mf_ver.version, tag, value
+            )
+
+    def remove_tag(self, mf_ver: MlflowModelVersion, tag: str):
+        if mf_ver.tags.get(tag) is not None:
+            logger.info(f"Untagging {mf_ver.name}/{mf_ver.version}: {tag}" f"")
+            self.client.delete_model_version_tag(
+                mf_ver.name, mf_ver.version, tag
+            )

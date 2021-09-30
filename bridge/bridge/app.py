@@ -131,8 +131,8 @@ def main():
 def routing_from_models(models: List[Model]) -> Dict[str, Dict[str, Set[str]]]:
     return {
         model.name: {
-            stage: {version.version_id for version in versions}
-            for stage, versions in model.versions.items()
+            stage: {endpoint.version.version_id for endpoint in endpoints}
+            for stage, endpoints in model.versions.items()
         }
         for model in models
     }

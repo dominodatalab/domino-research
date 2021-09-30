@@ -1,5 +1,5 @@
 from typing import List, Dict, Set
-from bridge.types import Model, ModelVersion, Artifact
+from bridge.types import Model, ModelVersion, Artifact, ModelEndpoint
 from bridge.deploy import DeployTarget
 import socket
 import signal
@@ -227,10 +227,12 @@ class LocalDeployTarget(DeployTarget):
             for stage, port in d.items():
                 for mv, md in self.running_models.items():
                     if port == md.port:
-                        mv.location = _ENDPOINT_URL_PATTERN.format(
+                        location = _ENDPOINT_URL_PATTERN.format(
                             self.proxy.port, model_name, stage
                         )
-                        model.versions[stage] = set([mv])
+                        model.versions[stage] = set[ModelEndpoint](
+                            [ModelEndpoint(mv, location)]
+                        )
                         break
             result.append(model)
         return result

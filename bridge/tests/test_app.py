@@ -1,5 +1,5 @@
 from bridge.deploy.sagemaker import SageMakerDeployTarget
-from bridge.types import Artifact, ModelVersion
+from bridge.types import Artifact, ModelVersion, ModelEndpoint
 from typing import Dict, Set
 import pytest  # type: ignore
 from botocore.exceptions import (  # type: ignore
@@ -85,7 +85,9 @@ def test_sagemaker_update_handles_failed_endpoint():
     assert {m.name for m in models_s2}.issuperset({m1})
     for m in models_s2:
         if m.name == m1:
-            assert m.versions[stage_Prod] == {ModelVersion(m1, m1_v2)}
+            assert m.versions[stage_Prod] == {
+                ModelEndpoint(ModelVersion(m1, m1_v2), None)
+            }
     print("Validated in s2 state")
 
     # step 4
@@ -139,7 +141,9 @@ def test_sagemaker_update_handles_creating_updating_status_endpoint():
     assert {m.name for m in models_s1}.issuperset({m1})
     for m in models_s1:
         if m.name == m1:
-            assert m.versions[stage_Prod] == {ModelVersion(m1, m1_v1)}
+            assert m.versions[stage_Prod] == {
+                ModelEndpoint(ModelVersion(m1, m1_v1), None)
+            }
     print("Validated s1 state is correct")
 
     # Step 2 - update while state creating, expect state to remain unchanged
@@ -157,7 +161,9 @@ def test_sagemaker_update_handles_creating_updating_status_endpoint():
     assert {m.name for m in models_s1}.issuperset({m1})
     for m in models_s1:
         if m.name == m1:
-            assert m.versions[stage_Prod] == {ModelVersion(m1, m1_v1)}
+            assert m.versions[stage_Prod] == {
+                ModelEndpoint(ModelVersion(m1, m1_v1), None)
+            }
     print("Validated still in s1 state")
 
     # step 3 - wait for state to stabilize and update
@@ -174,7 +180,9 @@ def test_sagemaker_update_handles_creating_updating_status_endpoint():
     assert {m.name for m in models_s2}.issuperset({m1})
     for m in models_s2:
         if m.name == m1:
-            assert m.versions[stage_Prod] == {ModelVersion(m1, m1_v2)}
+            assert m.versions[stage_Prod] == {
+                ModelEndpoint(ModelVersion(m1, m1_v2), None)
+            }
     print("Validated in s2 state")
 
     # step 4 - update again before waiting to stabilize
@@ -191,7 +199,9 @@ def test_sagemaker_update_handles_creating_updating_status_endpoint():
     assert {m.name for m in models_s2}.issuperset({m1})
     for m in models_s2:
         if m.name == m1:
-            assert m.versions[stage_Prod] == {ModelVersion(m1, m1_v2)}
+            assert m.versions[stage_Prod] == {
+                ModelEndpoint(ModelVersion(m1, m1_v2), None)
+            }
     print("Validated still in s2 state")
 
     # step 5 - wait for state to stabilize from updating to inservice
@@ -209,7 +219,9 @@ def test_sagemaker_update_handles_creating_updating_status_endpoint():
     assert {m.name for m in models_s3}.issuperset({m1})
     for m in models_s3:
         if m.name == m1:
-            assert m.versions[stage_Prod] == {ModelVersion(m1, m1_v3)}
+            assert m.versions[stage_Prod] == {
+                ModelEndpoint(ModelVersion(m1, m1_v3), None)
+            }
     print("Validated in s3 state")
 
     # step 6
@@ -270,10 +282,16 @@ def test_sagemaker_creates_and_updates_endpoints():
     assert {m.name for m in models_s1}.issuperset({m1, m2})
     for m in models_s1:
         if m.name == m1:
-            assert m.versions[stage_Prod] == {ModelVersion(m1, m1_v1)}
-            assert m.versions[stage_Staging] == {ModelVersion(m1, m1_v1)}
+            assert m.versions[stage_Prod] == {
+                ModelEndpoint(ModelVersion(m1, m1_v1), None)
+            }
+            assert m.versions[stage_Staging] == {
+                ModelEndpoint(ModelVersion(m1, m1_v1), None)
+            }
         if m.name == m2:
-            assert m.versions[stage_Prod] == {ModelVersion(m2, m2_v1)}
+            assert m.versions[stage_Prod] == {
+                ModelEndpoint(ModelVersion(m2, m2_v1), None)
+            }
 
     print("Validated s1 state is correct")
 
@@ -309,12 +327,16 @@ def test_sagemaker_creates_and_updates_endpoints():
     for m in models_s2:
         if m.name == m1:
             assert m.versions[stage_Prod] == {
-                ModelVersion(m1, m1_v1),
-                ModelVersion(m1, m1_v2),
+                ModelEndpoint(ModelVersion(m1, m1_v1), None),
+                ModelEndpoint(ModelVersion(m1, m1_v2), None),
             }
-            assert m.versions[stage_Latest] == {ModelVersion(m1, m1_v3)}
+            assert m.versions[stage_Latest] == {
+                ModelEndpoint(ModelVersion(m1, m1_v3), None)
+            }
         if m.name == m3:
-            assert m.versions[stage_Prod] == {ModelVersion(m3, m3_v1)}
+            assert m.versions[stage_Prod] == {
+                ModelEndpoint(ModelVersion(m3, m3_v1), None)
+            }
     print("Validated s2 state is correct")
 
     # Step 4

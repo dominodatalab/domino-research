@@ -1,6 +1,6 @@
 import logging
 from typing import List, Dict, Set, Union, Any
-from bridge.types import Model, ModelVersion, Artifact
+from bridge.types import Model, ModelVersion, Artifact, ModelEndpoint
 from bridge.deploy import DeployTarget
 import boto3  # type: ignore
 from botocore.exceptions import (  # type: ignore
@@ -112,15 +112,19 @@ class SageMakerDeployTarget(DeployTarget):
                 EndpointConfigName=endpoint_name
             )
 
-            versions = set(
+            model_endpoints = set[ModelEndpoint](
                 [
-                    ModelVersion(
-                        model_name=model_name,
-                        version_id=self._version_from_sagemaker_model_name(
-                            sagemaker_model_name=variant["ModelName"],
+                    ModelEndpoint(
+                        ModelVersion(
                             model_name=model_name,
-                        ),  # eg: 1 from brdg-modelC-1
-                        location=endpoint_url,
+                            version_id=self._version_from_sagemaker_model_name(
+                                sagemaker_model_name=variant["ModelName"],
+                                model_name=model_name,
+                            ),  # eg: 1 from brdg-modelC-1
+                        ),
+                        # TODO: How comes that one endpoint is associated with
+                        #  multiple models?
+                        endpoint_url,
                     )
                     for variant in endpoint_config[
                         "ProductionVariants"
@@ -129,11 +133,11 @@ class SageMakerDeployTarget(DeployTarget):
             )
 
             if model := output.get(model_name):
-                model.versions[stage] = versions
+                model.versions[stage] = model_endpoints
             else:
                 output[model_name] = Model(
                     name=model_name,
-                    versions={stage: versions},
+                    versions={stage: model_endpoints},
                 )
 
         return list(output.values())
