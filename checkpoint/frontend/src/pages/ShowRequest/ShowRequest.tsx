@@ -244,7 +244,7 @@ const ShowRequest: React.FC<Props> = ({ request_id, details, request, onSubmit }
               <Col lg={{ span: 16 }} xs={{ span: 24 }}>
                 <Card title="Description" style={{ height: '100%' }}>
                   {/* prettier-ignore */}
-                  <pre style={{ maxHeight: '400px', overflow: 'scroll' }}>
+                  <pre style={{ maxHeight: '400px', overflow: 'auto' }}>
                     {request?.description == undefined || request?.description == '' ? (
                       <Paragraph disabled italic>
                         No description provided.

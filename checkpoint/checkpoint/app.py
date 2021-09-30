@@ -38,6 +38,7 @@ import os
 from dataclasses import asdict
 import urllib.parse
 from datetime import datetime
+import socket
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,12 @@ app = Flask(
     static_url_path="/checkpoint/static",
     static_folder="../frontend/build/static",
 )
+
+if os.environ.get("FLASK_ENV") == "development":
+    app.logger.info("Enabling unrestricted CORS")
+    from flask_cors import CORS  # type: ignore
+
+    CORS(app)
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -61,8 +68,8 @@ else:
     app.logger.setLevel(gunicorn_logger.level)
     logger.setLevel(gunicorn_logger.level)
 
-with open("/etc/hostname", "r") as f:
-    analytics = AnalyticsClient(f.readline().strip(), app.logger)
+hostname = socket.gethostname()
+analytics = AnalyticsClient(hostname, app.logger)
 
 
 @app.before_first_request
