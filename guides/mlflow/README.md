@@ -35,6 +35,8 @@ Note that we pre-seed the registry with a simple demo model called `ScikitElasti
 It has 3 versions, with one marked for Staging and one marked for Production. The training
 code for this model is in `seed_models/scikit_elasticnet_wine/train.py`.
 
+<a name="own-model"></a>
+
 ### 2. [Optional] Using the MLflow registry with your own models
 
 If you'd like to add new models using your own training code,
