@@ -51,7 +51,10 @@ SERVER_URI = "http://localhost:5000"
 S3_ENDPOINT_URL = "http://localhost:9000"
 
 os.environ["MLFLOW_S3_ENDPOINT_URL"] = S3_ENDPOINT_URL
-
+os.environ["MLFLOW_S3_IGNORE_TLS"] = true
+os.environ["AWS_ACCESS_KEY_ID"] = AKIAIfoobar
+os.environ["AWS_SECRET_ACCESS_KEY"] = deadbeef
+    
 # For MLflow tracking:
 mlflow.set_tracking_uri(SERVER_URI)
 # ...
