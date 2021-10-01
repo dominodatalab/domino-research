@@ -422,14 +422,21 @@ class SageMakerDeployTarget(DeployTarget):
             )
 
     def _delete_endpoint(self, model_name: str, stage: str):
-        self._delete_endpoint_config(model_name, stage)
         try:
             self.sagemaker_client.delete_endpoint(
                 EndpointName=self._endpoint_name(model_name, stage)
             )
+            self._delete_endpoint_config(model_name, stage)
         except ClientError as e:
-            logging.error(e)
-            raise e
+            error_msg = e.response["Error"]["Message"]
+            if error_msg.startswith("Cannot update in-progress endpoint"):
+                logger.info(
+                    f"Skipping deletion of an in-progress "
+                    f"endpoint for {model_name}."
+                )
+            else:
+                logging.error(e)
+                raise e
 
     def _poll_endpoints_until_status(
         self,
