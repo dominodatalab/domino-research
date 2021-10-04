@@ -32,6 +32,7 @@ def main():
         from bridge.registry.mlflow import Client
 
         registry_client = Client(MODEL_CACHE_PATH)
+        registry_client.reset_tags()
     else:
         logger.error(f"Unrecognized BRIDGE_REGISTRY_KIND '{REGISTRY_KIND}'")
         sys.exit(1)
@@ -100,6 +101,7 @@ def main():
                 current_routing, desired_routing
             )
             deploy_client.delete_versions(expired_versions)
+            registry_client.tag_deployed_models(current_models, desired_models)
             logger.info("Update complete.")
             end_time = time.time()
 
@@ -129,8 +131,8 @@ def main():
 def routing_from_models(models: List[Model]) -> Dict[str, Dict[str, Set[str]]]:
     return {
         model.name: {
-            stage: {version.version_id for version in versions}
-            for stage, versions in model.versions.items()
+            stage: {endpoint.version.version_id for endpoint in endpoints}
+            for stage, endpoints in model.versions.items()
         }
         for model in models
     }

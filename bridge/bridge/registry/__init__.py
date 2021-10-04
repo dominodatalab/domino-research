@@ -10,6 +10,16 @@ class ModelRegistry(ABC):
 
     @abstractmethod
     def fetch_version_artifact(
-        sefl, model_name: str, version: str
+        self, model_name: str, version: str
     ) -> Artifact:
+        pass
+
+    @abstractmethod
+    def tag_deployed_models(
+        self, deployed_models: List[Model], registered_models: List[Model]
+    ):
+        pass
+
+    @abstractmethod
+    def reset_tags(self):
         pass
