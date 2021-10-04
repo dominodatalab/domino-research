@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 class DeploymentState(Enum):
     DEPLOYED = "DEPLOYED"  # Fully deployed to the target
-    DEPLOYING = "DEPLOYING"  # In the process of being deployed to the target
+    DEPLOYING = "UPDATING"  # In the process of being deployed to the target
     # Models that are being un-deployed are ignored
 
 
@@ -176,7 +176,7 @@ class Client(ModelRegistry):
 
     def remove_tag(self, mf_ver: MlflowModelVersion, tag: str):
         if mf_ver.tags.get(tag) is not None:
-            logger.info(f"Untagging {mf_ver.name}/{mf_ver.version}: {tag}" f"")
+            logger.info(f"Untagging {mf_ver.name}/{mf_ver.version}: {tag}")
             self.client.delete_model_version_tag(
                 mf_ver.name, mf_ver.version, tag
             )
