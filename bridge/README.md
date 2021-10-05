@@ -103,27 +103,13 @@ Bridge supports multiple *deploy targets* (services that Bridge can deploy your 
 
 *Using the local MLflow from our MLflow guide:*
 
-On macOS:
 ```
 docker run -it \
     -p 3000:3000 \
+    --network mlflow \
     -e BRIDGE_DEPLOY_KIND=localhost \
-    -e BRIDGE_MLFLOW_URI=http://host.docker.internal:5555 \
-    -e MLFLOW_S3_ENDPOINT_URL=http://host.docker.internal:9000 \
-    -e MLFLOW_S3_IGNORE_TLS=true \
-    -e AWS_ACCESS_KEY_ID=AKIAIfoobar \
-    -e AWS_SECRET_ACCESS_KEY=deadbeef \
-    -e AWS_DEFAULT_REGION=us-east-2 \
-    quay.io/domino/bridge:latest
-```
-
-On Linux:
-```
-docker run -it \
-    -p 3000:3000 \
-    -e BRIDGE_DEPLOY_KIND=localhost \
-    -e BRIDGE_MLFLOW_URI=http://localhost:5555 \
-    -e MLFLOW_S3_ENDPOINT_URL=http://localhost:9000 \
+    -e BRIDGE_MLFLOW_URI=http://mlflow:5555 \
+    -e MLFLOW_S3_ENDPOINT_URL=http://minio:9000 \
     -e MLFLOW_S3_IGNORE_TLS=true \
     -e AWS_ACCESS_KEY_ID=AKIAIfoobar \
     -e AWS_SECRET_ACCESS_KEY=deadbeef \

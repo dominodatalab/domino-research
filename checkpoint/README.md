@@ -76,23 +76,12 @@ For details on using Checkpoint with your team, see [here](#use-checkpoint-with-
 
 **Using the local MLflow from our MLflow guide** 
 
-On macOS:
-
 ```bash
 docker run -it \
 -p 5000:5000 \
+--network mlflow \
 -v $(PWD):/tmp \
--e CHECKPOINT_REGISTRY_URL=http://host.docker.internal:5555 \
-quay.io/domino/checkpoint
-```
-
-On Linux:
-
-```bash
-docker run -it \
--p 5000:5000 \
--v $(PWD):/tmp \
--e CHECKPOINT_REGISTRY_URL=http://localhost:5555 \
+-e CHECKPOINT_REGISTRY_URL=http://mlflow:5555 \
 quay.io/domino/checkpoint
 ```
 
