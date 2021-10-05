@@ -92,4 +92,5 @@ services:
 
 networks:
   mlflow:
+    name: mlflow
     driver: bridge
