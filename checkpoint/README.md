@@ -81,7 +81,7 @@ docker run -it \
 -p 5000:5000 \
 --network mlflow \
 -v $(PWD):/tmp \
--e CHECKPOINT_REGISTRY_URL=http://host.docker.internal:5555 \
+-e CHECKPOINT_REGISTRY_URL=http://mlflow:5555 \
 quay.io/domino/checkpoint
 ```
 
