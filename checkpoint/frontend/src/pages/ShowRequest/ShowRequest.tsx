@@ -2,7 +2,7 @@ import * as React from 'react';
 import OuterLayout from '../../components/OuterLayout';
 import { Row, Col, PageHeader, Card, Tag, Table, Input, Button, Form, Select, Typography } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
-import { PromoteRequest, RequestDetails, CreateReview } from '@domino-research/ui/dist/utils/types';
+import { PromoteRequest, RequestDetails, CreateReview } from '../../utils/types';
 import s from './ShowRequest.module.scss';
 import { useHistory } from 'react-router-dom';
 import { History } from 'history';

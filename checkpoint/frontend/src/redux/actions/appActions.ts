@@ -1,12 +1,7 @@
 // You can use CONSTANTS.js file for below definitions of constants and import here.
 import { ThunkDispatch } from 'redux-thunk';
 import { AppState } from '../state';
-import {
-  PromoteRequest,
-  CreatePromoteRequest,
-  RequestDetails,
-  CreateReview,
-} from '@domino-research/ui/dist/utils/types';
+import { PromoteRequest, CreatePromoteRequest, RequestDetails, CreateReview } from '../../utils/types';
 import { AnyAction } from 'redux';
 import { History } from 'history';
 
