@@ -24,12 +24,9 @@
     "typescript": "^4.2.2"
   },
   "scripts": {
-    "dev": "npm run build:ui && npm-run-all --parallel watch:ui start",
+    "dev": "npm run start",
     "start": "craco start",
-    "build:spa": "craco build",
-    "build": "npm run build:ui && craco build",
-    "build:ui": "cd packages/ui && npm i && npm run build",
-    "watch:ui": "cd packages/ui && npm run build:watch",
+    "build": "craco build",
     "test": "craco test",
     "lint": "tsc --noEmit && eslint src/**/*.ts{,x}",
     "lint:fix": "tsc --noEmit && eslint 'src/**/*.{js,ts}' --quiet --fix",
