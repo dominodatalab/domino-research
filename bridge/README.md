@@ -34,29 +34,26 @@ as the source of truth.
 
 We're hosting a sandbox version of MLflow with Bridge at [mlflow.research.dominodatalab.com](https://bit.ly/2W7wy2h). Try the following in the sandbox:
 
-#### Query the model version running in production
-
-Run the command below to query the model version currently in Production. In the step below, you'll update the version in Production and compare the new inference result it generates to the result you get from this command:
-
-```bash
-curl http://bridge.research.dominodatalab.com/ScikitElasticnetWineModel/Production/invocations -H 'Content-Type: application/json' -d '{"data":[[0.1, 0.1, 0.5, 0.66, 2, 0.6, 0.17, 8, 1.1, 1.23, 11]]}'
-```
-
 #### Promote a new model version to production
 
 1. Click into the `ScikitElasticNetWineModel` in the [MLflow models tab](https://bit.ly/2W7wy2h).
 2. Click into a version that is not marked as `Production`.
-3. Use the stage control in the top right to move the version into `Production`.
-   (When prompted, select the option to archive the current Production version).
-4. Bridge will detect the change in 15-20 seconds and will update the production endpoint with the new model version.
+3. Make sure the 'Tags' section is open. If this version is deployed already to a non-production environment, you'll see that it is already tagged as `DEPLOYED` and is available at a URL like `.../ScikitElasticNetWineModel/Staging/invocations`.
+4. Use the stage control in the top right to move the version into `Production`. (When prompted, select the option to archive the current Production version).
+5. After a few seconds, Bridge will detect the change and will deploy the new model version to the production endpoint. If the version has never been deployed before, it will be in the `UPDATING` state while bridge prepares the model version for consumption. When the model is deployed, it will be in the `DEPLOYED` state and will be available at the URL: `.../ScikitElasticNetWineModel/Production/invocations`.
 
-#### Query the model again
 
-Rerun the command below and observe the new result. Bridge detected the new version tagged as `Production` and updated the `Production` endpoint.
+#### Query the model version you deployed to production
+
+Run the command below to query the model version you deployed to Production using the standard MLflow inference format. That's it! Bridge syncs model versions from MLflow and updates stable endpoints to make them available for inference. When you push a new version, Bridge will update the `latest` endpoint. If you tag a new version for `Staging` or `Production`, Bridge will update the respective endpoint. Welcome to RegistryOps :tada:
 
 ```bash
 curl http://bridge.research.dominodatalab.com/ScikitElasticnetWineModel/Production/invocations -H 'Content-Type: application/json' -d '{"data":[[0.1, 0.1, 0.5, 0.66, 2, 0.6, 0.17, 8, 1.1, 1.23, 11]]}'
 ```
+
+#### Using Bridge for real
+
+Follow the guide below to run an instance of Bridge against your own MLflow. [Reach out](https://domino-research.slack.com/archives/C02FJ1RH5AL) if you need help.
 
 <a name="install-bridge"></a>
 
