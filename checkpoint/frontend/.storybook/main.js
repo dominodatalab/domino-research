@@ -8,7 +8,9 @@ module.exports = {
         {
             loader: "less-loader",
             options: {
-                javascriptEnabled: true
+                lessOptions: {
+                    javascriptEnabled: true
+                }
             }
         },
       ]
@@ -26,7 +28,6 @@ module.exports = {
           "fileLoaderExcludes": ["less"]
         }
       }
-    },
-    "@storybook/addon-knobs",
+    }
   ]
 }

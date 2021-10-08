@@ -1,4 +1,4 @@
-import { PromoteRequest, Model, ModelVersion, RequestDetails } from '@domino-research/ui/dist/utils/types';
+import { PromoteRequest, Model, ModelVersion, RequestDetails } from '../utils/types';
 
 export interface AppState {
   app: RootState;

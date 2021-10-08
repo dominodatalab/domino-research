@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { MultiSelector, RequestTable } from '@domino-research/ui';
-import { PromoteRequest } from '@domino-research/ui/dist/utils/types';
+import { MultiSelector, RequestTable } from 'components';
+import { PromoteRequest } from '../../utils/types';
 import { Row, Col, Button } from 'antd';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';

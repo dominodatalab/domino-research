@@ -24,16 +24,15 @@
     "typescript": "^4.2.2"
   },
   "scripts": {
-    "dev": "npm run build:ui && npm-run-all --parallel watch:ui start",
+    "dev": "npm run start",
     "start": "craco start",
-    "build:spa": "craco build",
-    "build": "npm run build:ui && craco build",
-    "build:ui": "cd packages/ui && npm i && npm run build",
-    "watch:ui": "cd packages/ui && npm run build:watch",
+    "build": "craco build",
     "test": "craco test",
     "lint": "tsc --noEmit && eslint src/**/*.ts{,x}",
     "lint:fix": "tsc --noEmit && eslint 'src/**/*.{js,ts}' --quiet --fix",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "storybook": "start-storybook -p 6006 -s public",
+    "build-storybook": "build-storybook -s public"
   },
   "browserslist": {
     "production": [
@@ -49,6 +48,12 @@
   },
   "devDependencies": {
     "@reduxjs/toolkit": "^1.5.0",
+    "@storybook/addon-actions": "^6.3.10",
+    "@storybook/addon-essentials": "^6.3.10",
+    "@storybook/addon-links": "^6.3.10",
+    "@storybook/node-logger": "^6.3.10",
+    "@storybook/preset-create-react-app": "^3.2.0",
+    "@storybook/react": "^6.3.10",
     "@testing-library/jest-dom": "^5.11.9",
     "@testing-library/react": "^11.2.5",
     "@testing-library/user-event": "12.7.3",
@@ -80,6 +85,26 @@
   "lint-staged": {
     "*.ts{x}": [
       "eslint --fix"
+    ]
+  },
+  "eslintConfig": {
+    "overrides": [
+      {
+        "files": [
+          "**/*.stories.*"
+        ],
+        "rules": {
+          "import/no-anonymous-default-export": "off"
+        }
+      },
+      {
+        "files": [
+          "**/*.stories.*"
+        ],
+        "rules": {
+          "import/no-anonymous-default-export": "off"
+        }
+      }
     ]
   }
 }

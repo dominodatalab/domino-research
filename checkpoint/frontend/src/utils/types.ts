@@ -13,7 +13,7 @@ export interface PromoteRequest {
   id: number;
   author_username: string;
   reviewer_username?: string;
-  review_comment?: string,
+  review_comment?: string;
   status: 'open' | 'closed' | 'approved';
   closed_at_epoch: number;
   created_at_epoch: number;
@@ -45,9 +45,10 @@ export interface RequestDetails {
 export interface VersionDetails {
   id: string;
   stage: string;
-  tags: Record<string, string>,
-  parameters: Record<string, any>,
-  metrics: Record<string, number>,
+  tags: Record<string, string>;
+  // eslint-disable-next-line
+  parameters: Record<string, any>;
+  metrics: Record<string, number>;
 }
 
 export interface CreateReview {

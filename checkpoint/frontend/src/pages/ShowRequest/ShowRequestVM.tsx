@@ -6,7 +6,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import ShowRequest from './ShowRequest';
 import { useParams } from 'react-router-dom';
 import { fetchRequestDetails, clearRequestDetails, fetchRequests, submitReview } from 'redux/actions/appActions';
-import { CreateReview } from '@domino-research/ui/dist/utils/types';
+import { CreateReview } from '../../utils/types';
 import { History } from 'history';
 
 const mapState = (state: AppState) => {

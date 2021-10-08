@@ -7,7 +7,7 @@ import { History } from 'history';
 import { Divider, Form, Input, Select } from 'antd';
 import { useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
-import { CreatePromoteRequest, Model, ModelVersion } from '../../../packages/ui/dist/utils/types';
+import { CreatePromoteRequest, Model, ModelVersion } from '../../utils/types';
 
 export interface Props {
   models?: Model[];

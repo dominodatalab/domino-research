@@ -11,7 +11,7 @@ import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
 import { connect, ConnectedProps } from 'react-redux';
 import RequestForm from './RequestForm';
-import { CreatePromoteRequest } from '../../../packages/ui/dist/utils/types';
+import { CreatePromoteRequest } from '../../utils/types';
 import { History } from 'history';
 
 const mapState = (state: AppState) => {

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Table } from 'antd';
 import { ColumnsType } from 'antd/es/table';
-import { PromoteRequest } from '../../utils/types';
+import { PromoteRequest } from '../../utils/index';
 import { useHistory } from 'react-router-dom';
 
 export interface RequestTableProps {
