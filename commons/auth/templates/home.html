@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="utf-8">
+    <head>
+        <title>Home</title>
+    </head>
+    <body>
+        <h1>Home</h1>
+        {% if 'profile' in session %}
+            <p>Logged in as <b>{{ session['profile']['name'] }}</b>.</p>
+            <p><a href="/logout">[Log out]</a></p>
+            <p><a href="/protected">[Try opening a protected page]</a></p>
+        {% else %}
+            <p>The current user is not authenticated.</p>
+            <p><a href="/login">[Log In]</a></p>
+            <p><a href="/protected">[Try opening a protected page]</a></p>
+        {% endif %}
+    </body>
+</html>
