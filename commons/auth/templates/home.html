@@ -5,8 +5,8 @@
     </head>
     <body>
         <h1>Home</h1>
-        {% if 'profile' in session %}
-            <p>Logged in as <b>{{ session['profile']['name'] }}</b>.</p>
+        {% if 'principal' in session %}
+            <p>Logged in as <b>{{ session['principal']['name'] }}</b>..</p>
             <p><a href="/logout">[Log out]</a></p>
             <p><a href="/protected">[Try opening a protected page]</a></p>
         {% else %}

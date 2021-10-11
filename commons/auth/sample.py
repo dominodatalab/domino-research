@@ -6,17 +6,20 @@ from flask import (
     url_for,
 )  # type: ignore
 
-from auth.client import LoginManager
+from auth import current_user
+from auth.auth0_client import Auth0LoginManager
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)  # Different key for every runtime
 
-login_manager = LoginManager(app)
+login_manager = Auth0LoginManager(app)
 login_manager.callback_uri = "/auth"
 
 
 @app.route("/")
 def home():
+    u = current_user()
+    print(f"u={u}")
     return render_template("home.html")
 
 
