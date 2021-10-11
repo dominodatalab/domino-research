@@ -14,6 +14,9 @@ repos:
   - id: black
     name: black-checkpoint
     files: ^checkpoint
+  - id: black
+    name: black-commons
+    files: ^commons
 
 - repo: https://gitlab.com/pycqa/flake8
   rev: 3.9.2
@@ -27,6 +30,9 @@ repos:
   - id: flake8
     name: flake8-checkpoint
     files: ^checkpoint/checkpoint|^checkpoint/tests|^checkpoint/examples
+  - id: flake8
+    name: flake8-commons-auth
+    files: ^commons/auth
 
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v0.910
@@ -40,3 +46,6 @@ repos:
   - id: mypy
     name: mypy-checkpoint
     files: ^checkpoint/checkpoint|^checkpoint/tests|^checkpoint/examples
+  - id: mypy
+    name: mypy-commons-auth
+    files: ^commons-auth

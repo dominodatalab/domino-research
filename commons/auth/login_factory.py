@@ -5,19 +5,19 @@ import auth.github_client
 import re
 
 _PROVIDERS = {
-    auth.auth0_client.CLIENT_TYPE: auth.auth0_client.Auth0LoginManager,
-    auth.github_client.CLIENT_TYPE: auth.github_client.GithubLoginManager
+    auth.auth0_client.LOGIN_TYPE: auth.auth0_client.Auth0LoginManager,
+    auth.github_client.LOGIN_TYPE: auth.github_client.GithubLoginManager,
 }
 
 
 def create_login_manager(app: Flask, config_name: str) -> LoginManager:
-    config = {}
+    conf = {}
     with open(config_name) as config_file:
         for s in config_file:
-            if m := re.match(r"^\s*([a-z0-9_-]+)\s*=\s*(\w+)\s*$", s, re.I):
-                config[m.group(1)] = m.group(2)
+            if m := re.match(r"\s*([a-z0-9_-]+)\s*=\s*(.+)\s*", s, re.I):
+                conf[m.group(1)] = m.group(2).strip()
 
-    login_type = config.get(LOGIN_TYPE, None)
+    login_type = conf.get(LOGIN_TYPE, None)
     if not login_type:
         raise RuntimeError(f"Missing '{LOGIN_TYPE}' property")
 
@@ -25,4 +25,4 @@ def create_login_manager(app: Flask, config_name: str) -> LoginManager:
     if not login_manager:
         raise RuntimeError(f"Unknown login type: {login_type}")
 
-    return login_manager(app)
+    return login_manager(app, conf)

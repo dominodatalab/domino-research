@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from functools import wraps
 from typing import Optional
-from flask import Response, session, request
+from flask import Flask, Response, session, request
 import logging
+import re
 
-# Web session keys.
 PRINCIPAL_KEY = "principal"  # Points to a Principal dict (see below)
 STORED_REQUEST_PATH_KEY = "stored-request-path"  # Internal use only
 
@@ -16,13 +16,20 @@ PRINCIPAL_PROVIDER_KEY = "provider"
 PRINCIPAL_NAME_KEY = "name"
 PRINCIPAL_EMAIL_KEY = "email"
 
-# Common configuration variable.
-OAUTH_CLIENT_ID = "OAUTH_CLIENT_ID"
-OAUTH_CLIENT_SECRET = "OAUTH_CLIENT_SECRET"
+# Common configuration variables.
+LOGIN_TYPE = "login-type"
+OAUTH_BASE_URL = "oauth-base-url"
+OAUTH_CLIENT_ID = "oauth-client-id"
+OAUTH_CLIENT_SECRET = "oauth-client-secret"
+ALLOWED_DOMAINS = "allowed-domains"
+ALLOWED_USERS = "allowed-users"
 
 
 class LoginManager(ABC):
-    def __init__(self, app):
+    allowed_domains = None
+    allowed_users = None
+
+    def __init__(self, app: Flask, conf: dict[str, str]):
         if app.debug:
             app.logger.setLevel(logging.DEBUG)
         else:
@@ -33,6 +40,22 @@ class LoginManager(ABC):
             else:
                 app.logger.setLevel(logging.INFO)
         self.logger = app.logger
+
+        ss = conf.get(ALLOWED_DOMAINS, None)
+        if ss:
+            self.allowed_domains = set[ss]()
+            self.allowed_domains.update(
+                [s.strip().casefold() for s in ss.split(",")]
+            )
+            self.logger.debug(f"Allowed domains: {self.allowed_domains}")
+
+        ss = conf.get(ALLOWED_USERS, None)
+        if ss:
+            self.allowed_users = set[ss]()
+            self.allowed_users.update(
+                [s.strip().casefold() for s in ss.split(",")]
+            )
+            self.logger.debug(f"Allowed users: {self.allowed_users}")
 
     @abstractmethod
     def login(self) -> Response:
@@ -64,6 +87,34 @@ class LoginManager(ABC):
             return f(*args, **kwargs)
 
         return assure_auth
+
+    def validate_principal(self, princ: dict[str, str]) -> bool:
+        """Validating a user principal against a list of allowed
+        users and email domains."""
+        user = princ.get(PRINCIPAL_NAME_KEY)
+
+        if self.allowed_users:
+            if user.casefold() not in self.allowed_users:
+                self.logger.info(f"User {user} is not allowed")
+                return False
+
+        if self.allowed_domains:
+            email = princ.get(PRINCIPAL_EMAIL_KEY, None)
+            if not email:
+                self.logger.info(f"User {user} has no email")
+                return False
+            match = re.match(r"(\S+)@(\S+)", email)
+            if not match:
+                self.logger.info(f"User {user} has an invalid email")
+                return False
+            domain = match.group(2)
+            if domain.casefold() not in self.allowed_domains:
+                self.logger.info(
+                    f"User {user} is not from the allowed domains"
+                )
+                return False
+
+        return True
 
 
 def externalize(url: str) -> str:
