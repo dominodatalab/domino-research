@@ -1,25 +1,24 @@
 import os
 
-from flask import Flask  # type: ignore
 from flask import (
+    Flask,
     render_template,
     url_for,
 )  # type: ignore
 
-from auth import current_user
 from auth.auth0_client import Auth0LoginManager
+from auth.github_client import GithubLoginManager
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)  # Different key for every runtime
 
 login_manager = Auth0LoginManager(app)
+# login_manager = GithubLoginManager(app)
 login_manager.callback_uri = "/auth"
 
 
 @app.route("/")
 def home():
-    u = current_user()
-    print(f"u={u}")
     return render_template("home.html")
 
 

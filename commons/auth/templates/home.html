@@ -6,7 +6,10 @@
     <body>
         <h1>Home</h1>
         {% if 'principal' in session %}
-            <p>Logged in as <b>{{ session['principal']['name'] }}</b>..</p>
+            <p>
+                Logged in as <b>{{ session['principal']['name'] }}</b>
+                <br/>({{ session['principal'].get('email','unknown email') }})
+            </p>
             <p><a href="/logout">[Log out]</a></p>
             <p><a href="/protected">[Try opening a protected page]</a></p>
         {% else %}
