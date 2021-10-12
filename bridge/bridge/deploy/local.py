@@ -16,7 +16,8 @@ requests.adapters.DEFAULT_RETRIES = 1
 logger = logging.getLogger(__name__)
 CONDA_LOCK_FILE = ".brdg_local.lock"
 
-_ENDPOINT_URL_PATTERN = "http://localhost:{0}/{1}/{2}/invocations"
+_ENDPOINT_ROOT = os.environ.get("BRIDGE_PUBLIC_MODEL_URL_PREFIX", None)
+_ENDPOINT_URL_PATTERN = "{0}/{1}/{2}/invocations"
 
 
 class LocalDeploymentProxy:
@@ -227,8 +228,13 @@ class LocalDeployTarget(DeployTarget):
             for stage, port in d.items():
                 for mv, md in self.running_models.items():
                     if port == md.port:
+                        root = (
+                            _ENDPOINT_ROOT
+                            if _ENDPOINT_ROOT
+                            else "http://localhost:" + str(self.proxy.port)
+                        )
                         location = _ENDPOINT_URL_PATTERN.format(
-                            self.proxy.port, model_name, stage
+                            root, model_name, stage
                         )
                         model.versions[stage] = set[ModelEndpoint](
                             [ModelEndpoint(mv, location)]
