@@ -16,7 +16,7 @@ requests.adapters.DEFAULT_RETRIES = 1
 logger = logging.getLogger(__name__)
 CONDA_LOCK_FILE = ".brdg_local.lock"
 
-_ENDPOINT_ROOT = os.environ.get("BRIDGE_PUBLIC_URL", None)
+_ENDPOINT_ROOT = os.environ.get("BRIDGE_PUBLIC_MODEL_URL_PREFIX", None)
 _ENDPOINT_URL_PATTERN = "{0}/{1}/{2}/invocations"
 
 
