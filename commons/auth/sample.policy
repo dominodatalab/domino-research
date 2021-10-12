@@ -1,0 +1,22 @@
+# SAMPLE ACCESS CONTROL CONFIGURATION FILE
+
+# A type of the authentication provider.
+# Supported types are "github" and "auth0".
+# REQUIRED
+login-type = auth0
+
+# OAuth Client ID and Client Secret.
+# REQUIRED for all OAuth providers.
+oauth-client-id = ...
+oauth-client-secret = ...
+
+# Auth0 base URL that identifies the current tenant.
+# OPTIONAL, except for the Auth0 client
+#oauth-base-url = https://dev-xx00yy00.us.auth0.com
+
+# Comma-separated lists of allowed email domains and allowed login names.
+# May be used to limit which self-serving OAuth users can access the service.
+# The domains and the user names are matched in a case-insensitive way.
+# OPTIONAL.
+#allowed-domains=dominodatalab.com,google.com
+#allowed-users=random.hacker@dominodatalab.com,foo@example.com
