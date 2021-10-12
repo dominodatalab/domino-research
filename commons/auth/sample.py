@@ -31,7 +31,7 @@ def login():
     return login_manager.login()
 
 
-@app.route("/auth")
+@app.route("/auth")  # The one specified in login_manager.callback_uri
 def auth_callback():
     """This endpoint is used by the user provider upon
     completion of the authentication workflow."""

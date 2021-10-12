@@ -49,12 +49,13 @@ class GithubLoginManager(auth.LoginManager):
                 auth.PRINCIPAL_NAME_KEY: user_name,
             }
             email = user_info["email"]
-            if email is not None:
+            if email:
                 princ[auth.PRINCIPAL_EMAIL_KEY] = email
-            self.logger.info(f"User '{user_name}' logged in.")
+            self.logger.info(f"User '{user_name}' logged in")
             session[auth.PRINCIPAL_KEY] = princ
             return redirect(session.pop(auth.STORED_REQUEST_PATH_KEY, "/"))
         except Exception:
+            session.pop(auth.STORED_REQUEST_PATH_KEY, None)
             self.logger.exception("User authentication failed")
             return Response("User Authentication Failed", 400)
 

@@ -37,7 +37,7 @@ class Auth0LoginManager(auth.LoginManager):
         self.logger.info(f"Created {LOGIN_TYPE} login manager")
 
     def login(self):
-        if self.callback_uri is None:
+        if not self.callback_uri:
             raise RuntimeError("Authentication callback URI is not set")
         ext_uri = auth.externalize(self.callback_uri)
         return self.oauth.auth0.authorize_redirect(ext_uri)
@@ -46,9 +46,9 @@ class Auth0LoginManager(auth.LoginManager):
         try:
             token = self.oauth.auth0.authorize_access_token()
             self.logger.debug(f"Obtained token: {token}.")
-            resp = self.oauth.auth0.get("userinfo")
+            resp = self.oauth.auth0.get(USER_INFO_URL)
             user_info = resp.json()
-            self.logger.debug(f"Obtained user info: {user_info}.")
+            self.logger.debug(f"Obtained user info: {user_info}")
             user_name = user_info["name"]
             princ = {
                 auth.PRINCIPAL_PROVIDER_KEY: LOGIN_TYPE,
@@ -63,6 +63,7 @@ class Auth0LoginManager(auth.LoginManager):
             session[auth.PRINCIPAL_KEY] = princ
             return redirect(session.pop(auth.STORED_REQUEST_PATH_KEY, "/"))
         except Exception:
+            session.pop(auth.STORED_REQUEST_PATH_KEY, None)
             self.logger.exception("User authentication failed")
             return Response("User Authentication Failed", 400)
 
@@ -75,7 +76,7 @@ class Auth0LoginManager(auth.LoginManager):
             "returnTo": auth.externalize(redirect_url),
             "client_id": self.oauth.auth0.client_id,
         }
-        self.logger.info(f"User '{user_name}' logged out.")
+        self.logger.info(f"User '{user_name}' logged out")
         return redirect(
             "{}/v2/logout?{}".format(self.base_url, urlencode(params))
         )

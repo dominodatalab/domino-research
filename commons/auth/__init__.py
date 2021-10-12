@@ -41,19 +41,15 @@ class LoginManager(ABC):
                 app.logger.setLevel(logging.INFO)
         self.logger = app.logger
 
-        ss = conf.get(ALLOWED_DOMAINS, None)
-        if ss:
-            self.allowed_domains = set[ss]()
-            self.allowed_domains.update(
-                [s.strip().casefold() for s in ss.split(",")]
+        if s := conf.get(ALLOWED_DOMAINS, None):
+            self.allowed_domains = set[str](
+                [s.strip().casefold() for s in s.split(",")]
             )
             self.logger.debug(f"Allowed domains: {self.allowed_domains}")
 
-        ss = conf.get(ALLOWED_USERS, None)
-        if ss:
-            self.allowed_users = set[ss]()
-            self.allowed_users.update(
-                [s.strip().casefold() for s in ss.split(",")]
+        if s := conf.get(ALLOWED_USERS, None):
+            self.allowed_users = set[str](
+                [s.strip().casefold() for s in s.split(",")]
             )
             self.logger.debug(f"Allowed users: {self.allowed_users}")
 
