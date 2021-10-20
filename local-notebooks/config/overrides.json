@@ -1,0 +1,9 @@
+{
+    "@jupyterlab/notebook-extension:tracker": {
+        "recordTiming": true
+    },
+    "@jupyterlab/extensionmanager-extension:plugin": {
+        "enabled": true,
+        "disclaimed": true
+    }
+}
