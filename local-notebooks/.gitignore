@@ -1,1 +1,3 @@
 .aws
+.env
+.mypy_cache
