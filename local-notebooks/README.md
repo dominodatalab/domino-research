@@ -73,6 +73,22 @@ The S3 bucket is mounted at `/mnt/home`, and set as the default path for the not
 
 ## Environments
 
+Environments are managed through Conda. We have included a number of customizations to make this easy:
+
+- To use an environment, simply select the kernel that corresponds to the environment. We use `nb_conda_kernels` to automatically make all Conda environments available for use in Jupyter as kernels. You will start with only a base environment, but can add as many as you like.
+
+- To create, modify and delete environments, navigate to settings > Conda Packages Manager. From here, you can create, delete and modify environments without touch the command line.
+
+- To use a shared an environment, start this tool pointing at the same S3 bucket as your collaborator. We will automatically load the latest version of all of the Conda environments that are backed up in the S3 bucket and make them available as kernels. Any changes you make or new environments you add will be saved back to the S3 bucket.
+
+Notes and limitations:
+
+- Environments are backed up every minute. Changes you make in the last minute before shut down may not be saved. We suggest waiting a minute before shutting down if you edit the environment.
+
+- Loading shared environments is done synchronously prior to server launch. We are looking into solutions to speed this up by saving the entire environment to S3 rather than only a YAML of the installed packages. We are also looking into making this process asynchronous.
+
+- You can also create and modify environments using the `conda` CLI. But, when you do this, you must add a `--name XXX` to the commands to target a specific environment. If you do `conda install` in a notebook without supplying a name, it will install into the base Conda environment and not the environment you have selected via the kernel.
+
 ## Real-Time Collaboration
 
 To start a network tunnel allowing other users to access your local notebook,
