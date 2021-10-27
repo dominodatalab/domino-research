@@ -13,14 +13,15 @@ USER jovyan
 RUN pip install --upgrade jupyterlab-git jupyterlab_execute_time
 
 # Install our custom notebook config
-COPY config/jupyter_notebook_config.py /home/jovyan/.jupyter/jupyter_notebook_config.py
+COPY config/jupyter_lab_config.py /home/jovyan/.jupyter/jupyter_lab_config.py
 
 # Override settings
 COPY config/overrides.json /opt/conda/share/jupyter/lab/settings/overrides.json
 
 # Install our custom before-start scripts
-COPY config/start-notebook /usr/local/bin/start-notebook.d/
+#COPY config/start-notebook /usr/local/bin/start-notebook.d/
 
 # Install the script for launching a tunnel.
-COPY config/start-tunnel /usr/local/bin/start-tunnel.d/
+COPY --chmod=0755 config/start-tunnel /usr/local/bin/start-tunnel.d/
+
 

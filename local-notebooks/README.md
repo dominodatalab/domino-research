@@ -65,7 +65,7 @@ docker run --name local-notebook \
 
 # Usage
 
-Once the notebook starts, JupyterLab will print out a link to access the UI as usual, use the one with hostname `127.0.0.1`. 
+Once the notebook starts, JupyterLab will print out a link to access the UI as usual, use the one with hostname `127.0.0.1` and port `8888`. 
 
 ## Shared Data
 
@@ -74,3 +74,37 @@ The S3 bucket is mounted at `/mnt/home`, and set as the default path for the not
 ## Environments
 
 ## Real-Time Collaboration
+
+To start a network tunnel allowing other users to access your local notebook,
+open Terminal (inside the Notebook webapp) and launch 
+`/usr/local/bin/start-tunnel.d/start-tunnel.sh` script. 
+A public URL for your tunnel will appear in the console. For example,
+
+```bash
+(base) domino-research@f6d754573428:~$ /usr/local/bin/start-tunnel.d/start-tunnel.sh 
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   159  100   159    0     0    703      0 --:--:-- --:--:-- --:--:--   703
+100   631  100   631    0     0   1923      0 --:--:-- --:--:-- --:--:--  1923
+100 29.9M  100 29.9M    0     0  25.6M      0  0:00:01  0:00:01 --:--:-- 57.8M
+2021-10-27T18:52:57Z INF Thank you for trying Cloudflare Tunnel. Doing so, without a Cloudflare account, is a quick way to experiment and try it out. However, be aware that these account-less Tunnels have no uptime guarantee. If you intend to use Tunnels in production you should use a pre-created named tunnel by following: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps
+2021-10-27T18:52:57Z INF Requesting new quick Tunnel on trycloudflare.com...
+2021-10-27T18:52:59Z INF +--------------------------------------------------------------------------------------------+
+2021-10-27T18:52:59Z INF |  Your quick Tunnel has been created! Visit it at (it may take some time to be reachable):  |
+2021-10-27T18:52:59Z INF |  https://afghanistan-null-ron-norwegian.trycloudflare.com                                  |
+2021-10-27T18:52:59Z INF +--------------------------------------------------------------------------------------------+
+2021-10-27T18:52:59Z INF Cannot determine default configuration path. No file [config.yml config.yaml] in [~/.cloudflared ~/.cloudflare-warp ~/cloudflare-warp /etc/cloudflared /usr/local/etc/cloudflared]
+2021-10-27T18:52:59Z INF Version 2021.10.5
+2021-10-27T18:52:59Z INF GOOS: linux, GOVersion: devel +a84af465cb Mon Aug 9 10:31:00 2021 -0700, GoArch: amd64
+2021-10-27T18:52:59Z INF Settings: map[protocol:quic url:http://127.0.0.1:8888]
+2021-10-27T18:52:59Z INF cloudflared will not automatically update when run from the shell. To enable auto-updates, run cloudflared as a service: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/run-tunnel/run-as-service
+2021-10-27T18:52:59Z INF Generated Connector ID: 1d0fca10-ba61-4620-902a-60ada75c622a
+2021-10-27T18:52:59Z INF Initial protocol quic
+2021-10-27T18:52:59Z INF Starting metrics server on 127.0.0.1:35577/metrics
+<...>
+```
+
+Here, `https://afghanistan-null-ron-norwegian.trycloudflare.com` is the URL
+that can be shared with your collaborators. Note that the tunnel always uses 
+a default port for the given protocol.
+
