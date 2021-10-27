@@ -1,0 +1,3 @@
+# To debug: install and start rsyslog and then
+# view logs with grep 'conda_dump' /var/log/syslog
+* * * * * /usr/local/sbin/dom_cron/dump_conda.sh 2>&1 | logger -t conda_dump
