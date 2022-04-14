@@ -6,7 +6,6 @@
   "dependencies": {
     "@ant-design/icons": "^4.6.1",
     "@craco/craco": "^6.1.1",
-    "@domino-research/ui": "file:packages/ui",
     "@types/node": "^12.20.4",
     "@types/react": "^17.0.2",
     "@types/react-dom": "^17.0.1",
